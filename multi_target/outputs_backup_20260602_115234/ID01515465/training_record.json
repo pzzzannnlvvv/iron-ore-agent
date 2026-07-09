@@ -1,0 +1,27 @@
+{
+  "target_id": "ID01515465",
+  "target_name": "铁精粉：港口库存：乌克兰→华东地区：岚山港：明细（周度）",
+  "trained_at": "2026-05-29 16:13:30",
+  "optuna_trials": 50,
+  "optimization_time_seconds": 263.7960891723633,
+  "train_samples": 393,
+  "feature_count": 3184,
+  "validation_mda": 0.6388888888888888,
+  "test_mda": 0.6346153846153846,
+  "test_mape": 0.19665068932426302,
+  "best_params": {
+    "num_leaves": 216,
+    "max_depth": 5,
+    "learning_rate": 0.014448920651563087,
+    "n_estimators": 1942,
+    "min_child_samples": 41,
+    "subsample": 0.7579777360688189,
+    "colsample_bytree": 0.7036721699561687,
+    "reg_alpha": 2.485579067835945e-07,
+    "reg_lambda": 0.007371904514840067,
+    "random_state": 42,
+    "deterministic": true,
+    "verbosity": -1,
+    "n_jobs": -1
+  }
+}

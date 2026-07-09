@@ -1,0 +1,27 @@
+{
+  "target_id": "ID01516418",
+  "target_name": "PB块：港口库存：长江沿江地区：江阴港：明细（周度）",
+  "trained_at": "2026-05-29 17:28:02",
+  "optuna_trials": 50,
+  "optimization_time_seconds": 245.75242400169373,
+  "train_samples": 393,
+  "feature_count": 3184,
+  "validation_mda": 0.6216216216216216,
+  "test_mda": 0.5510204081632653,
+  "test_mape": 0.6948340899520541,
+  "best_params": {
+    "num_leaves": 209,
+    "max_depth": 4,
+    "learning_rate": 0.03972674082264495,
+    "n_estimators": 1817,
+    "min_child_samples": 60,
+    "subsample": 0.6117625786475714,
+    "colsample_bytree": 0.6785518249305914,
+    "reg_alpha": 1.9086200964391067e-07,
+    "reg_lambda": 0.0023015849208983838,
+    "random_state": 42,
+    "deterministic": true,
+    "verbosity": -1,
+    "n_jobs": -1
+  }
+}

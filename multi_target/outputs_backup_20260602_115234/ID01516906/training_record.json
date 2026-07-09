@@ -1,0 +1,27 @@
+{
+  "target_id": "ID01516906",
+  "target_name": "PB粉：港口库存：长江沿江地区：江阴港：明细（周度）",
+  "trained_at": "2026-05-29 17:14:47",
+  "optuna_trials": 50,
+  "optimization_time_seconds": 287.8886640071869,
+  "train_samples": 393,
+  "feature_count": 3184,
+  "validation_mda": 0.631578947368421,
+  "test_mda": 0.4716981132075472,
+  "test_mape": 0.5190183635150577,
+  "best_params": {
+    "num_leaves": 197,
+    "max_depth": 4,
+    "learning_rate": 0.019925244298211298,
+    "n_estimators": 1692,
+    "min_child_samples": 27,
+    "subsample": 0.8264705281307512,
+    "colsample_bytree": 0.734519802626952,
+    "reg_alpha": 1.8492119614909294e-06,
+    "reg_lambda": 0.005773188298875859,
+    "random_state": 42,
+    "deterministic": true,
+    "verbosity": -1,
+    "n_jobs": -1
+  }
+}

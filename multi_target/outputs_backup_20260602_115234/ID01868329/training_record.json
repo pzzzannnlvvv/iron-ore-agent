@@ -1,0 +1,27 @@
+{
+  "target_id": "ID01868329",
+  "target_name": "粗粉：库存：47个港口（周度）",
+  "trained_at": "2026-05-29 16:55:02",
+  "optuna_trials": 50,
+  "optimization_time_seconds": 88.1937928199768,
+  "train_samples": 124,
+  "feature_count": 3184,
+  "validation_mda": 0.6666666666666666,
+  "test_mda": 0.6226415094339622,
+  "test_mape": 0.07340092795411124,
+  "best_params": {
+    "num_leaves": 173,
+    "max_depth": 3,
+    "learning_rate": 0.02272718076754365,
+    "n_estimators": 1689,
+    "min_child_samples": 21,
+    "subsample": 0.5506641585955514,
+    "colsample_bytree": 0.7672680777626609,
+    "reg_alpha": 3.8404766860626824e-07,
+    "reg_lambda": 0.0004979791606015983,
+    "random_state": 42,
+    "deterministic": true,
+    "verbosity": -1,
+    "n_jobs": -1
+  }
+}

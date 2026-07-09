@@ -1,0 +1,32 @@
+{
+  "target_id": "ID01517067",
+  "target_name": "PB粉：港口库存：华北地区：曹妃甸港：明细（周度）",
+  "group": "C",
+  "trained_at": "2026-06-04 14:59:58",
+  "optuna_trials": 100,
+  "optimization_time_seconds": 52.11316800117493,
+  "train_samples": 343,
+  "test_samples": 47,
+  "feature_count": 300,
+  "used_feature_selection": true,
+  "original_mda": 0.6038,
+  "new_validation_mda": 0.7647058823529411,
+  "new_test_mda": 0.5,
+  "new_test_rmse": 14.631330235071573,
+  "mda_improvement": -0.1038,
+  "best_params": {
+    "num_leaves": 34,
+    "max_depth": 6,
+    "learning_rate": 0.14915600625283928,
+    "n_estimators": 119,
+    "min_child_samples": 25,
+    "subsample": 0.6306748511545603,
+    "colsample_bytree": 0.5386342035888563,
+    "reg_alpha": 0.5945260200582195,
+    "reg_lambda": 0.058309224945989925,
+    "random_state": 42,
+    "deterministic": true,
+    "verbosity": -1,
+    "n_jobs": -1
+  }
+}

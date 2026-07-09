@@ -1,0 +1,27 @@
+{
+  "target_id": "ID01517226",
+  "target_name": "卡拉加斯粉：港口库存：华东地区：青岛港：明细（周度）",
+  "trained_at": "2026-06-03 18:27:20",
+  "optuna_trials": 50,
+  "optimization_time_seconds": 130.61967587471008,
+  "train_samples": 367,
+  "feature_count": 3196,
+  "validation_mda": 0.6388888888888888,
+  "test_mda": 0.5,
+  "test_rmse": 24.010774623767333,
+  "best_params": {
+    "num_leaves": 172,
+    "max_depth": 5,
+    "learning_rate": 0.017998203418672507,
+    "n_estimators": 1429,
+    "min_child_samples": 56,
+    "subsample": 0.650404456598277,
+    "colsample_bytree": 0.6962621922357269,
+    "reg_alpha": 7.128430658355947e-07,
+    "reg_lambda": 0.0005591997202604994,
+    "random_state": 42,
+    "deterministic": true,
+    "verbosity": -1,
+    "n_jobs": -1
+  }
+}

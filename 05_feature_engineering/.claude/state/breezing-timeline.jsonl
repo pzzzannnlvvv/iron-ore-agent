@@ -1,0 +1,1 @@
+{"event":"task_completed","teammate":"","task_id":"4","subject":"创建周频数据切分脚本 01_split_train_test_weekly.py","description":"创建无验证集的周频数据切分脚本，Gap=14周","timestamp":"2026-05-28T07:32:26Z"}

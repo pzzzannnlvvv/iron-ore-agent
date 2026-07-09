@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>多标的模型训练结果汇总</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; background: #f5f7fa; padding: 20px; }
+        .container { max-width: 1400px; margin: 0 auto; background: white; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); overflow: hidden; }
+        .header { background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%); color: white; padding: 30px; }
+        .header h1 { font-size: 28px; margin-bottom: 10px; }
+        .header p { opacity: 0.9; font-size: 16px; }
+        .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; padding: 30px; background: #f8fafc; }
+        .stat-card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); text-align: center; }
+        .stat-value { font-size: 32px; font-weight: 700; color: #2563eb; margin-bottom: 5px; }
+        .stat-label { color: #64748b; font-size: 14px; }
+        .content { padding: 30px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 13px; }
+        th, td { padding: 12px 10px; text-align: left; border-bottom: 1px solid #e2e8f0; }
+        th { background: #f1f5f9; font-weight: 600; color: #334155; position: sticky; top: 0; }
+        tr:hover { background: #f8fafc; }
+        .mda-good { color: #059669; font-weight: 600; }
+        .mda-medium { color: #d97706; font-weight: 600; }
+        .mda-bad { color: #dc2626; font-weight: 600; }
+        .rank { display: inline-block; width: 24px; height: 24px; border-radius: 50%; text-align: center; line-height: 24px; font-size: 12px; font-weight: 600; margin-right: 8px; }
+        .rank-1 { background: #fbbf24; color: #78350f; }
+        .rank-2 { background: #9ca3af; color: #1f2937; }
+        .rank-3 { background: #cd7f32; color: white; }
+        .target-name { max-width: 350px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .footer { padding: 20px 30px; background: #f8fafc; color: #64748b; font-size: 13px; text-align: center; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏭 多标的模型训练结果汇总</h1>
+            <p>铁矿石库存预测 - 26个标的周频模型训练结果 | 生成时间: 2026-05-29 17:56:36</p>
+        </div>
+
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-value">26</div>
+                <div class="stat-label">总标的数</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">64.62%</div>
+                <div class="stat-label">平均测试MDA</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">92.45%</div>
+                <div class="stat-label">最高测试MDA</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">89.89%</div>
+                <div class="stat-label">平均测试MAPE</div>
+            </div>
+        </div>
+
+        <div class="content">
+            <h2>📊 详细结果表</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>排名</th>
+                        <th>标的ID</th>
+                        <th>标的名称</th>
+                        <th>训练样本</th>
+                        <th>特征数</th>
+                        <th>验证MDA</th>
+                        <th>测试MDA</th>
+                        <th>测试MAPE</th>
+                        <th>训练时间</th>
+                    </tr>
+                </thead>
+                <tbody>
+
+                    <tr>
+                        <td><span class="rank rank-1">1</span></td>
+                        <td><code>ID00186278</code></td>
+                        <td class="target-name" title="块矿：库存：45个港口（周度）">块矿：库存：45个港口（周度）</td>
+                        <td>471</td>
+                        <td>3184</td>
+                        <td>95.45%</td>
+                        <td class="mda-good">92.45%</td>
+                        <td>1.28%</td>
+                        <td>5.1分</td>
+                    </tr>
+
+                    <tr>
+                        <td><span class="rank rank-2">2</span></td>
+                        <td><code>ID02017501</code></td>
+                        <td class="target-name" title="铁矿石：进口：库存：长江沿江地区：45个港口（周度）">铁矿石：进口：库存：长江沿江地区：45个港口（周度）</td>
+                        <td>471</td>
+                        <td>3184</td>
+                        <td>86.36%</td>
+                        <td class="mda-good">90.57%</td>
+                        <td>1.84%</td>
+                        <td>4.5分</td>
+                    </tr>
+
+                    <tr>
+                        <td><span class="rank rank-3">3</span></td>
+                        <td><code>ID01512783</code></td>
+                        <td class="target-name" title="铁精粉：进口：库存：47个港口（周度）">铁精粉：进口：库存：47个港口（周度）</td>
+                        <td>159</td>
+                        <td>3184</td>
+                        <td>92.86%</td>
+                        <td class="mda-good">81.13%</td>
+                        <td>8.40%</td>
+                        <td>1.7分</td>
+                    </tr>
+
+                    <tr>
+                        <td><span class="">4</span></td>
+                        <td><code>ID02017483</code></td>
+                        <td class="target-name" title="铁矿石：进口：库存：华北地区：45个港口（周度）">铁矿石：进口：库存：华北地区：45个港口（周度）</td>
+                        <td>471</td>
+                        <td>3184</td>
+                        <td>86.36%</td>
+                        <td class="mda-good">79.25%</td>
+                        <td>2.83%</td>
+                        <td>3.7分</td>
+                    </tr>
+
+                    <tr>
+                        <td><span class="">5</span></td>
+                        <td><code>ID00186318</code></td>
+                        <td class="target-name" title="球团矿：进口：库存：45个港口（周度）">球团矿：进口：库存：45个港口（周度）</td>
+                        <td>471</td>
+                        <td>3184</td>
+                        <td>81.82%</td>
+                        <td class="mda-good">71.70%</td>
+                        <td>27.38%</td>
+                        <td>4.6分</td>
+                    </tr>
+
+                    <tr>
+                        <td><span class="">6</span></td>
+                        <td><code>ID01135139</code></td>
+                        <td class="target-name" title="粗粉：进口：库存：45个港口（周度）">粗粉：进口：库存：45个港口（周度）</td>
+                        <td>471</td>
+                        <td>3184</td>
+                        <td>88.64%</td>
+                        <td class="mda-good">69.81%</td>
+                        <td>3.72%</td>
+                        <td>4.4分</td>
+                    </tr>
+
+                    <tr>
+                        <td><span class="">7</span></td>
+                        <td><code>ID02017488</code></td>
+                        <td class="target-name" title="铁矿石：进口：库存：华南地区：45个港口（周度）">铁矿石：进口：库存：华南地区：45个港口（周度）</td>
+                        <td>471</td>
+                        <td>3184</td>
+                        <td>81.82%</td>
+                        <td class="mda-good">69.81%</td>
+                        <td>3.73%</td>
+                        <td>5.2分</td>
+                    </tr>
+
+                    <tr>
+                        <td><span class="">8</span></td>
+                        <td><code>ID01512800</code></td>
+                        <td class="target-name" title="块矿：进口：库存：47个港口（周度）">块矿：进口：库存：47个港口（周度）</td>
+                        <td>159</td>
+                        <td>3184</td>
+                        <td>92.86%</td>
+                        <td class="mda-good">67.92%</td>
+                        <td>3.68%</td>
+                        <td>1.7分</td>
+                    </tr>
+
+                    <tr>
+                        <td><span class="">9</span></td>
+                        <td><code>ID01512793</code></td>
+                        <td class="target-name" title="球团矿：进口：库存：47个港口（周度）">球团矿：进口：库存：47个港口（周度）</td>
+                        <td>159</td>
+                        <td>3184</td>
+                        <td>92.86%</td>
+                        <td class="mda-good">66.04%</td>
+                        <td>48.14%</td>
+                        <td>2.0分</td>
+                    </tr>
+
+                    <tr>
+                        <td><span class="">10</span></td>
+                        <td><code>ID00186491</code></td>
+                        <td class="target-name" title="铁精粉：库存：45个港口（周度）">铁精粉：库存：45个港口（周度）</td>
+                        <td>471</td>
+                        <td>3184</td>
+                        <td>84.09%</td>
+                        <td class="mda-good">66.04%</td>
+                        <td>8.30%</td>
+                        <td>5.2分</td>
+                    </tr>
+
+                    <tr>
+                        <td><span class="">11</span></td>
+                        <td><code>ID01516560</code></td>
+                        <td class="target-name" title="PB块：港口库存：华东地区：青岛港：明细（周度）">PB块：港口库存：华东地区：青岛港：明细（周度）</td>
+                        <td>393</td>
+                        <td>3184</td>
+                        <td>56.76%</td>
+                        <td class="mda-good">64.15%</td>
+                        <td>30.28%</td>
+                        <td>4.5分</td>
+                    </tr>
+
+                    <tr>
+                        <td><span class="">12</span></td>
+                        <td><code>ID00414945</code></td>
+                        <td class="target-name" title="铁矿石：进口：库存：华东地区：45个港口（周度）">铁矿石：进口：库存：华东地区：45个港口（周度）</td>
+                        <td>471</td>
+                        <td>3184</td>
+                        <td>84.09%</td>
+                        <td class="mda-good">64.15%</td>
+                        <td>2.36%</td>
+                        <td>4.3分</td>
+                    </tr>
+
+                    <tr>
+                        <td><span class="">13</span></td>
+                        <td><code>ID01515465</code></td>
+                        <td class="target-name" title="铁精粉：港口库存：乌克兰→华东地区：岚山港：明细（周度）">铁精粉：港口库存：乌克兰→华东地区：岚山港：明细（周度）</td>
+                        <td>393</td>
+                        <td>3184</td>
+                        <td>63.89%</td>
+                        <td class="mda-good">63.46%</td>
+                        <td>19.67%</td>
+                        <td>4.4分</td>
+                    </tr>
+
+                    <tr>
+                        <td><span class="">14</span></td>
+                        <td><code>ID01868329</code></td>
+                        <td class="target-name" title="粗粉：库存：47个港口（周度）">粗粉：库存：47个港口（周度）</td>
+                        <td>124</td>
+                        <td>3184</td>
+                        <td>66.67%</td>
+                        <td class="mda-good">62.26%</td>
+                        <td>7.34%</td>
+                        <td>1.5分</td>
+                    </tr>
+
+                    <tr>
+                        <td><span class="">15</span></td>
+                        <td><code>ID01512786</code></td>
+                        <td class="target-name" title="铁矿石：进口：库存：47个港口（周度）">铁矿石：进口：库存：47个港口（周度）</td>
+                        <td>159</td>
+                        <td>3184</td>
+                        <td>85.71%</td>
+                        <td class="mda-good">62.26%</td>
+                        <td>4.76%</td>
+                        <td>2.2分</td>
+                    </tr>
+
+                    <tr>
+                        <td><span class="">16</span></td>
+                        <td><code>ID01517067</code></td>
+                        <td class="target-name" title="PB粉：港口库存：华北地区：曹妃甸港：明细（周度）">PB粉：港口库存：华北地区：曹妃甸港：明细（周度）</td>
+                        <td>393</td>
+                        <td>3184</td>
+                        <td>68.42%</td>
+                        <td class="mda-good">60.38%</td>
+                        <td>43.96%</td>
+                        <td>3.7分</td>
+                    </tr>
+
+                    <tr>
+                        <td><span class="">17</span></td>
+                        <td><code>ID01516505</code></td>
+                        <td class="target-name" title="PB块：港口库存：华北地区：曹妃甸港：明细（周度）">PB块：港口库存：华北地区：曹妃甸港：明细（周度）</td>
+                        <td>393</td>
+                        <td>3184</td>
+                        <td>60.53%</td>
+                        <td class="mda-good">60.00%</td>
+                        <td>37.58%</td>
+                        <td>4.3分</td>
+                    </tr>
+
+                    <tr>
+                        <td><span class="">18</span></td>
+                        <td><code>ID01517226</code></td>
+                        <td class="target-name" title="卡拉加斯粉：港口库存：华东地区：青岛港：明细（周度）">卡拉加斯粉：港口库存：华东地区：青岛港：明细（周度）</td>
+                        <td>393</td>
+                        <td>3184</td>
+                        <td>70.27%</td>
+                        <td class="mda-medium">58.49%</td>
+                        <td>25.12%</td>
+                        <td>3.9分</td>
+                    </tr>
+
+                    <tr>
+                        <td><span class="">19</span></td>
+                        <td><code>ID01517220</code></td>
+                        <td class="target-name" title="卡拉加斯粉：港口库存：长江沿江地区：江阴港：明细（周度）">卡拉加斯粉：港口库存：长江沿江地区：江阴港：明细（周度）</td>
+                        <td>393</td>
+                        <td>3184</td>
+                        <td>66.67%</td>
+                        <td class="mda-medium">58.14%</td>
+                        <td>511.83%</td>
+                        <td>3.7分</td>
+                    </tr>
+
+                    <tr>
+                        <td><span class="">20</span></td>
+                        <td><code>ID01517011</code></td>
+                        <td class="target-name" title="超特粉：港口库存：华北地区：曹妃甸港：明细（周度）">超特粉：港口库存：华北地区：曹妃甸港：明细（周度）</td>
+                        <td>393</td>
+                        <td>3184</td>
+                        <td>65.79%</td>
+                        <td class="mda-medium">56.60%</td>
+                        <td>642.20%</td>
+                        <td>3.9分</td>
+                    </tr>
+
+                    <tr>
+                        <td><span class="">21</span></td>
+                        <td><code>ID01516418</code></td>
+                        <td class="target-name" title="PB块：港口库存：长江沿江地区：江阴港：明细（周度）">PB块：港口库存：长江沿江地区：江阴港：明细（周度）</td>
+                        <td>393</td>
+                        <td>3184</td>
+                        <td>62.16%</td>
+                        <td class="mda-medium">55.10%</td>
+                        <td>69.48%</td>
+                        <td>4.1分</td>
+                    </tr>
+
+                    <tr>
+                        <td><span class="">22</span></td>
+                        <td><code>ID01517120</code></td>
+                        <td class="target-name" title="PB粉：港口库存：华东地区：青岛港：明细（周度）">PB粉：港口库存：华东地区：青岛港：明细（周度）</td>
+                        <td>393</td>
+                        <td>3184</td>
+                        <td>78.38%</td>
+                        <td class="mda-medium">54.72%</td>
+                        <td>53.66%</td>
+                        <td>4.8分</td>
+                    </tr>
+
+                    <tr>
+                        <td><span class="">23</span></td>
+                        <td><code>ID01517102</code></td>
+                        <td class="target-name" title="超特粉：港口库存：华东地区：青岛港：明细（周度）">超特粉：港口库存：华东地区：青岛港：明细（周度）</td>
+                        <td>393</td>
+                        <td>3184</td>
+                        <td>72.97%</td>
+                        <td class="mda-medium">54.72%</td>
+                        <td>38.50%</td>
+                        <td>4.2分</td>
+                    </tr>
+
+                    <tr>
+                        <td><span class="">24</span></td>
+                        <td><code>ID01517224</code></td>
+                        <td class="target-name" title="卡拉加斯粉：港口库存：华北地区：曹妃甸港：明细（周度）">卡拉加斯粉：港口库存：华北地区：曹妃甸港：明细（周度）</td>
+                        <td>393</td>
+                        <td>3184</td>
+                        <td>65.79%</td>
+                        <td class="mda-medium">52.83%</td>
+                        <td>36.38%</td>
+                        <td>4.1分</td>
+                    </tr>
+
+                    <tr>
+                        <td><span class="">25</span></td>
+                        <td><code>ID01516873</code></td>
+                        <td class="target-name" title="超特粉：港口库存：长江沿江地区：江阴港：明细（周度）">超特粉：港口库存：长江沿江地区：江阴港：明细（周度）</td>
+                        <td>393</td>
+                        <td>3184</td>
+                        <td>64.86%</td>
+                        <td class="mda-medium">51.02%</td>
+                        <td>652.90%</td>
+                        <td>2.9分</td>
+                    </tr>
+
+                    <tr>
+                        <td><span class="">26</span></td>
+                        <td><code>ID01516906</code></td>
+                        <td class="target-name" title="PB粉：港口库存：长江沿江地区：江阴港：明细（周度）">PB粉：港口库存：长江沿江地区：江阴港：明细（周度）</td>
+                        <td>393</td>
+                        <td>3184</td>
+                        <td>63.16%</td>
+                        <td class="mda-bad">47.17%</td>
+                        <td>51.90%</td>
+                        <td>4.8分</td>
+                    </tr>
+
+                </tbody>
+            </table>
+        </div>
+
+        <div class="footer">
+            <p>数据来源: /Users/huzhongyuan/Desktop/厦门实习/项目复现2/multi_target/outputs | 汇总时间: 2026-05-29 17:56:36</p>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,32 @@
+{
+  "target_id": "ID01517011",
+  "target_name": "超特粉：港口库存：华北地区：曹妃甸港：明细（周度）",
+  "group": "C",
+  "trained_at": "2026-06-04 15:03:17",
+  "optuna_trials": 100,
+  "optimization_time_seconds": 53.71551489830017,
+  "train_samples": 341,
+  "test_samples": 51,
+  "feature_count": 300,
+  "used_feature_selection": true,
+  "original_mda": 0.566,
+  "new_validation_mda": 0.7941176470588235,
+  "new_test_mda": 0.48,
+  "new_test_rmse": 13.967877437100562,
+  "mda_improvement": -0.08599999999999997,
+  "best_params": {
+    "num_leaves": 56,
+    "max_depth": 4,
+    "learning_rate": 0.005819566156555786,
+    "n_estimators": 1279,
+    "min_child_samples": 20,
+    "subsample": 0.5336416485377666,
+    "colsample_bytree": 0.7985795481831063,
+    "reg_alpha": 3.0738486319006224,
+    "reg_lambda": 2.1276121157817784,
+    "random_state": 42,
+    "deterministic": true,
+    "verbosity": -1,
+    "n_jobs": -1
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "processed_at": "2026-06-02 14:20:49",
+  "cleaning_strategy": {
+    "method": "winsorize",
+    "description": "使用Winsorize缩尾处理极端值：原始值±3σ，百分比变化特征±50%"
+  },
+  "outputs": {
+    "ID01517011": "/Users/huzhongyuan/Desktop/厦门实习/项目复现2/three_special_targets/outputs/ID01517011/features_weekly.csv",
+    "ID01516873": "/Users/huzhongyuan/Desktop/厦门实习/项目复现2/three_special_targets/outputs/ID01516873/features_weekly.csv",
+    "ID01517220": "/Users/huzhongyuan/Desktop/厦门实习/项目复现2/three_special_targets/outputs/ID01517220/features_weekly.csv"
+  }
+}

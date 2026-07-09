@@ -1,0 +1,47 @@
+{
+  "project_name": "三个问题标的特殊处理 - 铁矿石库存预测",
+  "created_at": "2026-06-02",
+  "description": "专门针对存在数据跳变问题的三个标的进行清洗和重训练",
+  "cleaning_strategy": {
+    "method": "winsorize",
+    "description": "使用Winsorize缩尾处理极端值：原始值±3σ，百分比变化特征±50%"
+  },
+  "targets": [
+    {
+      "target_id": "ID01517011",
+      "target_name": "超特粉：港口库存：华北地区：曹妃甸港：明细（周度）",
+      "status": "pending",
+      "issue": "存在频繁跳变到接近0值的问题"
+    },
+    {
+      "target_id": "ID01516873",
+      "target_name": "超特粉：港口库存：长江沿江地区：江阴港：明细（周度）",
+      "status": "pending",
+      "issue": "存在频繁跳变到0值的问题"
+    },
+    {
+      "target_id": "ID01517220",
+      "target_name": "卡拉加斯粉：港口库存：长江沿江地区：江阴港：明细（周度）",
+      "status": "pending",
+      "issue": "存在频繁跳变到0值的问题"
+    }
+  ],
+  "feature_strategy": {
+    "description": "复用现有3200个特征（因子特征+时间特征），仅替换标的滞后特征",
+    "factor_features": "reuse_all",
+    "time_features": "reuse_all",
+    "target_lag_features": "replace_with_current_target"
+  },
+  "data_paths": {
+    "daily_data": "../03_data_cleaning/outputs/cleaned_data_daily.csv",
+    "weekly_features": "../05_feature_engineering/outputs/09_features_final_weekly.csv",
+    "feature_list": "../05_feature_engineering/outputs/final_feature_list.csv",
+    "reference_best_params": "../07_model_training/outputs/best_params_weekly.json"
+  },
+  "training_config": {
+    "model": "LightGBM",
+    "metric": "MDA（方向准确率）",
+    "gap_weeks": 14,
+    "optuna_trials": 50
+  }
+}

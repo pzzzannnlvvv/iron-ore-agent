@@ -1,0 +1,27 @@
+{
+  "target_id": "ID01512793",
+  "target_name": "球团矿：进口：库存：47个港口（周度）",
+  "trained_at": "2026-05-29 16:58:51",
+  "optuna_trials": 50,
+  "optimization_time_seconds": 118.67084121704102,
+  "train_samples": 159,
+  "feature_count": 3184,
+  "validation_mda": 0.9285714285714286,
+  "test_mda": 0.660377358490566,
+  "test_mape": 0.48139989757607576,
+  "best_params": {
+    "num_leaves": 197,
+    "max_depth": 4,
+    "learning_rate": 0.019925244298211298,
+    "n_estimators": 1692,
+    "min_child_samples": 27,
+    "subsample": 0.8264705281307512,
+    "colsample_bytree": 0.734519802626952,
+    "reg_alpha": 1.8492119614909294e-06,
+    "reg_lambda": 0.005773188298875859,
+    "random_state": 42,
+    "deterministic": true,
+    "verbosity": -1,
+    "n_jobs": -1
+  }
+}

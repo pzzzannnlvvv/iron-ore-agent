@@ -1,0 +1,35 @@
+# ===== 敏感配置(含真实 LLM API_KEY / 内网地址,绝不上传) =====
+# 注意:.env.example 也含真实 key,一并排除;如需给 clone 者配置示例,请另做脱敏版
+.env
+.env.*
+
+# ===== Python 虚拟环境与缓存 =====
+.venv/
+venv/
+env/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+*.egg-info/
+.ipynb_checkpoints/
+
+# ===== 超大中间产物(>50MB,超 GitHub 限制;可由 05/06 脚本重新生成) =====
+05_feature_engineering/outputs/03_factor_lags.csv
+05_feature_engineering/outputs/04_trend_volatility.csv
+05_feature_engineering/outputs/08_features_merged.csv
+05_feature_engineering/outputs/09_features_final.csv
+06_data_split/outputs/train.csv
+
+# ===== IDE / 编辑器 / 系统 =====
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+*.swp
+
+# ===== 日志与临时文件 =====
+*.log
+logs/
+*.tmp

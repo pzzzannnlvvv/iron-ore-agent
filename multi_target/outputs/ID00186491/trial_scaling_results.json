@@ -1,0 +1,152 @@
+{
+  "target_id": "ID00186491",
+  "target_name": "铁精粉：库存：45个港口（周度）",
+  "total_trials": 200,
+  "checkpoints": [
+    50,
+    100,
+    150,
+    200
+  ],
+  "trained_at": "2026-05-31 16:31:59",
+  "total_elapsed_minutes": 15.3,
+  "train_samples": 471,
+  "feature_count": 3184,
+  "scaling_results": [
+    {
+      "trials": 50,
+      "val_loss": 0.15909090909090906,
+      "val_mda": 0.8409090909090909,
+      "test_mda": 0.660377358490566,
+      "test_mape": 0.0830460482865306,
+      "elapsed_seconds": 236.35542678833008,
+      "elapsed_minutes": 3.9,
+      "best_params": {
+        "num_leaves": 200,
+        "max_depth": 3,
+        "learning_rate": 0.056136519921092115,
+        "n_estimators": 1864,
+        "min_child_samples": 28,
+        "subsample": 0.5612226012785683,
+        "colsample_bytree": 0.5554898311043164,
+        "reg_alpha": 9.919123481802806e-08,
+        "reg_lambda": 0.0010502045248482618,
+        "random_state": 42,
+        "deterministic": true,
+        "verbosity": -1,
+        "n_jobs": -1
+      }
+    },
+    {
+      "trials": 100,
+      "val_loss": 0.13636363636363635,
+      "val_mda": 0.8636363636363636,
+      "test_mda": 0.6792452830188679,
+      "test_mape": 0.08016170003139267,
+      "elapsed_seconds": 466.1068170070648,
+      "elapsed_minutes": 7.8,
+      "best_params": {
+        "num_leaves": 216,
+        "max_depth": 3,
+        "learning_rate": 0.00877758464049528,
+        "n_estimators": 1876,
+        "min_child_samples": 21,
+        "subsample": 0.8043268564449036,
+        "colsample_bytree": 0.7435169952663244,
+        "reg_alpha": 3.0240015060125344e-07,
+        "reg_lambda": 0.0010815712578858294,
+        "random_state": 42,
+        "deterministic": true,
+        "verbosity": -1,
+        "n_jobs": -1
+      }
+    },
+    {
+      "trials": 150,
+      "val_loss": 0.13636363636363635,
+      "val_mda": 0.8636363636363636,
+      "test_mda": 0.6792452830188679,
+      "test_mape": 0.08016170003139267,
+      "elapsed_seconds": 691.4651899337769,
+      "elapsed_minutes": 11.5,
+      "best_params": {
+        "num_leaves": 216,
+        "max_depth": 3,
+        "learning_rate": 0.00877758464049528,
+        "n_estimators": 1876,
+        "min_child_samples": 21,
+        "subsample": 0.8043268564449036,
+        "colsample_bytree": 0.7435169952663244,
+        "reg_alpha": 3.0240015060125344e-07,
+        "reg_lambda": 0.0010815712578858294,
+        "random_state": 42,
+        "deterministic": true,
+        "verbosity": -1,
+        "n_jobs": -1
+      }
+    },
+    {
+      "trials": 200,
+      "val_loss": 0.13636363636363635,
+      "val_mda": 0.8636363636363636,
+      "test_mda": 0.6792452830188679,
+      "test_mape": 0.08016170003139267,
+      "elapsed_seconds": 912.7774229049683,
+      "elapsed_minutes": 15.2,
+      "best_params": {
+        "num_leaves": 216,
+        "max_depth": 3,
+        "learning_rate": 0.00877758464049528,
+        "n_estimators": 1876,
+        "min_child_samples": 21,
+        "subsample": 0.8043268564449036,
+        "colsample_bytree": 0.7435169952663244,
+        "reg_alpha": 3.0240015060125344e-07,
+        "reg_lambda": 0.0010815712578858294,
+        "random_state": 42,
+        "deterministic": true,
+        "verbosity": -1,
+        "n_jobs": -1
+      }
+    }
+  ],
+  "marginal_analysis": {
+    "delta_50_to_100": {
+      "trial_increment": 50,
+      "test_mda_change": 0.018868,
+      "test_mape_change": -0.002884,
+      "time_minutes": 3.8
+    },
+    "delta_100_to_150": {
+      "trial_increment": 50,
+      "test_mda_change": 0.0,
+      "test_mape_change": 0.0,
+      "time_minutes": 3.8
+    },
+    "delta_150_to_200": {
+      "trial_increment": 50,
+      "test_mda_change": 0.0,
+      "test_mape_change": 0.0,
+      "time_minutes": 3.7
+    }
+  },
+  "final_best_params": {
+    "num_leaves": 216,
+    "max_depth": 3,
+    "learning_rate": 0.00877758464049528,
+    "n_estimators": 1876,
+    "min_child_samples": 21,
+    "subsample": 0.8043268564449036,
+    "colsample_bytree": 0.7435169952663244,
+    "reg_alpha": 3.0240015060125344e-07,
+    "reg_lambda": 0.0010815712578858294,
+    "random_state": 42,
+    "deterministic": true,
+    "verbosity": -1,
+    "n_jobs": -1
+  },
+  "convergence": {
+    "best_value_per_trial": [],
+    "n_trials": 200
+  }
+}

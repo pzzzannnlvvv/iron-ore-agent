@@ -1,0 +1,27 @@
+{
+  "target_id": "ID01517102",
+  "target_name": "超特粉：港口库存：华东地区：青岛港：明细（周度）",
+  "trained_at": "2026-05-29 17:32:20",
+  "optuna_trials": 50,
+  "optimization_time_seconds": 251.3965709209442,
+  "train_samples": 393,
+  "feature_count": 3184,
+  "validation_mda": 0.7297297297297297,
+  "test_mda": 0.5471698113207547,
+  "test_mape": 0.3850200279914076,
+  "best_params": {
+    "num_leaves": 167,
+    "max_depth": 6,
+    "learning_rate": 0.01986831428308323,
+    "n_estimators": 1426,
+    "min_child_samples": 41,
+    "subsample": 0.6270168310706193,
+    "colsample_bytree": 0.6024893942189784,
+    "reg_alpha": 2.5037279016468263e-07,
+    "reg_lambda": 0.009108494322621093,
+    "random_state": 42,
+    "deterministic": true,
+    "verbosity": -1,
+    "n_jobs": -1
+  }
+}

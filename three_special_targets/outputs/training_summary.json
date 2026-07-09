@@ -1,0 +1,95 @@
+{
+  "summary_created_at": "2026-06-04 13:56:17",
+  "total_targets": 3,
+  "trained_targets": 3,
+  "cleaning_strategy": {
+    "method": "winsorize",
+    "description": "使用Winsorize缩尾处理极端值：原始值±3σ，百分比变化特征±50%"
+  },
+  "results": {
+    "ID01517011": {
+      "target_id": "ID01517011",
+      "target_name": "超特粉：港口库存：华北地区：曹妃甸港：明细（周度）",
+      "trained_at": "2026-06-03 18:41:10",
+      "optuna_trials": 50,
+      "optimization_time_seconds": 133.5226867198944,
+      "train_samples": 366,
+      "feature_count": 3196,
+      "train_mda": 0.9942363112391931,
+      "validation_mda": 0.5555555555555556,
+      "test_mda": 0.49056603773584906,
+      "test_rmse": 15.358172828220777,
+      "best_params": {
+        "num_leaves": 178,
+        "max_depth": 4,
+        "learning_rate": 0.02099093176377813,
+        "n_estimators": 1448,
+        "min_child_samples": 52,
+        "subsample": 0.5251020770314154,
+        "colsample_bytree": 0.7985869293769366,
+        "reg_alpha": 8.560090366777465e-07,
+        "reg_lambda": 0.00023398735325638682,
+        "random_state": 42,
+        "deterministic": true,
+        "verbosity": -1,
+        "n_jobs": -1
+      }
+    },
+    "ID01516873": {
+      "target_id": "ID01516873",
+      "target_name": "超特粉：港口库存：长江沿江地区：江阴港：明细（周度）",
+      "trained_at": "2026-06-03 18:43:23",
+      "optuna_trials": 50,
+      "optimization_time_seconds": 130.38604092597961,
+      "train_samples": 367,
+      "feature_count": 3196,
+      "train_mda": 0.967930029154519,
+      "validation_mda": 0.6111111111111112,
+      "test_mda": 0.4807692307692308,
+      "test_rmse": 5.6834840919206435,
+      "best_params": {
+        "num_leaves": 176,
+        "max_depth": 3,
+        "learning_rate": 0.014541473055432718,
+        "n_estimators": 1464,
+        "min_child_samples": 58,
+        "subsample": 0.7797851410253248,
+        "colsample_bytree": 0.7379331633755716,
+        "reg_alpha": 1.7642161785284582e-07,
+        "reg_lambda": 0.00048613288264945647,
+        "random_state": 42,
+        "deterministic": true,
+        "verbosity": -1,
+        "n_jobs": -1
+      }
+    },
+    "ID01517220": {
+      "target_id": "ID01517220",
+      "target_name": "卡拉加斯粉：港口库存：长江沿江地区：江阴港：明细（周度）",
+      "trained_at": "2026-06-04 13:56:17",
+      "optuna_trials": 50,
+      "optimization_time_seconds": 164.20646500587463,
+      "train_samples": 370,
+      "feature_count": 3196,
+      "train_mda": 0.9941690962099126,
+      "validation_mda": 0.7,
+      "test_mda": 0.5882352941176471,
+      "test_rmse": 2.9854406090341836,
+      "best_params": {
+        "num_leaves": 175,
+        "max_depth": 3,
+        "learning_rate": 0.02907827638930087,
+        "n_estimators": 1628,
+        "min_child_samples": 25,
+        "subsample": 0.6667318795419634,
+        "colsample_bytree": 0.5104043964357017,
+        "reg_alpha": 1.609272592956049e-06,
+        "reg_lambda": 0.00030854675626875485,
+        "random_state": 42,
+        "deterministic": true,
+        "verbosity": -1,
+        "n_jobs": -1
+      }
+    }
+  }
+}

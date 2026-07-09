@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>agent 复刻学习指南 · 8 个问题搞懂项目复现2</title>
+<style>
+  :root{
+    --bg:#fbfcfe; --panel:#ffffff; --panel2:#f4f7fb; --border:#e3e9f2;
+    --text:#2b3543; --muted:#6b7888; --accent:#3b82f6; --accent2:#10a37f;
+    --warn:#d97706; --pink:#ec4899; --purple:#8b5cf6; --code-bg:#1e2937;
+    --soft-blue:#eff6ff; --soft-green:#ecfdf5; --soft-yellow:#fefce8; --soft-pink:#fdf2f8;
+    --soft-purple:#f5f3ff;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+    background:var(--bg);color:var(--text);line-height:1.85;font-size:16px}
+  a{color:var(--accent)}
+  .layout{display:flex;min-height:100vh}
+  nav{width:260px;position:fixed;top:0;left:0;bottom:0;background:var(--panel);
+    border-right:1px solid var(--border);padding:20px 0;overflow-y:auto;z-index:10}
+  nav .brand{padding:0 20px 16px;font-size:16px;font-weight:700;color:var(--accent2)}
+  nav a{display:block;padding:9px 20px;color:var(--muted);font-size:14px;border-left:3px solid transparent}
+  nav a:hover{background:var(--panel2);color:var(--text)}
+  nav a.active{color:var(--accent);border-left-color:var(--accent);background:var(--soft-blue)}
+  nav .group{padding:14px 20px 4px;font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#9aa6b6;font-weight:700}
+  main{margin-left:260px;flex:1;padding:36px 50px;max-width:940px}
+  section{margin-bottom:54px;scroll-margin-top:20px}
+  h1{font-size:30px;margin:0 0 8px;color:var(--text)}
+  h2{font-size:23px;margin:0 0 14px;color:var(--accent);padding-bottom:8px;border-bottom:2px solid var(--soft-blue)}
+  h3{font-size:18px;margin:22px 0 8px;color:var(--purple)}
+  h4{font-size:15px;margin:14px 0 6px;color:var(--text)}
+  .sub{color:var(--muted);font-size:14px;margin-bottom:22px}
+  p{margin:12px 0}
+  code{background:var(--panel2);border:1px solid var(--border);padding:2px 7px;border-radius:5px;
+    font-family:"JetBrains Mono","Consolas",monospace;font-size:13.5px;color:var(--pink)}
+  pre{background:var(--code-bg);border-radius:10px;padding:16px 18px;overflow-x:auto;margin:14px 0}
+  pre code{background:none;border:none;color:#cbd5e1;padding:0;font-size:13px}
+  pre .c{color:#64748b}  /* 注释色 */
+  pre .k{color:#c084fc}  /* 关键字 */
+  pre .s{color:#86efac}  /* 字符串 */
+  .card{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:18px 22px;margin:16px 0;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+  .card.tip{border-left:4px solid var(--accent2);background:var(--soft-green)}
+  .card.warn{border-left:4px solid var(--warn);background:var(--soft-yellow)}
+  .card.key{border-left:4px solid var(--accent);background:var(--soft-blue)}
+  .card.cute{border-left:4px solid var(--pink);background:var(--soft-pink)}
+  .card .t{font-weight:700;margin-bottom:4px}
+  /* 驱动问题框 */
+  .qbox{background:linear-gradient(135deg,#3b82f6,#6366f1);color:#fff;border-radius:12px;padding:18px 24px;margin:18px 0}
+  .qbox .qt{font-size:13px;opacity:.85;font-weight:700;letter-spacing:.05em}
+  .qbox .qq{font-size:19px;font-weight:700;margin-top:4px}
+  /* 一句话答案 */
+  .ans{background:var(--soft-green);border:2px solid #a7e9d0;border-radius:10px;padding:14px 20px;margin:16px 0}
+  .ans .at{font-weight:700;color:var(--accent2);font-size:13px;letter-spacing:.03em}
+  .ans .aa{font-size:16px;margin-top:2px}
+  /* 动手实验框 */
+  .exp{background:var(--soft-purple);border:2px dashed var(--purple);border-radius:12px;padding:16px 22px;margin:18px 0}
+  .exp .et{font-weight:700;color:var(--purple);font-size:16px;margin-bottom:6px}
+  .exp .et::before{content:"🖐 "}
+  .exp ol{margin:8px 0 4px;padding-left:24px}
+  .exp li{margin:6px 0}
+  .exp .look{background:#fff;border:1px solid var(--border);border-radius:8px;padding:10px 14px;margin-top:10px;font-size:14px}
+  .exp .look b{color:var(--purple)}
+  /* 自测框 */
+  .quiz{background:var(--panel);border:1px solid var(--border);border-top:4px solid var(--accent);border-radius:10px;padding:14px 22px;margin:18px 0}
+  .quiz .qt{font-weight:700;color:var(--accent);margin-bottom:6px}
+  .quiz .qt::before{content:"✅ "}
+  .quiz .qi{margin:10px 0;padding-left:26px;position:relative}
+  .quiz .qi .q{font-weight:600;margin-bottom:2px}
+  .quiz .qi .q::before{content:"Q";position:absolute;left:0;top:0;background:var(--accent);color:#fff;width:20px;height:20px;border-radius:50%;font-size:12px;text-align:center;line-height:20px;font-weight:700}
+  .quiz details{margin-top:6px}
+  .quiz summary{cursor:pointer;color:var(--muted);font-size:14px;font-weight:600}
+  .quiz summary:hover{color:var(--accent)}
+  .quiz .a{background:var(--soft-green);border-radius:6px;padding:8px 12px;margin-top:6px;font-size:14px}
+  .qa{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:8px 22px;margin:14px 0}
+  .qa .q{font-weight:700;color:var(--accent);margin:8px 0 4px}
+  .qa .q::before{content:"❓ "}
+  .qa .a{margin:4px 0 8px}
+  .remember{background:var(--soft-yellow);border:2px dashed var(--warn);border-radius:10px;padding:12px 18px;margin:16px 0}
+  .remember b{color:var(--warn)}
+  .pill{display:inline-block;background:var(--soft-blue);border:1px solid #cfe0fb;border-radius:20px;padding:3px 12px;font-size:13px;margin:3px;color:var(--accent)}
+  .pill.g{background:var(--soft-green);border-color:#a7e9d0;color:var(--accent2)}
+  .pill.p{background:var(--soft-pink);border-color:#f5c6dd;color:var(--pink)}
+  .pill.u{background:var(--soft-purple);border-color:#ddd0fb;color:var(--purple)}
+  table{width:100%;border-collapse:collapse;margin:14px 0;font-size:14px;background:var(--panel);border-radius:10px;overflow:hidden}
+  th,td{border:1px solid var(--border);padding:10px 14px;text-align:left;vertical-align:top}
+  th{background:var(--panel2);color:var(--accent);font-weight:700}
+  ul{padding-left:22px} li{margin:5px 0}
+  .flow{display:flex;flex-wrap:wrap;align-items:stretch;margin:18px 0;gap:0}
+  .flow .node{flex:1;min-width:90px;background:var(--panel);border:2px solid var(--accent);border-radius:10px;padding:12px 8px;text-align:center;font-size:13px}
+  .flow .node b{display:block;color:var(--accent);margin-bottom:3px;font-size:13.5px}
+  .flow .node.green{border-color:var(--accent2)}
+  .flow .node.green b{color:var(--accent2)}
+  .flow .node.purple{border-color:var(--purple)}
+  .flow .node.purple b{color:var(--purple)}
+  .flow .node.pink{border-color:var(--pink)}
+  .flow .node.pink b{color:var(--pink)}
+  .flow .arr{display:flex;align-items:center;color:var(--muted);padding:0 4px;font-size:20px}
+  .timeline{position:relative;padding-left:28px;margin:18px 0}
+  .timeline::before{content:"";position:absolute;left:8px;top:6px;bottom:6px;width:2px;background:var(--border)}
+  .timeline .step{position:relative;margin-bottom:18px}
+  .timeline .step::before{content:"";position:absolute;left:-24px;top:4px;width:14px;height:14px;border-radius:50%;background:var(--accent);border:3px solid var(--soft-blue)}
+  .timeline .step .h{font-weight:700;color:var(--accent)}
+  .compare{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:16px 0}
+  .compare .col{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:16px}
+  .compare .col h4{margin:0 0 8px;font-size:15px}
+  .compare .bad{border-top:4px solid var(--pink)}
+  .compare .bad h4{color:var(--pink)}
+  .compare .good{border-top:4px solid var(--accent2)}
+  .compare .good h4{color:var(--accent2)}
+  .hero{background:linear-gradient(135deg,#3b82f6,#8b5cf6);color:#fff;border-radius:16px;padding:28px 32px;margin-bottom:30px}
+  .hero h1{color:#fff;margin:0}
+  .hero p{margin:8px 0 0;opacity:.95}
+  .glossary dt{font-weight:700;color:var(--purple);margin-top:12px}
+  dd{margin:2px 0 0 0;color:var(--muted)}
+  .rolemap{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:14px 0}
+  .rolemap .r{background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:14px}
+  .rolemap .r b{color:var(--accent)}
+  .pathbox{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin:14px 0}
+  .pathbox .p{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;font-size:14px}
+  .pathbox .p .e{font-size:24px}
+  .pathbox .p b{display:block;color:var(--accent);margin:4px 0}
+  details.fold{margin:12px 0;border:1px solid var(--border);border-radius:8px;background:var(--panel);padding:6px 16px}
+  details.fold summary{cursor:pointer;font-weight:700;color:var(--purple);padding:6px 0}
+  details.fold summary::before{content:"📎 "}
+  @media(max-width:860px){nav{display:none}main{margin-left:0;padding:24px}
+    .compare,.rolemap,.pathbox{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="layout">
+<nav>
+  <div class="brand">📚 agent 复刻学习</div>
+  <div class="group">先跑起来</div>
+  <a href="#start" class="nav">5 分钟跑出报告</a>
+  <a href="#map" class="nav">一张图认识全员</a>
+  <div class="group">跟着 8 个问题学</div>
+  <a href="#q1" class="nav">Q1 提问后怎么开始</a>
+  <a href="#q2" class="nav">Q2 怎么知道研究啥</a>
+  <a href="#q3" class="nav">Q3 怎么查到数据</a>
+  <a href="#q4" class="nav">Q4 数据怎么传给写手</a>
+  <a href="#q5" class="nav">Q5 报告怎么流过来</a>
+  <a href="#q6" class="nav">Q6 崩了怎么修</a>
+  <a href="#q7" class="nav">Q7 为啥这么复杂</a>
+  <a href="#q8" class="nav">Q8 vs 现成 AI</a>
+  <div class="group">收尾</div>
+  <a href="#glossary" class="nav">术语表</a>
+  <a href="#next" class="nav">下一步学什么</a>
+</nav>
+
+<main>
+
+<div class="hero">
+  <h1><span class="emoji">🧠</span> 项目复现2 · agent 复刻学习指南</h1>
+  <p>8 个问题 + 动手实验，从「能跑起来」到「懂原理」再到「想通为什么」。把 LangGraph + MCP + SSE 拆成你能摸到的零件。</p>
+</div>
+
+<section id="start">
+  <h2>🚀 先跑起来，再说原理</h2>
+  <div class="card key">
+    <div class="t">学习心法（先记住）</div>
+    <p>别一上来啃原理。先让它<b>跑出一份真实报告</b>，你眼睛看到「输入一句话 → 几十秒后得到一份铁矿石分析报告」，后面的原理就会变得具体。这份指南的每个概念，都锚定到你马上能动手验证的东西。</p>
+  </div>
+  <p>整个项目有 <b>3 个独立程序</b>，各开一个终端（PowerShell / cmd / Git Bash 都行）：</p>
+
+  <h4>终端 1 · 档案室（MCP server，常驻别关）</h4>
+  <pre><code>C:\Users\admin\.local\bin\uv.exe --directory "C:\Users\admin\Desktop\项目复现2\mcp_server" run python server.py</code></pre>
+  <p>看到 <code>Uvicorn running on http://127.0.0.1:17000</code> 就成了。</p>
+
+  <h4>终端 2 · 研究团队（agent_service，常驻别关）</h4>
+  <pre><code>C:\Users\admin\.local\bin\uv.exe --directory "C:\Users\admin\Desktop\项目复现2\agent_service" run uvicorn main:app --host 0.0.0.0 --port 5000</code></pre>
+  <p>看到 <code>Application started successfully</code> 就成了。</p>
+
+  <h4>终端 3 · 你提问（客户端，跑完自动退出）</h4>
+  <pre><code>C:\Users\admin\.local\bin\uv.exe --directory "C:\Users\admin\Desktop\项目复现2\agent_service" run python "C:\Users\admin\Desktop\项目复现2\11_report_generation\scripts\generate_report.py"</code></pre>
+
+  <div class="exp">
+    <div class="et">动手实验 0 · 拿到第一份报告</div>
+    <ol>
+      <li>按顺序开 3 个终端，跑上面 3 条命令。</li>
+      <li>终端 3 会边跑边打印 <code>[工具调用] agent=parallel_researcher tools=['fetch_data']</code> 之类——这就是研究团队在干活。</li>
+      <li>等约 1~2 分钟，看到 <code>✓ 报告已保存: ...\outputs\report_xxxxx.md</code>。</li>
+      <li>用编辑器打开那个 md 文件，你会看到一份带表格的<b>真实铁矿石库存预测分析报告</b>（含 MDA 84.91%、12 周预测明细等）。</li>
+    </ol>
+    <div class="look"><b>你会观察到</b>：你没写一行分析文字，是 AI 自己查数据、自己写出来的。这份指南就是拆解「它怎么做到的」。</div>
+  </div>
+
+  <div class="remember"><b>🎯 跑通再往下学</b>。后面每个概念，我都会标出「去哪里亲眼看到它」。没跑通的话，原理会很飘。</div>
+</section>
+
+<section id="map">
+  <h2>🗺️ 一张图认识全员</h2>
+  <p>把整套系统想象成一家 <b>调研公司</b>。你（客户端）进门提问，公司里的人接力把报告交给你。</p>
+  <div class="flow">
+    <div class="node pink"><b>你</b>客户端<br>提问</div>
+    <div class="arr">→</div>
+    <div class="node"><b>前台</b>coordinator<br>接单+转交</div>
+    <div class="arr">→</div>
+    <div class="node"><b>项目经理</b>planner<br>拆计划</div>
+    <div class="arr">→</div>
+    <div class="node green"><b>调研员</b>researcher<br>查资料</div>
+    <div class="arr">→</div>
+    <div class="node purple"><b>写手</b>reporter<br>写报告</div>
+  </div>
+  <p>调研员查资料时，去的是公司自带的 <b>档案室</b>（MCP server），那里放着项目复现2 的建模结果。写手写报告时，是一边想一边<b>递纸条</b>给你（SSE 流式），不是写完才给。</p>
+
+  <div class="rolemap">
+    <div class="r"><b>coordinator</b> · 前台接线员，接你的问题，决定转给谁</div>
+    <div class="r"><b>planner</b> · 项目经理，把大问题拆成几个具体步骤</div>
+    <div class="r"><b>researcher</b> · 调研员，按步骤去档案室查数据</div>
+    <div class="r"><b>mcp_server</b> · 档案室，存着复现2 的预测/评估数据</div>
+    <div class="r"><b>reporter</b> · 写手，汇总所有结论写成报告</div>
+    <div class="r"><b>state</b> · 团队共享白板，所有人把进展写上面</div>
+  </div>
+
+  <div class="card tip">
+    <div class="t">3 个程序分别是谁</div>
+    <p>① <code>mcp_server</code>（端口 17000）= 档案室。② <code>agent_service</code>（端口 5000）= 整个研究团队（前台+经理+调研员+写手都在里面，用 LangGraph 编排）。③ <code>generate_report.py</code> = 你（提问 + 收报告）。</p>
+  </div>
+  <p>接下来 7 个问题，就是挨个走进每个角色，看它到底怎么干活的。每个问题都带一个动手实验。</p>
+</section>
+
+<section id="q1">
+  <h2>Q1 · 提问后，系统怎么开始干活的？</h2>
+  <div class="qbox"><div class="qt">驱动问题</div><div class="qq">我敲完一句话回车，是谁第一个接住？它怎么决定接下来干嘛？</div></div>
+  <div class="ans"><div class="at">💡 一句话答案</div><div class="aa">请求进到 <code>agent_service</code>，LangGraph 图的入口节点 <b>coordinator</b>（前台）接住，它给 LLM 几个"转交工具"，LLM 选了 <code>handoff_to_planner</code>，于是流程跳到 planner。</div></div>
+
+  <h3>什么是 LangGraph「图」</h3>
+  <p>LangGraph 把一个任务画成一张<b>有向图</b>：每个<b>节点（node）</b>是一个干活的函数，<b>边（edge）</b>决定执行顺序。图有一个入口 <code>START</code>，一个出口 <code>END</code>。看 <code>builder.py</code> 怎么搭这张图：</p>
+  <pre><code><span class="c"># agent_service/src/graph/deepresearch/builder.py</span>
+builder = StateGraph(State)
+builder.add_edge(START, <span class="s">"coordinator"</span>)          <span class="c"># 一进门就找前台</span>
+builder.add_node(<span class="s">"coordinator"</span>, coordinator_node)
+builder.add_node(<span class="s">"planner"</span>, planner_node)
+builder.add_node(<span class="s">"researcher"</span>, researcher_node)
+builder.add_node(<span class="s">"parallel_researcher"</span>, parallel_researcher_node)
+builder.add_node(<span class="s">"reporter"</span>, reporter_node)
+...
+builder.add_edge(<span class="s">"parallel_researcher"</span>, <span class="s">"research_team"</span>)  <span class="c"># 调研完回调度</span>
+builder.add_edge(<span class="s">"reporter"</span>, END)              <span class="c"># 写完报告结束</span></code></pre>
+  <p>注意：边不全是写死的。<code>research_team</code> 后面跟的是<b>条件边</b>——由一个函数根据当前进度决定下一步去哪（Q4 会细讲）。</p>
+
+  <h3>前台 coordinator 怎么"决定转给谁"</h3>
+  <p>coordinator 不是用 if/else 硬编码，而是<b>给 LLM 一组"转交工具"</b>，让 LLM 自己选。看 <code>nodes.py</code>：</p>
+  <pre><code><span class="c"># coordinator_node 里</span>
+tools = [handoff_to_planner, handoff_after_clarification, ...]
+response = await get_llm_by_type(...).bind_tools(tools).ainvoke(messages)
+
+<span class="k">if</span> response.tool_calls:          <span class="c"># LLM 选了某个转交工具</span>
+    <span class="k">for</span> tool_call <span class="k">in</span> response.tool_calls:
+        <span class="k">if</span> tool_call[<span class="s">"name"</span>] == <span class="s">"handoff_to_planner"</span>:
+            goto = <span class="s">"planner"</span>     <span class="c"># → 跳到项目经理</span></code></pre>
+  <p>而这个 <code>handoff_to_planner</code> 工具其实<b>啥都不干</b>，它只是个"信号"：</p>
+  <pre><code><span class="c"># nodes.py</span>
+@tool
+<span class="k">def</span> handoff_to_planner(research_topic: str, locale: str):
+    <span class="s">"""Handoff to planner agent to do plan."""</span>
+    <span class="k">return</span>   <span class="c"># 不返回任何东西，纯粹是让 LLM 表达"我要转给 planner"</span></code></pre>
+  <div class="card tip"><div class="t">为什么用"空工具"而不是 if/else？</div><p>因为 LLM 擅长理解语义。你说"帮我分析库存"，LLM 读得懂该转给研究流程；你说"你好"，LLM 可以选择不转交、直接回你。把决策权交给 LLM，比写死规则灵活得多。这是 <b>agent</b> 区别于普通程序的关键：流程不是人写死的，是模型动态选的。</p></div>
+
+  <div class="exp">
+    <div class="et">动手实验 1 · 观察 coordinator 的转交</div>
+    <ol>
+      <li>确保终端 1、2 还开着。</li>
+      <li>终端 3 跑一次报告生成，盯着终端 2（agent_service）的日志。</li>
+      <li>你会看到类似 <code>[工具调用] agent=coordinator tools=['handoff_to_planner']</code>——这就是前台选了"转给项目经理"。</li>
+      <li>改个提问试试：编辑 <code>generate_report.py</code> 末尾 <code>default_q</code>，换成 <code>"你好，你能做什么？"</code>，再跑。观察 coordinator 这次是否还转给 planner（很可能不转，直接回你）。</li>
+    </ol>
+    <div class="look"><b>你会观察到</b>：不同提问，coordinator 的 tool_calls 不一样。流程是模型选的，不是写死的。</div>
+  </div>
+
+  <div class="quiz">
+    <div class="qt">3 题自测（点开看答案）</div>
+    <div class="qi"><div class="q">LangGraph 图里，"节点"和"边"分别是什么？</div>
+      <details><summary>看答案</summary><div class="a">节点是一个干活的函数（如 coordinator_node）；边决定执行顺序（如 START→coordinator→planner）。条件边则由函数运行时决定下一站。</div></details></div>
+    <div class="qi"><div class="q">coordinator 为什么用"工具"来决定转交，而不是 if/else？</div>
+      <details><summary>看答案</summary><div class="a">因为转交决策依赖语义理解（用户到底想干嘛），交给 LLM 选工具比硬编码规则更灵活。这是 agent 的核心特征：流程由模型动态决定。</div></details></div>
+    <div class="qi"><div class="q"><code>handoff_to_planner</code> 工具内部有逻辑吗？为什么这样设计？</div>
+      <details><summary>看答案</summary><div class="a">没有，它直接 return。它只是个信号——让 LLM 用"调用这个工具"来表达"我要转给 planner"，代码侧检测到这个 tool_call 就跳转。把意图和执行解耦。</div></details></div>
+  </div>
+</section>
+
+<section id="q2">
+  <h2>Q2 · 系统怎么知道"研究什么、分几步"？</h2>
+  <div class="qbox"><div class="qt">驱动问题</div><div class="qq">前台转给项目经理后，计划是哪来的？谁决定要查哪几样东西？</div></div>
+  <div class="ans"><div class="at">💡 一句话答案</div><div class="aa"><b>planner</b> 让 LLM 流式输出一段 <b>JSON 计划</b>（几个步骤、每步要查啥），代码解析成 <code>Plan</code> 对象。因为开了 <code>auto_accepted_plan</code>，计划自动通过、不等人工审。</div></div>
+
+  <h3>planner 流式拼出一段 JSON</h3>
+  <p>planner 让 LLM 边想边吐字，把每个 chunk 拼成完整字符串，再当 JSON 解析：</p>
+  <pre><code><span class="c"># nodes.py · planner_node</span>
+full_response = <span class="s">""</span>
+<span class="k">async for</span> chunk <span class="k">in</span> llm.astream(compressed_state[<span class="s">"messages"</span>]):
+    full_response += _content_to_text(chunk.content)   <span class="c"># 拼成完整 JSON 文本</span>
+
+curr_plan = json.loads(repair_json_output(full_response))  <span class="c"># 解析成 dict</span>
+curr_plan = Plan.model_validate(curr_plan)                 <span class="c"># 校验成结构化计划</span></code></pre>
+  <p>解析出来的 <code>Plan</code> 大致长这样（真实跑出来的 4 步计划）：</p>
+  <pre><code>{
+  <span class="s">"steps"</span>: [
+    {<span class="s">"title"</span>: <span class="s">"项目背景与建模流程"</span>,  <span class="s">"step_type"</span>: <span class="s">"RESEARCH"</span>},
+    {<span class="s">"title"</span>: <span class="s">"预测结果与模型评估指标"</span>, <span class="s">"step_type"</span>: <span class="s">"RESEARCH"</span>},
+    {<span class="s">"title"</span>: <span class="s">"模型选择与超参优化结果"</span>, <span class="s">"step_type"</span>: <span class="s">"RESEARCH"</span>},
+    {<span class="s">"title"</span>: <span class="s">"测试集预测结果分析"</span>,   <span class="s">"step_type"</span>: <span class="s">"RESEARCH"</span>}
+  ]
+}</code></pre>
+  <p>这 4 步就是接下来 researcher 要一个个查的题目。计划的<b>步数</b>由请求里的 <code>max_step_num</code> 限制。</p>
+
+  <h3>计划要不要人审？</h3>
+  <p>LangGraph 原本支持"计划生成后暂停，等用户确认再继续"（human-in-the-loop）。但我们客户端请求里设了：</p>
+  <pre><code><span class="c"># generate_report.py 的 payload</span>
+payload = {
+    <span class="s">"auto_accepted_plan"</span>: True,        <span class="c"># 自动通过，不等人工审</span>
+    <span class="s">"enable_clarification"</span>: False,    <span class="c"># 不多轮追问澄清</span>
+    <span class="s">"max_step_num"</span>: 4,
+    ...
+}</code></pre>
+  <p>所以 <code>human_feedback</code> 节点直接放行，流程不停顿——适合自动出报告。如果你要做交互式产品，可以关掉这两个，让用户审计划。</p>
+
+  <div class="exp">
+    <div class="et">动手实验 2 · 改计划步数</div>
+    <ol>
+      <li>打开 <code>generate_report.py</code>，把 <code>"max_step_num": 4</code> 改成 <code>2</code>。</li>
+      <li>终端 3 重跑（终端 1、2 不用动）。</li>
+      <li>盯终端 2 日志，找 <code>[planner_node] max_step_num before prompt render: 2</code> 这行。</li>
+      <li>再看后面 <code>Executing step: ...</code> 的行数——从 4 步变成 2 步。</li>
+    </ol>
+    <div class="look"><b>你会观察到</b>：<code>max_step_num</code> 直接控制 planner 拆几步。步数少 → 研究粗 → 报告浅；步数多 → 更细但更慢、更费 token。</div>
+  </div>
+
+  <div class="quiz">
+    <div class="qt">3 题自测</div>
+    <div class="qi"><div class="q">planner 输出的是一段文本，代码怎么把它变成"能执行的步骤"？</div>
+      <details><summary>看答案</summary><div class="a">先用 <code>json.loads</code> 把 JSON 文本解析成 dict，再用 <code>Plan.model_validate</code> 校验并转成结构化的 Plan 对象（pydantic）。校验失败会走降级逻辑。</div></details></div>
+    <div class="qi"><div class="q">为什么要 <code>async for chunk in llm.astream(...)</code> 而不是一次性 <code>ainvoke</code>？</div>
+      <details><summary>看答案</summary><div class="a">流式 astream 边生成边拿，可以更早开始处理、避免长文本一次性返回的等待。这里主要拼完整字符串；在 reporter 那里流式还能让用户实时看到字（Q5）。</div></details></div>
+    <div class="qi"><div class="q"><code>auto_accepted_plan=True</code> 关掉会怎样？</div>
+      <details><summary>看答案</summary><div class="a">计划生成后流程会在 <code>human_feedback</code> 节点暂停（interrupt），等用户确认计划才继续。适合交互式产品，不适合自动出报告。</div></details></div>
+  </div>
+</section>
+
+<section id="q3">
+  <h2>Q3 · researcher 怎么"知道"去查铁矿石数据？又怎么查到的？</h2>
+  <div class="qbox"><div class="qt">驱动问题</div><div class="qq">researcher 是个通用 AI，它怎么知道这项目有"库存预测结果"可查？数据又是从哪冒出来的？</div></div>
+  <div class="ans"><div class="at">💡 一句话答案</div><div class="aa">靠 <b>MCP</b>：我们自建了一个 MCP server（档案室），把复现2 的数据包成几个"工具"；配置文件告诉 agent "researcher 能用这些工具"；researcher 就像调函数一样调它们拿数据。</div></div>
+
+  <h3>什么是 MCP</h3>
+  <p><b>MCP（Model Context Protocol）</b>是一个让 AI 调用外部工具/数据源的协议。你可以理解为：<b>给 AI 装一个"USB 接口"，插上不同的工具它就能用</b>。这里我们把"读复现2 建模产出"做成了一个 MCP server，AI 通过它查数据。</p>
+  <p>为什么不直接在代码里写个函数让 AI 调？因为 MCP 是<b>独立进程、统一协议</b>：工具和 agent 解耦，换数据源不用改 agent，多个 agent 能共用同一份工具。（Q7 会对比"本地 tool vs MCP"。）</p>
+
+  <h3>自建 MCP server 长啥样</h3>
+  <p>用 <code>mcp</code> 库的 FastMCP，写法和 Flask 很像——每个 <code>@mcp.tool()</code> 就是一个 AI 可调的工具：</p>
+  <pre><code><span class="c"># mcp_server/server.py</span>
+<span class="k">from</span> mcp.server.fastmcp <span class="k">import</span> FastMCP
+
+mcp = FastMCP(<span class="s">"iron-ore-reproduction-mcp"</span>, host=<span class="s">"127.0.0.1"</span>, port=17000)
+
+@mcp.tool()
+<span class="k">def</span> fetch_data(query: str) -> str:
+    <span class="s">"""查询铁矿石库存预测的核心数据：标的、评估指标、测试集预测、特征体系。"""</span>
+    parts = []
+    parts.append(<span class="s">"【标的】ID00186052 铁矿石：进口：库存：45个港口（周度）"</span>)
+    parts.append(_read_text(OUT_07 / <span class="s">"final_evaluation_weekly.json"</span>))  <span class="c"># 读真实评估</span>
+    parts.append(_read_csv_tail(OUT_07 / <span class="s">"test_predictions_weekly.csv"</span>)) <span class="c"># 读预测</span>
+    <span class="k">return</span> <span class="s">"\n\n"</span>.join(parts)
+
+<span class="k">if</span> __name__ == <span class="s">"__main__"</span>:
+    mcp.run(transport=<span class="s">"streamable-http"</span>)   <span class="c"># 跑成 HTTP 服务</span></pre>
+  <p>工具的<b>docstring 就是给 AI 看的说明书</b>——AI 靠它判断"这个工具该不该调"。所以 docstring 要写清楚"能查什么、什么时候调"。</p>
+
+  <h3>agent 怎么知道 researcher 能用哪些工具</h3>
+  <p>在 <code>.env.dev</code> 的 <code>MCP_DEFAULT_SETTINGS</code> 里配了一张"工具表"，写明每个角色能用哪些工具、MCP server 在哪：</p>
+  <pre><code><span class="c"># .env.dev（简化展示）</span>
+MCP_DEFAULT_SETTINGS='{"servers":{"xmschain-mcp-tools":{
+  "enabled_tools":[
+    {"node":"researcher","tools":["fetch_data","fetch_news","model_choice","model_predict","draw_chart"]},
+    {"node":"background","tools":["fetch_background"]}
+  ],
+  "transport":"streamable_http",
+  "url":"http://127.0.0.1:17000/mcp"   <span class="c"># 指向自建 MCP server</span>
+}}}'</code></pre>
+  <p>agent 启动 researcher 时，<code>merge_mcp_tools</code> 会按这张表，连到 17000 端口把工具加载进来，注入给 ReAct agent：</p>
+  <pre><code><span class="c"># nodes.py · _setup_and_execute_agent_step</span>
+enable_mcp_servers, loaded_tools = await merge_mcp_tools(
+    agent_name, configurable.mcp_settings, default_tools)
+agent = create_agent(graph_name, agent_name, loaded_tools, prompt_template)</code></pre>
+
+  <div class="card warn"><div class="t">关键链条（记住这条线）</div>
+  <p><code>mcp_server</code> 暴露工具 → <code>.env.dev</code> 配工具表和地址 → <code>merge_mcp_tools</code> 加载注入 → researcher 的 ReAct agent 拿到工具 → LLM 决定调哪个 → 工具读复现2 文件返回数据。任何一环断掉，researcher 就查不到数据。</p></div>
+
+  <div class="exp">
+    <div class="et">动手实验 3 · 关掉档案室看报错</div>
+    <ol>
+      <li>终端 3 先正常跑一次，确认日志里能看到 <code>[工具调用] agent=parallel_researcher tools=['fetch_data']</code> 和 <code>└ 工具返回: 【标的】ID00186052...</code>——说明数据查到了。</li>
+      <li>去终端 1 按 <code>Ctrl+C</code> 关掉 MCP server（档案室关门）。</li>
+      <li>终端 3 再跑一次报告生成。</li>
+      <li>盯终端 2 日志：researcher 调工具时会失败/超时，报告会缺少真实数据（或流程报错）。</li>
+      <li>实验完，终端 1 重新跑命令把 MCP server 开回来。</li>
+    </ol>
+    <div class="look"><b>你会观察到</b>：MCP server 是数据的唯一来源。关掉它，researcher 再聪明也拿不到铁矿石数据。这帮你理解 MCP 的"桥梁"角色。</div>
+  </div>
+
+  <div class="quiz">
+    <div class="qt">3 题自测</div>
+    <div class="qi"><div class="q">researcher 怎么知道有 <code>fetch_data</code> 这个工具可以用？</div>
+      <details><summary>看答案</summary><div class="a">两步：① MCP server 用 <code>@mcp.tool()</code> 暴露工具，docstring 描述用途；② <code>.env.dev</code> 的工具表声明 researcher 能用哪些，<code>merge_mcp_tools</code> 加载注入。LLM 根据 docstring 判断何时调。</div></details></div>
+    <div class="qi"><div class="q">工具的 docstring 是写给谁看的？为什么要认真写？</div>
+      <details><summary>看答案</summary><div class="a">写给 LLM 看。LLM 靠 docstring 判断"这个工具能干什么、我该不该调"。docstring 写得糊，LLM 就会乱调或不调。</div></details></div>
+    <div class="qi"><div class="q">MCP server 和 agent_service 是同一个程序吗？为什么要分开？</div>
+      <details><summary>看答案</summary><div class="a">不是。MCP server 是独立进程（端口 17000），agent_service 是另一个（端口 5000）。分开是为了解耦：数据源可独立维护/复用，多个 agent 都能连同一个 MCP server，换数据源不用改 agent 代码。</div></details></div>
+  </div>
+</section>
+
+<section id="q4">
+  <h2>Q4 · 查到的数据怎么变成"结论"传给写手？</h2>
+  <div class="qbox"><div class="qt">驱动问题</div><div class="qq">researcher 查完一份数据，这结果存哪？写手怎么拿到所有步骤的结论？多步怎么并行？</div></div>
+  <div class="ans"><div class="at">💡 一句话答案</div><div class="aa">所有节点共享一块叫 <b>state</b> 的"白板"。researcher 把每步结论写进 <code>execution_res</code>；<code>research_team</code> 节点像个调度员，用<b>条件边</b>看白板进度，有多个就绪步骤就派 <code>parallel_researcher</code> 并行，全做完就交给 reporter。</div></div>
+
+  <h3>state：团队共享白板</h3>
+  <p>LangGraph 图里所有节点<b>共享一个 state 对象</b>。你可以把它想象成团队办公室墙上的一块白板：每个节点干完活，把结果写到白板上；下一个节点从白板上读。planner 写 <code>current_plan</code>，researcher 写 <code>execution_res</code>，reporter 读所有这些。</p>
+  <div class="card key"><div class="t">这是 LangGraph 的核心设计</div><p>节点之间<b>不直接传参</b>，而是通过 state 读写。这样节点解耦、可并行、可恢复（白板能存档）。state 定义在 <code>types.py</code>，是个带字段的类。</p></div>
+
+  <h3>research_team：调度员 + 条件边</h3>
+  <p>计划有 4 步，谁来决定"现在该做哪步、做完去哪"？是 <code>research_team</code> 节点配的那个<b>条件函数</b>：</p>
+  <pre><code><span class="c"># builder.py</span>
+builder.add_conditional_edges(
+    <span class="s">"research_team"</span>,                       <span class="c"># 从 research_team 出发</span>
+    continue_to_running_research_team,       <span class="c"># 由这个函数决定下一站</span>
+    [<span class="s">"planner"</span>, <span class="s">"researcher"</span>, <span class="s">"parallel_researcher"</span>, <span class="s">"analyst"</span>, <span class="s">"reporter"</span>],
+)
+builder.add_edge(<span class="s">"parallel_researcher"</span>, <span class="s">"research_team"</span>)  <span class="c"># 跑完回调度</span></pre>
+  <pre><code><span class="c"># nodes.py · continue_to_running_research_team（简化）</span>
+<span class="c"># 1. 全部步骤都做完了？</span>
+<span class="k">if</span> all(step.execution_res <span class="k">is not</span> None <span class="k">for</span> step <span class="k">in</span> plan.steps):
+    <span class="k">return</span> <span class="s">"planner"</span>     <span class="c"># → 交给 planner 收尾/或 reporter</span>
+
+<span class="c"># 2. 找出"依赖已满足、还没做"的步骤</span>
+ready_research_steps = [...]
+<span class="k">if</span> len(ready_research_steps) &gt; 1:
+    <span class="k">return</span> <span class="s">"parallel_researcher"</span>   <span class="c"># 多个就绪 → 并行</span>
+<span class="k">if</span> ready_research_steps:
+    <span class="k">return</span> <span class="s">"researcher"</span>           <span class="c"># 单个 → 串行</span></code></pre>
+  <p>这就是为什么日志里你会看到 4 个步骤是<b>同时</b>开始执行的——条件函数发现 4 步互不依赖，全部就绪，于是派 <code>parallel_researcher</code> 并行跑。</p>
+
+  <div class="flow">
+    <div class="node"><b>research_team</b>调度</div>
+    <div class="arr">→</div>
+    <div class="node green"><b>parallel_researcher</b>4步并行</div>
+    <div class="arr">→</div>
+    <div class="node"><b>research_team</b>再看白板</div>
+    <div class="arr">→</div>
+    <div class="node purple"><b>reporter</b>全做完→写报告</div>
+  </div>
+
+  <div class="exp">
+    <div class="et">动手实验 4 · 看并行与结论落地</div>
+    <ol>
+      <li>终端 3 跑一次报告生成，盯终端 2 日志。</li>
+      <li>找 <code>本次将进行递归的任务执行，共 4 个并行任务: ['项目背景与建模流程', '预测结果与模型评估指标', ...]</code> 这行——确认 4 步并行。</li>
+      <li>找 4 行 <code>Step '...' execution completed by researcher</code>——每步完成后，结论写进了 state 的 <code>execution_res</code>。</li>
+      <li>最后找 <code>Reporter write final report</code>——写手这时才从白板读所有结论开始写。</li>
+    </ol>
+    <div class="look"><b>你会观察到</b>：researcher 不直接调 reporter，而是把结论写白板、回调度、调度看"全做完了"才放行给 reporter。这就是 state + 条件边的编排方式。</div>
+  </div>
+
+  <div class="quiz">
+    <div class="qt">3 题自测</div>
+    <div class="qi"><div class="q">researcher 和 reporter 之间怎么传数据？</div>
+      <details><summary>看答案</summary><div class="a">不直接传。researcher 把每步结论写进共享 state 的 <code>execution_res</code>；reporter 从 state 读所有结论。节点间通过 state 解耦。</div></details></div>
+    <div class="qi"><div class="q">4 个研究步骤为什么能并行？谁决定的？</div>
+      <details><summary>看答案</summary><div class="a"><code>continue_to_running_research_team</code> 条件函数发现 4 步互不依赖、全部就绪，于是返回 <code>parallel_researcher</code> 触发并行。是运行时根据 state 动态决定的，不是写死。</div></details></div>
+    <div class="qi"><div class="q">条件边和普通边的区别？</div>
+      <details><summary>看答案</summary><div class="a">普通边是写死的固定跳转（A→B）。条件边由一个函数在运行时返回下一站，能根据 state 灵活路由（A→B 或 A→C）。研究流程的"做完没/能否并行"判断全靠它。</div></details></div>
+  </div>
+</section>
+
+<section id="q5">
+  <h2>Q5 · 报告怎么"边想边写"实时流到我屏幕？</h2>
+  <div class="qbox"><div class="qt">驱动问题</div><div class="qq">写手写报告时，我不是等它写完才看到，而是一字一字往外冒。这个"流"是怎么实现的？</div></div>
+  <div class="ans"><div class="at">💡 一句话答案</div><div class="aa">靠 <b>SSE（Server-Sent Events）</b>：服务端把生成过程拆成一个个小事件（吐字/调工具/工具返回），通过 HTTP 长连接一条条推给客户端；客户端按 <code>event:</code> / <code>data:</code> 格式解析。</div></div>
+
+  <h3>什么是 SSE</h3>
+  <p><b>SSE</b> 就是服务器主动往客户端"推"消息的协议。基于 HTTP 长连接，服务器不停往里写文本，浏览器/客户端边收边处理。这里用它把"AI 生成报告的过程"实时推出来，不用等整篇写完。</p>
+  <p>SSE 的格式非常简单，每条事件两行：</p>
+  <pre><code>event: message_chunk
+data: {"agent": "reporter", "content": "# 铁矿石库存预测..."}
+
+event: tool_calls
+data: {"agent": "researcher", "tool_calls": [{"name": "fetch_data"}]}</code></pre>
+  <p>一个空行分隔每条事件。客户端逐行读：<code>event:</code> 行说"这是什么事件"，<code>data:</code> 行是 JSON 内容。</p>
+
+  <h3>4 种事件类型</h3>
+  <table>
+    <tr><th>事件</th><th>含义</th><th>客户端怎么用</th></tr>
+    <tr><td><code>message_chunk</code></td><td>模型吐了一小段文字</td><td>如果 <code>agent</code> 是 reporter，拼进报告；否则是别的节点在"想"</td></tr>
+    <tr><td><code>tool_calls</code></td><td>模型决定调某个工具</td><td>打印 <code>[工具调用] tools=[...]</code>，让你看到 AI 在查啥</td></tr>
+    <tr><td><code>tool_call_result</code></td><td>工具返回结果了</td><td>打印前 80 字，看到查到的数据片段</td></tr>
+    <tr><td><code>error</code></td><td>出错了</td><td>打印错误信息</td></tr>
+  </table>
+
+  <h3>客户端怎么解析</h3>
+  <pre><code><span class="c"># generate_report.py</span>
+<span class="k">for</span> line <span class="k">in</span> resp.iter_lines():
+    <span class="k">if</span> line.startswith(<span class="s">"event: "</span>):
+        event_type = line[7:].strip()       <span class="c"># 取 "message_chunk"</span>
+    <span class="k">elif</span> line.startswith(<span class="s">"data: "</span>):
+        data_str = line[6:]
+        <span class="k">if</span> data_str == <span class="s">"[DONE]"</span>: break <span class="c"># 结束标记</span>
+        data = json.loads(data_str)          <span class="c"># 解析 JSON</span>
+        handle_event(event_type, data, ...)
+
+<span class="c"># handle_event 里：只收 reporter 的字作为最终报告</span>
+<span class="k">if</span> event_type == <span class="s">"message_chunk"</span>:
+    <span class="k">if</span> <span class="s">"reporter"</span> <span class="k">in</span> agent.lower():
+        report_chunks.append(content)        <span class="c"># 拼报告</span></code></pre>
+  <div class="card tip"><div class="t">为什么只收 reporter 的字？</div><p>因为 planner、researcher 也会吐字（message_chunk），但那些是"思考过程"不是报告。只有写手 reporter 吐的才是要给用户的成品。靠事件里的 <code>agent</code> 字段区分。</p></div>
+
+  <div class="exp">
+    <div class="et">动手实验 5 · 打印每条事件</div>
+    <ol>
+      <li>打开 <code>generate_report.py</code>，在 <code>handle_event</code> 函数开头加一行：<code>print(f"[事件] type={event_type} agent={data.get('agent','')}", flush=True)</code>。</li>
+      <li>终端 3 重跑。</li>
+      <li>你会看到大量 <code>[事件] type=message_chunk agent=...</code> 和 <code>type=tool_calls</code>——实时看到 AI 一边想一边调工具一边写字。</li>
+      <li>注意 <code>agent=reporter</code> 的 message_chunk，就是报告正文在逐字流出。</li>
+    </ol>
+    <div class="look"><b>你会观察到</b>：报告不是一个整块返回的，是几百个 message_chunk 拼起来的。SSE 让你能"看着 AI 写"。</div>
+  </div>
+
+  <div class="quiz">
+    <div class="qt">3 题自测</div>
+    <div class="qi"><div class="q">SSE 和普通 HTTP 请求的最大区别？</div>
+      <details><summary>看答案</summary><div class="a">普通 HTTP 是"请求→一个完整响应→结束"。SSE 是长连接，服务器持续推多条事件，客户端边收边处理。适合流式生成场景。</div></details></div>
+    <div class="qi"><div class="q">客户端怎么从一堆 message_chunk 里挑出"报告正文"？</div>
+      <details><summary>看答案</summary><div class="a">看每条事件的 <code>agent</code> 字段。只有 <code>agent</code> 包含 "reporter" 的 message_chunk 才是报告正文，其他节点的是思考过程。拼接到 <code>report_chunks</code>。</div></details></div>
+    <div class="qi"><div class="q"><code>data: [DONE]</code> 是什么意思？</div>
+      <details><summary>看答案</summary><div class="a">流结束的标记。客户端收到它就 break 退出循环，结束接收。这是约定好的哨兵值。</div></details></div>
+  </div>
+</section>
+
+<section id="q6">
+  <h2>Q6 · 联调崩了，怎么像侦探一样定位修复？</h2>
+  <div class="qbox"><div class="qt">驱动问题</div><div class="qq">第一次联调直接报错。真实项目里 bug 怎么找、怎么修？</div></div>
+  <div class="ans"><div class="at">💡 一句话答案</div><div class="aa">联调踩了两个真实 bug：① planner 拼字符串时崩（LLM 返回的不是字符串是列表）；② 报告写到一半断了（token 不够）。靠<b>读报错栈定位节点</b>→<b>理解根因</b>→<b>最小修复</b>。</div></div>
+
+  <h3>Bug 1 · <code>TypeError: can only concatenate str (not "list") to str</code></h3>
+  <div class="card warn"><div class="t">报错现场</div>
+  <pre style="background:#7f1d1d;margin:0"><code style="color:#fecaca">TypeError: can only concatenate str (not "list") to str
+  File ".../nodes.py", line 431, in planner_node
+    full_response += chunk.content
+        ↑              ↑
+       str            list: [{'thinking': 'The', 'type': 'thinking', 'index': 0}]</code></pre></div>
+  <p><b>侦探步骤</b>：报错栈直接指到 <code>planner_node</code> 第 431 行，<code>full_response += chunk.content</code>。<code>full_response</code> 是字符串，但 <code>chunk.content</code> 居然是个<b>列表</b>。为什么？</p>
+  <div class="card key"><div class="t">根因</div>
+  <p>我们用的 LLM 是火山方舟 GLM，走 Anthropic 协议（<code>ChatAnthropic</code>）。这个端点默认会返回 <b>thinking 块</b>（模型的思考过程），导致 <code>content</code> 是一个列表：<code>[{'thinking':..., 'type':'thinking'}, {'text':..., 'type':'text'}]</code>，而不是纯字符串。代码原本假设 <code>content</code> 是字符串，于是 <code>str += list</code> 崩了。</p></div>
+  <div class="compare">
+    <div class="col bad"><h4>修复前</h4><pre style="margin:0;background:#1e2937"><code>full_response += chunk.content
+<span class="c"># chunk.content 是 list → 崩</span></code></pre></div>
+    <div class="col good"><h4>修复后</h4><pre style="margin:0;background:#1e2937"><code>full_response += _content_to_text(chunk.content)
+<span class="c"># 提取 text 块、跳过 thinking 块</span></code></pre></div>
+  </div>
+  <pre><code><span class="c"># nodes.py · 新增 helper</span>
+<span class="k">def</span> _content_to_text(content):
+    <span class="k">if</span> isinstance(content, str): <span class="k">return</span> content      <span class="c"># OpenAI 协议：本来就是字符串</span>
+    <span class="k">if</span> isinstance(content, list):                 <span class="c"># Anthropic 协议：thinking+text 列表</span>
+        parts = []
+        <span class="k">for</span> block <span class="k">in</span> content:
+            <span class="k">if</span> isinstance(block, dict) <span class="k">and</span> block.get(<span class="s">"type"</span>) == <span class="s">"text"</span>:
+                parts.append(block.get(<span class="s">"text"</span>, <span class="s">""</span>))   <span class="c"># 只取 text，跳过 thinking</span>
+        <span class="k">return</span> <span class="s">""</span>.join(parts)
+    <span class="k">return</span> str(content)</code></pre>
+  <div class="card tip"><div class="t">学到什么</div><p>① <b>报错栈是最好的向导</b>，直接指到出问题的行。② 不同 LLM 协议返回结构不同，写兼容代码要考虑。③ thinking 块对人是噪音，提取时跳过。④ reporter、SSE 工具里同样的坑也要一并修（任何 <code>+= content</code> 都得套 helper）。</p></div>
+
+  <h3>Bug 2 · 报告写到一半突然断了</h3>
+  <div class="card warn"><div class="t">现象</div><p>报告在「七、结论」的表格中间戛然而止：<code>| **绝对精度** | 中等</code> 后面就没了，明显没写完。</p></div>
+  <p><b>侦探步骤</b>：没报错，但输出被截断 → 典型的 <b>max_tokens 不够</b>。为什么不够？因为 thinking 块也占 token 配额——模型先"想"了一大段（消耗 token），留给"写正文"的额度就不够了。</p>
+  <div class="compare">
+    <div class="col bad"><h4>修复前</h4><p><code>.env.dev</code>：<code>LLM_MAX_TOKENS=4096</code></p><p>thinking 吃掉一大半，报告写不完。</p></div>
+    <div class="col good"><h4>修复后</h4><p><code>.env.dev</code>：<code>LLM_MAX_TOKENS=16000</code></p><p>thinking + 完整报告都装得下。</p></div>
+  </div>
+  <div class="card tip"><div class="t">学到什么</div><p>① "没报错但结果不完整"常是 token 截断。② 带 thinking 的模型，max_tokens 要算上思考的消耗。③ 改完 <code>.env.dev</code> 要<b>重启 agent_service</b>才生效（uvicorn 没开热重载）。</p></div>
+
+  <div class="exp">
+    <div class="et">动手实验 6 · 复现 Bug 1（安全地）</div>
+    <ol>
+      <li>打开 <code>nodes.py</code>，把 <code>full_response += _content_to_text(chunk.content)</code> 临时改回 <code>full_response += chunk.content</code>。</li>
+      <li>终端 2 按 <code>Ctrl+C</code> 关掉 agent_service，重新跑那条命令重启（改了代码必须重启）。</li>
+      <li>终端 3 跑报告生成。</li>
+      <li>终端 2 会出现那个 <code>TypeError: can only concatenate str (not "list") to str</code> 报错栈，指到 planner_node。</li>
+      <li><b>改回</b> <code>_content_to_text</code>，重启 agent_service，确认恢复正常。</li>
+    </ol>
+    <div class="look"><b>你会观察到</b>：一行代码差异，整个流程在 planner 就崩了。这就是为什么理解"content 是列表"这个根因这么重要。</div>
+  </div>
+
+  <div class="quiz">
+    <div class="qt">3 题自测</div>
+    <div class="qi"><div class="q">为什么 ChatAnthropic 返回的 <code>content</code> 是列表而不是字符串？</div>
+      <details><summary>看答案</summary><div class="a">因为火山方舟 GLM 的端点默认返回 thinking 块（思考过程），所以 content 是 <code>[thinking 块, text 块]</code> 的列表。OpenAI 协议默认不返回 thinking，content 是纯字符串。</div></details></div>
+    <div class="qi"><div class="q">报告没报错却写一半就停，最可能的原因？</div>
+      <details><summary>看答案</summary><div class="a">max_tokens 截断。带 thinking 的模型，思考过程也占 token 配额，留给正文的额度不够。调大 <code>LLM_MAX_TOKENS</code> 并重启服务。</div></details></div>
+    <div class="qi"><div class="q">改了 <code>src/</code> 代码或 <code>.env.dev</code>，为什么必须重启 agent_service？</div>
+      <details><summary>看答案</summary><div class="a">因为 uvicorn 启动时没加 <code>--reload</code>，不会自动热重载。配置和代码在进程启动时加载一次，改了不重启不生效。</div></details></div>
+  </div>
+</section>
+
+<section id="q7">
+  <h2>Q7 · 为什么搞这么复杂？不用 LangGraph/MCP 会怎样？</h2>
+  <div class="qbox"><div class="qt">驱动问题</div><div class="qq">不就生成个报告吗，写个函数链调用 LLM 不就行了？为什么要 LangGraph + MCP 这么重？</div></div>
+  <div class="ans"><div class="at">💡 一句话答案</div><div class="aa">简单函数链能跑通最简场景，但<b>没法并行、没法中断恢复、没法流式、工具和逻辑耦合</b>。LangGraph 解决"流程编排"，MCP 解决"工具解耦"。复杂度换来的是工程能力。</p></div>
+
+  <h3>简单函数链 vs LangGraph</h3>
+  <div class="compare">
+    <div class="col bad"><h4>简单函数链</h4>
+      <pre style="margin:0;background:#1e2937"><code><span class="k">def</span> run(question):
+    plan = llm_plan(question)
+    <span class="k">for</span> step <span class="k">in</span> plan:
+        data = llm_research(step)
+    report = llm_report(...)
+    <span class="k">return</span> report</code></pre>
+      <ul>
+        <li>顺序写死，<b>不能并行</b>4 步研究</li>
+        <li>中途崩了<b>没法恢复</b>，得从头跑</li>
+        <li>用户<b>看不到过程</b>，只能等最后结果</li>
+        <li>流程一变就得改代码</li>
+      </ul>
+    </div>
+    <div class="col good"><h4>LangGraph</h4>
+      <ul>
+        <li>条件边 + parallel_researcher → <b>自动并行</b>就绪步骤</li>
+        <li>checkpointer 存 state → 崩了能<b>从断点恢复</b>（本项目用 MemorySaver 简化了）</li>
+        <li>stream_mode → 全程<b>流式</b>吐事件</li>
+        <li>节点/边配置化，<b>流程易调整</b></li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>本地 tool vs MCP</h3>
+  <div class="compare">
+    <div class="col bad"><h4>本地 tool（直接写函数注入）</h4>
+      <ul>
+        <li>工具和 agent <b>同一个进程</b>，耦合</li>
+        <li>换数据源要改 agent 代码</li>
+        <li>多个 agent 难共用同一套工具</li>
+        <li>但：<b>简单、快、无网络开销</b></li>
+      </ul>
+    </div>
+    <div class="col good"><h4>MCP（独立 server + 协议）</h4>
+      <ul>
+        <li>工具独立进程，<b>解耦</b></li>
+        <li>换数据源不动 agent</li>
+        <li>多个 agent 共用一个 MCP server</li>
+        <li>代价：<b>多一个进程、网络调用</b></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card cute"><div class="t">诚实提示</div><p>对你这个数据建模项目，完整 agent 服务（常驻 FastAPI + 多节点编排）<b>形态上偏重</b>。它的核心价值不是"必须这么做"，而是让你体验完整的 <b>planner→researcher→reporter 自主研究闭环</b>，理解 agent 架构怎么工作。真要做个轻量预测报告，一个脚本调 LLM 也行——但你学不到这些编排思想。</p></div>
+
+  <div class="quiz">
+    <div class="qt">3 题自测</div>
+    <div class="qi"><div class="q">用简单函数链能不能实现这个项目？差什么？</div>
+      <details><summary>看答案</summary><div class="a">能跑通最简版。但缺：并行研究（慢）、断点恢复（崩了重来）、流式输出（用户干等）、流程灵活调整。LangGraph 用复杂度换了这些工程能力。</div></details></div>
+    <div class="qi"><div class="q">什么场景下 MCP 的"解耦"特别值？</div>
+      <details><summary>看答案</summary><div class="a">多个 agent 要共用同一套工具、或数据源由不同团队维护、或想不改 agent 代码换数据源时。如果就一个 agent + 固定数据，本地 tool 更简单。</div></details></div>
+    <div class="qi"><div class="q">checkpointer 是干嘛的？本项目为什么关掉了？</div>
+      <details><summary>看答案</summary><div class="a">checkpointer 把 state 持久化（如存 Postgres），让流程能中断/恢复。本项目为免 Postgres 依赖，设 <code>LANGGRAPH_CHECKPOINT_SAVER=False</code>，用内存 MemorySaver，代价是重启就丢状态。够用于自动出报告。</div></details></div>
+  </div>
+</section>
+
+<section id="q8">
+  <h2>Q8 · 自己搭 agent，和直接用 Claude Code 扫文件夹有啥区别？</h2>
+  <div class="qbox"><div class="qt">驱动问题</div><div class="qq">有了 Claude Code 这种能扫整个文件夹、自己找文件的 AI，我干嘛还要费劲搭这套 agent？</div></div>
+  <div class="ans"><div class="at">💡 一句话答案</div><div class="aa">这是两个层次的选择。Claude Code 是<b>放权给 AI</b>（AI 自己设计流程、自己找文件），自建 agent 是<b>约束 AI</b>（人设计好流程，AI 只在决策点填智能）。前者灵活万能，后者稳定、可产品化、能给非技术人员用。</div></div>
+
+  <h3>本质：谁在设计流程</h3>
+  <div class="compare">
+    <div class="col bad"><h4>直接用 Claude Code</h4>
+      <p>流程也交给 AI。AI 自己决定读哪个文件、grep 什么、跑什么命令。人只下指令。</p>
+      <p><b>AI 既是工位，又是流程设计师。</b></p>
+      <p><span class="pill p">灵活万能</span> <span class="pill p">不可预测</span></p></div>
+    <div class="col good"><h4>自建 agent</h4>
+      <p>流程攥在人手里。人画好图（coordinator→planner→researcher→reporter），AI 只在「选工具/拆步/写报告」填智能。</p>
+      <p><b>AI 只是流水线上的智能工位。</b></p>
+      <p><span class="pill g">稳定可控</span> <span class="pill g">只擅长预见到的事</span></p></div>
+  </div>
+
+  <h3>分维度对比</h3>
+  <table>
+    <tr><th>维度</th><th>你的 agent 项目</th><th>Claude Code 扫文件夹</th></tr>
+    <tr><td>工具</td><td>窄而专：<code>fetch_data</code> 直接吐结构化结果，AI 不知文件路径</td><td>宽而通用：Read/Grep/Glob/Bash 扫任意位置</td></tr>
+    <tr><td>数据接入</td><td>MCP 预先桥接，AI 调工具即得</td><td>AI 自己 glob/grep 摸索项目布局</td></tr>
+    <tr><td>流程</td><td>LangGraph 图固定编排，有条件边、并行</td><td>无固定图，模型即流程，即兴生成</td></tr>
+    <tr><td>并行</td><td>parallel_researcher 多步同时跑</td><td>基本串行探索</td></tr>
+    <tr><td>可复现性</td><td>同问题走同样节点，输出稳定</td><td>每次路径可能不同，不可预期</td></tr>
+    <tr><td>部署形态</td><td>常驻 FastAPI 服务，HTTP 可调，可嵌网页/多用户</td><td>本地 CLI/IDE，单人交互，非服务</td></tr>
+    <tr><td>受众</td><td>业务人员：只会问「生成报告」</td><td>开发者：要会看代码判断结果</td></tr>
+    <tr><td>领域知识</td><td>内化在 prompts 和工具 docstring</td><td>通用知识，靠上下文临时注入</td></tr>
+  </table>
+
+  <div class="card key"><div class="t">核心洞察：agent 是「约束工程」</div>
+  <p>搭 agent 不是「让 AI 更强」，而是<b>把 AI 约束进可控流水线</b>。约束体现在四层：① 流程约束（固定图）② 工具约束（窄 MCP）③ 知识约束（prompt 固化）④ 输出约束（结构化校验）。每一层都是用灵活性换可控性——工程就是把不确定性约束掉，让结果可预期。</p></div>
+
+  <h3>约束换来什么 / 代价什么</h3>
+  <div class="compare">
+    <div class="col good"><h4>约束换来</h4>
+      <ul><li>稳定、可复现</li><li>可并行、可恢复</li><li>可产品化（给别人用）</li><li>输出标准化</li><li>领域知识固化</li><li>可控不跑偏</li></ul></div>
+    <div class="col bad"><h4>约束的代价</h4>
+      <ul><li>灵活性（只擅长预见到的任务）</li><li>搭建成本（画图/写工具/调 prompt）</li><li>维护成本（流程一变要改代码）</li><li>不能跨领域即兴发挥</li></ul></div>
+  </div>
+
+  <h3>什么时候用哪个</h3>
+  <table>
+    <tr><th>场景</th><th>选什么</th></tr>
+    <tr><td>个人偶尔看一次报告 / 探索陌生代码 / 调 bug / 跨领域未知问题</td><td><span class="pill p">直接用 Claude Code</span> 零搭建，灵活</td></tr>
+    <tr><td>给别人用 / 重复定时跑 / 嵌入产品网页 / 多用户 / 输出要稳定标准</td><td><span class="pill g">自建 agent</span> 约束化，可产品化</td></tr>
+  </table>
+
+  <div class="card tip"><div class="t">最大的意义：把「会用 AI」的门槛，从用户侧搬到开发者侧</div>
+  <p>直接用 Claude Code 出报告，用户要会装环境、看代码、写 prompt——门槛把 AI 问答关在开发者圈子里。自建 agent 把这些复杂度全吞进服务内部，业务人员只要一个输入框问一句话。开发者吃下复杂度，换用户一个简单入口。这就是<b>从「用 AI」到「造 AI 产品」的跃迁</b>。</p></div>
+
+  <div class="exp">
+    <div class="et">思考实验 · 你会怎么选？</div>
+    <ol>
+      <li>场景 A：你想每周自动给老板发一份铁矿石库存周报。→ 选哪个？为什么？</li>
+      <li>场景 B：你接手一个完全陌生的代码库，要搞懂它干嘛的。→ 选哪个？为什么？</li>
+      <li>场景 C：你要让公司里不懂技术的销售，能自己查「这周库存预测涨还是跌」。→ 选哪个？</li>
+    </ol>
+    <div class="look"><b>参考思路</b>：A 选自建 agent（定时调用、输出稳定）；B 选 Claude Code（未知问题、要即兴探索）；C 选自建 agent（给非技术人员用、要平民化）。关键看：流程是否可预见 + 受众是否懂技术。</div>
+  </div>
+
+  <div class="quiz">
+    <div class="qt">3 题自测</div>
+    <div class="qi"><div class="q">自建 agent 和 Claude Code 最根本的区别是什么？</div>
+      <details><summary>看答案</summary><div class="a">谁在设计流程。Claude Code 把流程交给 AI（放权），自建 agent 把流程攥在人手里（约束），AI 只在决策点填智能。</div></details></div>
+    <div class="qi"><div class="q">「agent 是约束工程」这句话怎么理解？</div>
+      <details><summary>看答案</summary><div class="a">搭 agent 的核心动作不是调教模型，而是设计约束（固定流程图、窄工具、固化 prompt、结构化输出）。每一层约束用灵活性换可控性，把不确定性约束掉让结果可预期。</div></details></div>
+    <div class="qi"><div class="q">什么场景下，自建 agent 比 Claude Code 更值？</div>
+      <details><summary>看答案</summary><div class="a">流程可预见 + 受众不懂技术 + 要重复/定时调用 + 要嵌入产品/多用户时。如给业务人员做问答网页、每周自动出报告。反之未知问题、个人探索，直接用 Claude Code 更省。</div></details></div>
+  </div>
+</section>
+
+<section id="glossary">
+  <h2>📖 术语表</h2>
+  <dl>
+    <dt>Agent（智能体）</dt>
+    <dd>能自己决定调哪个工具、走哪一步的 AI 程序。流程由 LLM 动态选，不是写死的。</dd>
+    <dt>LangGraph</dt>
+    <dd>把任务画成"节点+边"的图来编排的框架。节点是干活函数，边是执行顺序，state 是共享白板。</dd>
+    <dt>Node / Edge（节点/边）</dt>
+    <dd>节点 = 一个干活的函数（如 planner_node）。边 = 节点间的跳转。条件边 = 由函数运行时决定下一站。</dd>
+    <dt>State（状态）</dt>
+    <dd>所有节点共享的数据对象，像团队白板。节点读它取上游结果、写它存自己的产出。</dd>
+    <dt>MCP（Model Context Protocol）</dt>
+    <dd>AI 调用外部工具/数据的协议。给 AI 装"USB 接口"，插上工具就能用。本项目的 MCP server 是"档案室"。</dd>
+    <dt>FastMCP</dt>
+    <dd>mcp 库里快速搭 MCP server 的类，像 Flask。用 <code>@mcp.tool()</code> 定义工具。</dd>
+    <dt>streamable_http</dt>
+    <dd>MCP 的一种传输方式，走 HTTP。本项目的 MCP server 用它，监听 17000。</dd>
+    <dt>SSE（Server-Sent Events）</dt>
+    <dd>服务器主动推消息的协议。这里把 AI 生成过程一条条事件实时推给客户端。</dd>
+    <dt>ReAct</dt>
+    <dd>"思考-行动"循环：LLM 想一步→调工具→看结果→再想。researcher 就是 ReAct agent。</dd>
+    <dt>checkpointer</dt>
+    <dd>把 state 持久化的机制，让流程能中断/恢复。本项目用 MemorySaver（内存版，免 Postgres）。</dd>
+    <dt>ChatAnthropic vs ChatOpenAI</dt>
+    <dd>两种 LLM 客户端，分别走 Anthropic 协议和 OpenAI 协议。本项目用 ChatAnthropic 接火山方舟 GLM。</dd>
+    <dt>thinking 块</dt>
+    <dd>模型返回的"思考过程"内容。Anthropic 协议会返回，占 token，content 变列表，需提取 text。</dd>
+  </dl>
+</section>
+
+<section id="next">
+  <h2>🎓 你现在到哪了 · 下一步学什么</h2>
+  <div class="card key"><div class="t">学完这份，你建立的认知</div>
+  <p>你理解了 agent 不是"一个很聪明的函数"，而是<b>一张由节点和边编起来的图</b>，流程由 LLM 动态决定；理解了<b>工具/数据通过 MCP 解耦</b>、<b>结果通过 state 流转</b>、<b>输出通过 SSE 流式</b>。这套思想能迁移到任何 agent 项目。</p></div>
+
+  <div class="pathbox">
+    <div class="p"><div class="e">🔧</div><b>动手改造</b>给 MCP server 加一个新工具（如读 multi_target 目录），改 researcher 工具表，跑通</div>
+    <div class="p"><div class="e">🧩</div><b>读源码</b>通读 <code>nodes.py</code> 的 coordinator/planner/reporter 三个节点完整实现</div>
+    <div class="p"><div class="e">📚</div><b>学基础</b>LangGraph 官方 tutorial（StateGraph/checkpointer/stream_mode）</div>
+    <div class="p"><div class="e">💡</div><b>想通透</b>重读 Q8 + <code>agent复刻思考与认知.md</code>，建立"约束工程"心智</div>
+  </div>
+
+  <h3>推荐学习顺序</h3>
+  <div class="timeline">
+    <div class="step"><div class="h">1. 把本指南的 7 个动手实验 + 1 个思考实验全做一遍</div>眼见为实，建立具象感觉。</div>
+    <div class="step"><div class="h">2. 通读 generate_report.py + mcp_server/server.py</div>这俩最短最独立，能完整看懂。</div>
+    <div class="step"><div class="h">3. 读 nodes.py 的 coordinator → planner → reporter</div>看每个节点怎么读写 state、调 LLM。</div>
+    <div class="step"><div class="h">4. 读 builder.py + 条件边函数</div>理解图怎么编排、并行怎么触发。</div>
+    <div class="step"><div class="h">5. 自己加一个 MCP 工具 + 改 prompt</div>闭环验证你真的懂了。</div>
+  </div>
+
+  <div class="remember"><b>📌 配套文件</b>：① <code>项目复现2/agent复刻进度.md</code> — 全部改动与运行命令（恢复用）。② <code>项目复现2/完整agent服务集成方案.md</code> — 原始方案。③ <code>项目复现2/11_report_generation/outputs/</code> — 真实报告样本。</div>
+
+  <div class="card tip"><div class="t">一句话送你</div><p>agent 的核心不是"模型多强"，而是"怎么把模型、工具、状态组织成可靠流水线"。你现在已经有这张图了。继续动手，会越看越透。</p></div>
+</section>
+
+</main>
+</div>
+
+<script>
+  // 导航高亮当前章节
+  const links = document.querySelectorAll('nav a.nav');
+  const secs = document.querySelectorAll('section[id]');
+  window.addEventListener('scroll', () => {
+    let cur = '';
+    secs.forEach(s => { if (window.scrollY >= s.offsetTop - 60) cur = s.id; });
+    links.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + cur));
+  });
+</script>
+</body>
+</html>

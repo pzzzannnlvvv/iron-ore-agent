@@ -1,0 +1,32 @@
+{
+  "target_id": "ID01512800",
+  "target_name": "块矿：进口：库存：47个港口（周度）",
+  "group": "B",
+  "trained_at": "2026-06-04 14:56:52",
+  "optuna_trials": 100,
+  "optimization_time_seconds": 24.12950897216797,
+  "train_samples": 142,
+  "test_samples": 48,
+  "feature_count": 229,
+  "used_feature_selection": true,
+  "original_mda": 0.6792,
+  "new_validation_mda": 0.9285714285714286,
+  "new_test_mda": 0.5531914893617021,
+  "new_test_rmse": 44.012595224479576,
+  "mda_improvement": -0.12600851063829788,
+  "best_params": {
+    "num_leaves": 30,
+    "max_depth": 6,
+    "learning_rate": 0.014164599797432061,
+    "n_estimators": 1561,
+    "min_child_samples": 20,
+    "subsample": 0.9298249375977756,
+    "colsample_bytree": 0.589279964363258,
+    "reg_alpha": 1.446719031660446,
+    "reg_lambda": 0.010953114890618483,
+    "random_state": 42,
+    "deterministic": true,
+    "verbosity": -1,
+    "n_jobs": -1
+  }
+}

@@ -1,0 +1,1220 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LGBM 超参优化任务 — 新手学习总结</title>
+<style>
+  :root {
+    --bg: #f8f9fa;
+    --card-bg: #ffffff;
+    --text: #2c3e50;
+    --muted: #6b7280;
+    --accent: #2563eb;
+    --accent-light: #eff6ff;
+    --border: #e5e7eb;
+    --warn-bg: #fef3c7;
+    --warn-text: #92400e;
+    --danger-bg: #fef2f2;
+    --danger-text: #991b1b;
+    --green-bg: #f0fdf4;
+    --green-text: #166534;
+    --purple-bg: #faf5ff;
+    --purple-text: #7c3aed;
+    --orange-bg: #fff7ed;
+    --orange-text: #c2410c;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans SC", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.85;
+    padding: 2rem 1rem;
+  }
+  .container { max-width: 960px; margin: 0 auto; }
+
+  h1 {
+    font-size: 1.9rem;
+    text-align: center;
+    margin-bottom: 0.3rem;
+    color: #111827;
+  }
+  .subtitle { text-align: center; color: var(--muted); margin-bottom: 2.2rem; font-size: 0.95rem; }
+
+  .card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.6rem 1.9rem;
+    margin-bottom: 1.6rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,.04);
+  }
+  .card h2 {
+    font-size: 1.2rem;
+    margin-bottom: 1.1rem;
+    padding-bottom: 0.55rem;
+    border-bottom: 2px solid var(--accent-light);
+    display: flex; align-items: center; gap: 0.5rem;
+  }
+  .card h2 .icon { font-size: 1.3rem; }
+  .card h3 {
+    font-size: 1.02rem;
+    margin: 1.3rem 0 0.6rem;
+    color: #1e40af;
+  }
+  .card h3:first-of-type { margin-top: 0; }
+
+  /* ── Glossary ── */
+  .glossary-item {
+    padding: 0.85rem 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .glossary-item:last-child { border-bottom: none; }
+  .glossary-term {
+    font-weight: 700;
+    color: #1e40af;
+    font-size: 0.95rem;
+  }
+  .glossary-term .en { font-weight: 400; color: var(--muted); font-size: 0.82rem; margin-left: 0.4rem; }
+  .glossary-desc { margin-top: 0.25rem; font-size: 0.9rem; color: #4b5563; }
+  .glossary-desc .analogy {
+    display: block;
+    margin-top: 0.3rem;
+    padding: 0.4rem 0.7rem;
+    background: #fffbeb;
+    border-left: 3px solid #f59e0b;
+    border-radius: 0 6px 6px 0;
+    font-size: 0.85rem;
+    color: #92400e;
+  }
+
+  /* ── Concept cards ── */
+  .concept-block {
+    margin: 1rem 0;
+    padding: 1rem 1.2rem;
+    border-radius: 8px;
+    border-left: 4px solid var(--accent);
+    background: var(--accent-light);
+  }
+  .concept-block.warn {
+    background: #fffbeb;
+    border-left-color: #f59e0b;
+  }
+  .concept-block.green {
+    background: var(--green-bg);
+    border-left-color: #16a34a;
+  }
+  .concept-block strong { color: #1e40af; }
+
+  /* ── Tables ── */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.88rem;
+    margin: 0.6rem 0;
+  }
+  th, td {
+    padding: 0.6rem 0.75rem;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+  th { background: #f9fafb; font-weight: 600; color: var(--muted); font-size: 0.78rem; text-transform: uppercase; }
+  td:first-child code {
+    background: #f1f5f9; padding: 0.12rem 0.4rem; border-radius: 3px;
+    font-size: 0.83rem; white-space: nowrap;
+  }
+
+  /* ── Tags ── */
+  .tag {
+    display: inline-block;
+    padding: 0.15rem 0.55rem;
+    border-radius: 12px;
+    font-size: 0.76rem;
+    font-weight: 600;
+  }
+  .tag-green  { background: var(--green-bg); color: var(--green-text); }
+  .tag-yellow { background: var(--warn-bg); color: var(--warn-text); }
+  .tag-red    { background: var(--danger-bg); color: var(--danger-text); }
+  .tag-purple { background: var(--purple-bg); color: var(--purple-text); }
+
+  /* ── Timeline ── */
+  .timeline { position: relative; padding-left: 1.6rem; }
+  .timeline::before {
+    content: ""; position: absolute; left: 6px; top: 0; bottom: 0;
+    width: 2px; background: var(--border);
+  }
+  .timeline-day { margin-bottom: 1.1rem; position: relative; }
+  .timeline-day::before {
+    content: ""; position: absolute; left: -1.42rem; top: 0.45rem;
+    width: 10px; height: 10px; border-radius: 50%;
+    background: var(--accent); border: 2px solid #fff;
+    box-shadow: 0 0 0 2px var(--accent);
+  }
+  .timeline-day h4 { font-size: 0.95rem; margin-bottom: 0.2rem; }
+  .timeline-day p { color: var(--muted); font-size: 0.85rem; }
+
+  /* ── Rule list ── */
+  .rule-list { list-style: none; }
+  .rule-list li {
+    padding: 0.5rem 0;
+    padding-left: 1.6rem;
+    position: relative;
+  }
+  .rule-list li::before { content: "▸"; position: absolute; left: 0; color: var(--accent); font-weight: bold; }
+
+  /* ── Deliverable ── */
+  .deliverable { display: flex; align-items: center; gap: 0.7rem; padding: 0.55rem 0; }
+  .deliverable .idx {
+    width: 28px; height: 28px;
+    background: var(--accent); color: #fff;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.8rem; font-weight: 700; flex-shrink: 0;
+  }
+  .deliverable code {
+    background: #f1f5f9; padding: 0.15rem 0.45rem; border-radius: 4px; font-size: 0.85rem;
+  }
+
+  .highlight-box {
+    background: #fffbeb; border-left: 4px solid #f59e0b;
+    padding: 1.1rem 1.3rem; border-radius: 0 8px 8px 0; margin-top: 1rem;
+  }
+  .highlight-box strong { color: #b45309; }
+
+  .summary-box {
+    background: linear-gradient(135deg, #eff6ff 0%, #faf5ff 100%);
+    border: 2px solid var(--accent);
+    padding: 1.3rem 1.5rem;
+    border-radius: 10px;
+    text-align: center;
+    font-size: 1.05rem;
+    font-weight: 600;
+    line-height: 1.8;
+  }
+
+  .nav-toc {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.3rem 1.8rem;
+    margin-bottom: 1.6rem;
+  }
+  .nav-toc h3 { font-size: 0.95rem; margin-bottom: 0.6rem; color: var(--muted); text-transform: uppercase; }
+  .nav-toc ol { padding-left: 1.3rem; columns: 2; column-gap: 2rem; }
+  .nav-toc li { margin-bottom: 0.3rem; font-size: 0.88rem; }
+  .nav-toc a { color: var(--accent); text-decoration: none; }
+  .nav-toc a:hover { text-decoration: underline; }
+
+  .flow-step {
+    display: flex; gap: 0.8rem; align-items: flex-start; margin: 0.7rem 0;
+  }
+  .flow-num {
+    width: 30px; height: 30px;
+    background: var(--accent); color: #fff;
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 0.82rem; flex-shrink: 0;
+  }
+
+  @media (max-width: 640px) {
+    .nav-toc ol { columns: 1; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>LGBM 超参优化任务 — 新手学习总结</h1>
+<p class="subtitle">面向算法初学者的概念详解 + 执行规划 &nbsp;|&nbsp; 2026年5月</p>
+
+<!-- ============ 目录 ============ -->
+<div class="nav-toc">
+  <h3>目录</h3>
+  <ol>
+    <li><a href="#s1">一句话：我们要做什么？</a></li>
+    <li><a href="#s2">核心概念辞典（必读）</a></li>
+    <li><a href="#s3">LightGBM 是什么？</a></li>
+    <li><a href="#s3b">LightGBM 核心训练逻辑详解</a></li>
+    <li><a href="#s4">什么是「超参数」和「超参优化」？</a></li>
+    <li><a href="#s5">Optuna 是怎么工作的？</a></li>
+    <li><a href="#s5b">Optuna 深入：TPE + MedianPruner 原理</a></li>
+    <li><a href="#s6">9 个核心超参逐个详解</a></li>
+    <li><a href="#s7">评估指标：MDA / MAPE</a></li>
+    <li><a href="#s7b">objective(trial) 函数详解</a></li>
+    <li><a href="#s7c">LightGBM + Optuna 完整配合流程</a></li>
+    <li><a href="#s8">为什么要复现？随机种子是什么？</a></li>
+    <li><a href="#s9">任务执行计划</a></li>
+    <li><a href="#s10">交付物清单 + 硬性规则</a></li>
+  </ol>
+</div>
+
+<!-- ======================================================================== -->
+<!-- 第1章：我们要做什么 -->
+<!-- ======================================================================== -->
+<div class="card" id="s1">
+  <h2><span class="icon">🎯</span> 一、一句话：我们要做什么？</h2>
+
+  <div class="summary-box">
+    用 <strong>Optuna</strong>（一个自动调参工具）帮 <strong>LightGBM</strong>（一个预测模型）找到最优的参数设置，<br>
+    让模型预测铁矿石库存的误差尽可能小。<br>
+    最终只保存参数组合（不保存几百 MB 的模型文件），<br>
+    并提供一套可 100% 复现结果的脚本。
+  </div>
+
+  <div class="concept-block" style="margin-top:1.2rem;">
+    <strong>简单比喻：</strong>这就像你想做一道最好吃的菜（预测模型），但盐放多少、火候多大、煮多久（超参数）需要反复尝试。Optuna 就是一个自动帮你尝味道、调整配方的大厨助手，它比你自己一次次试（网格搜索）快得多、聪明得多。
+  </div>
+
+  <h3>四个核心目标</h3>
+  <table>
+    <tr><th style="width:30px">#</th><th>目标</th><th>大白话解释</th></tr>
+    <tr><td>1</td><td>用 Optuna 替代网格搜索</td><td>不让机器盲目遍历所有组合，而是「聪明地猜」哪些参数更值得试</td></tr>
+    <tr><td>2</td><td>只保存超参+指标，不保存模型文件</td><td>模型文件很大（几百 MB），参数只是几十行数字，用 CSV 表格存就够了</td></tr>
+    <tr><td>3</td><td>推理脚本 100% 复现结果</td><td>给定同样的参数和同样的数据，运行两次得到完全一样的结果</td></tr>
+    <tr><td>4</td><td>交付 2 个脚本 + 1 个结果文件</td><td>优化脚本、复现脚本、参数结果表（CSV），三个文件即可</td></tr>
+  </table>
+</div>
+
+<!-- ======================================================================== -->
+<!-- 第2章：核心概念辞典 -->
+<!-- ======================================================================== -->
+<div class="card" id="s2">
+  <h2><span class="icon">📖</span> 二、核心概念辞典（必读）</h2>
+  <p style="color:var(--muted);font-size:0.9rem;margin-bottom:0.8rem;">先搞清楚这些词是什么意思，后面的内容才能看懂。每个概念都附了「大白话类比」。</p>
+
+  <div class="glossary-item">
+    <div class="glossary-term">超参数 <span class="en">Hyperparameter</span></div>
+    <div class="glossary-desc">
+      模型训练前由人设定的参数，模型自己学不会。比如「树最多长多深」「每次学多快」。
+      <span class="analogy">比喻：做菜时「盐放多少」「火开多大」——不是菜自己决定的，是厨师调的。</span>
+    </div>
+  </div>
+
+  <div class="glossary-item">
+    <div class="glossary-term">超参优化 / 调参 <span class="en">Hyperparameter Optimization</span></div>
+    <div class="glossary-desc">
+      自动搜索最优超参数组合的过程。目标：找到让模型预测误差最小的那组参数。
+      <span class="analogy">比喻：反复做同一道菜，每次微调配方，直到找到最好吃的那个版本。</span>
+    </div>
+  </div>
+
+  <div class="glossary-item">
+    <div class="glossary-term">网格搜索 <span class="en">Grid Search</span></div>
+    <div class="glossary-desc">
+      把所有参数组合列成一张大表，一个一个试。比如 5 个参数各取 10 个值 = 10⁵ = 10 万次试验，非常慢。
+      <span class="analogy">比喻：想找到从北京到上海的最优路线，于是把全国每条路都走一遍——太慢了。</span>
+    </div>
+  </div>
+
+  <div class="glossary-item">
+    <div class="glossary-term">Optuna</div>
+    <div class="glossary-desc">
+      一个日本公司 Preferred Networks 开源的自动超参优化框架。核心思想：根据已经试过的参数效果，智能推测下一组该试什么参数，比网格搜索快 10~100 倍。
+      <span class="analogy">比喻：一个聪明的厨师学徒——尝过几次后就知道往哪个方向调整配方，不需要把每种组合都做一遍。</span>
+    </div>
+  </div>
+
+  <div class="glossary-item">
+    <div class="glossary-term">TPE 采样器 <span class="en">Tree-structured Parzen Estimator</span></div>
+    <div class="glossary-desc">
+      Optuna 默认使用的智能搜索算法。它会根据历史试验结果，把「好参数」和「差参数」分成两组，然后优先从「好参数」区域采样新的尝试值。
+      <span class="analogy">比喻：你在调台灯的亮度，发现太亮和太暗都不舒服，TPE 会自动聚焦到让你舒服的亮度范围去试。</span>
+    </div>
+  </div>
+
+  <div class="glossary-item">
+    <div class="glossary-term">剪枝 / MedianPruner <span class="en">Pruning</span></div>
+    <div class="glossary-desc">
+      训练过程中，如果某组参数的中间结果已经明显很差（低于所有已完成试验的中位数），就提前终止这组试验，不浪费算力。
+      <span class="analogy">比喻：做菜时尝了一口发现咸得没法吃，直接倒掉重做，而不是做完再倒。</span>
+    </div>
+  </div>
+
+  <div class="glossary-item">
+    <div class="glossary-term">交叉验证 <span class="en">Cross Validation, CV</span></div>
+    <div class="glossary-desc">
+      把训练数据切成 N 份，轮流用 N-1 份训练、1 份验证，取 N 次结果的平均值作为最终评分。避免「碰巧在某一份数据上表现好」的假象。
+      <span class="analogy">比喻：模拟考不能只做一套卷子，要做多套不同卷子取平均分，才能真实反映水平。</span>
+    </div>
+  </div>
+
+  <div class="glossary-item">
+    <div class="glossary-term">时序交叉验证 <span class="en">TimeSeriesSplit</span></div>
+    <div class="glossary-desc">
+      专门给时间序列数据用的交叉验证。和普通 CV 的区别：<strong>不能用未来数据验证过去</strong>。每次切分时，训练数据的时间一定在验证数据之前。
+      <span class="analogy">比喻：不能用明天的股价来验证今天的预测模型——那叫作弊（数据泄露）。</span>
+    </div>
+  </div>
+
+  <div class="glossary-item">
+    <div class="glossary-term">随机种子 <span class="en">Random Seed</span></div>
+    <div class="glossary-desc">
+      计算机的「随机」其实是伪随机——由一个初始数字（种子）决定整个随机序列。同样种子 → 同样随机序列 → 同样结果。
+      <span class="analogy">比喻：Minecraft 的地图种子——输入同一个种子号，生成的世界一模一样。</span>
+    </div>
+  </div>
+
+  <div class="glossary-item">
+    <div class="glossary-term">DataFrame</div>
+    <div class="glossary-desc">
+      Python 的 pandas 库中最核心的数据结构，可以理解为一个「超级 Excel 表格」，有行有列，可以筛选、排序、计算、导出 CSV。
+    </div>
+  </div>
+
+  <div class="glossary-item">
+    <div class="glossary-term">梯度提升树 <span class="en">Gradient Boosting Decision Tree, GBDT</span></div>
+    <div class="glossary-desc">
+      LightGBM 的核心算法。简单说：先建一棵简单的树做预测，然后第二棵树专门学习第一棵树的「残差」（预测值和真实值的差距），第三棵树学习前两棵的残差……这样一棵一棵叠加，预测越来越准。
+      <span class="analogy">比喻：团队合作解题——第一个人给出初步答案，第二个人专门修正前面的错误，第三个人再修正剩下的错误，越改越准。</span>
+    </div>
+  </div>
+
+  <div class="glossary-item">
+    <div class="glossary-term">过拟合 <span class="en">Overfitting</span></div>
+    <div class="glossary-desc">
+      模型在训练数据上表现极好，但在新数据（测试集）上表现很差。相当于「死记硬背了答案，但换个题就不会做」。
+      <span class="analogy">比喻：学生把练习册答案全背下来了，考试满分；但换一套新题就不会了。</span>
+    </div>
+  </div>
+
+  <div class="glossary-item">
+    <div class="glossary-term">正则化 <span class="en">Regularization</span></div>
+    <div class="glossary-desc">
+      防止过拟合的手段。通过在损失函数中加入惩罚项，限制模型参数不要太大或太复杂。L1（Lasso）会直接把不重要的参数压成 0；L2（Ridge）会让所有参数都尽量小。
+      <span class="analogy">比喻：给模型套上缰绳，不让它跑太偏。</span>
+    </div>
+  </div>
+</div>
+
+<!-- ======================================================================== -->
+<!-- 第3章：LightGBM 是什么 -->
+<!-- ======================================================================== -->
+<div class="card" id="s3">
+  <h2><span class="icon">🌲</span> 三、LightGBM 是什么？</h2>
+
+  <div class="concept-block">
+    <strong>LightGBM</strong>（Light Gradient Boosting Machine）是微软 2017 年开源的一个<strong>梯度提升决策树</strong>框架。
+    它是 XGBoost 的「升级版」，核心优势是<strong>训练速度快、内存占用少、精度高</strong>，在 Kaggle 竞赛和工业界使用极广。
+  </div>
+
+  <h3>它是怎么工作的？（三步理解）</h3>
+
+  <div class="flow-step">
+    <div class="flow-num">1</div>
+    <div>
+      <strong>初始化：</strong>先用一个常数（比如所有目标值的平均值）作为初始预测。比如预测铁矿石库存，第一轮全部猜「平均库存量」。
+    </div>
+  </div>
+  <div class="flow-step">
+    <div class="flow-num">2</div>
+    <div>
+      <strong>迭代修正：</strong>每轮新建一棵决策树，专门学习上一轮预测的「残差」（真实值 - 预测值）。新树的目标就是「把上一轮没预测准的部分补上」。
+    </div>
+  </div>
+  <div class="flow-step">
+    <div class="flow-num">3</div>
+    <div>
+      <strong>累加输出：</strong>最终的预测 = 初始值 + 第1棵树的修正 + 第2棵树的修正 + …… + 第N棵树的修正。所有树的结果累加。
+    </div>
+  </div>
+
+  <div class="concept-block warn" style="margin-top:1rem;">
+    <strong>LightGBM vs XGBoost 的核心区别：</strong>LightGBM 使用 <strong>直方图算法</strong>（Histogram）和 <strong>按叶子生长</strong>（Leaf-wise）策略，而 XGBoost 按层生长（Level-wise）。这使得 LightGBM 更快、更省内存，但更容易过拟合——所以更需要认真调参。
+  </div>
+</div>
+
+<!-- ======================================================================== -->
+<!-- 第3b章：LightGBM 核心训练逻辑详解 -->
+<!-- ======================================================================== -->
+<div class="card" id="s3b">
+  <h2><span class="icon">🔬</span> 三-B、LightGBM 核心训练逻辑详解</h2>
+
+  <p style="color:var(--muted);font-size:0.9rem;margin-bottom:1rem;">
+    深入理解树是怎么生长的、残差是怎么存储的、随机种子到底控制什么。
+  </p>
+
+  <h3>一、核心训练逻辑（梯度提升思路）</h3>
+
+  <div class="concept-block">
+    <strong>逐树叠加、拟合残差</strong>
+  </div>
+
+  <div class="flow-step">
+    <div class="flow-num">1</div>
+    <div>
+      <strong>第一棵树：</strong>用一个常数（比如所有目标值的平均值）做基础预测
+    </div>
+  </div>
+  <div class="flow-step">
+    <div class="flow-num">2</div>
+    <div>
+      <strong>后续每棵树：</strong>专门学习<strong>前面所有树产生的残差</strong>（真实值 - 累计预测值）
+    </div>
+  </div>
+  <div class="flow-step">
+    <div class="flow-num">3</div>
+    <div>
+      <strong>最终预测：</strong>所有树的输出累加，模型精度逐步提升
+    </div>
+  </div>
+
+  <div class="concept-block green" style="margin-top:1rem;">
+    <strong>残差是什么？</strong>预测值和真实值之间的误差，是后续每一棵树的训练目标。
+  </div>
+
+  <h3>二、残差在树结构中的表达方式</h3>
+
+  <p>树不会直接存储残差数字，而是通过<strong>节点分裂 + 叶子节点取值</strong>两步共同表达残差规律：</p>
+
+  <table>
+    <tr><th>步骤</th><th>做什么</th><th>作用</th></tr>
+    <tr>
+      <td><strong>节点分裂</strong></td>
+      <td>按照特征规则对样本分组</td>
+      <td>把<strong>残差相近</strong>的样本划分到同一个节点</td>
+    </tr>
+    <tr>
+      <td><strong>叶子节点</strong></td>
+      <td>无法再分裂的末端节点</td>
+      <td>节点内存储<strong>本组样本残差的均值</strong></td>
+    </tr>
+  </table>
+
+  <h3>三、随机种子到底控制什么？</h3>
+
+  <div class="concept-block warn">
+    <strong>先纠正关键误区：</strong>随机种子<strong>不控制</strong>节点数量、树的大小！
+  </div>
+
+  <table>
+    <tr><th>什么控制树结构？</th><th>什么控制随机选择？</th></tr>
+    <tr>
+      <td>
+        <strong>超参数</strong>（结构参数）<br>
+        <code>max_depth</code>、<code>num_leaves</code>、<code>min_child_samples</code>、正则化等
+      </td>
+      <td>
+        <strong>随机种子</strong><br>
+        选哪个特征、选哪个分裂切点等
+      </td>
+    </tr>
+  </table>
+
+  <div class="concept-block green">
+    <strong>随机种子控制的随机行为：</strong><br>
+    &nbsp;&nbsp;• 训练时随机选取部分特征<br>
+    &nbsp;&nbsp;• 节点分裂时随机筛选候选分裂点<br>
+    &nbsp;&nbsp;• 数据采样（如果 subsample &lt; 1.0）<br>
+    &nbsp;&nbsp;• 特征采样（如果 colsample_bytree &lt; 1.0）
+  </div>
+
+  <h3>四、整体逻辑串联（一条完整训练链路）</h3>
+
+  <div style="background:#f9fafb;border-radius:10px;padding:1.4rem;margin:0.8rem 0;line-height:2.3;font-size:0.92rem;border:1px solid var(--border);">
+    1. 划分数据集（随机种子固定划分结果）→<br>
+    2. 初始化第一棵树，根节点包含全部样本 →<br>
+    3. 树不断<strong>节点分裂</strong>：<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;• 随机种子固定「选哪个特征/分裂点」<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;• 结构参数+正则化限制「分裂次数、节点总数」→<br>
+    4. 生成叶子节点，用叶子值表达残差，完成单棵树训练 →<br>
+    5. 计算整体误差（原始损失），叠加正则惩罚，优化总损失 →<br>
+    6. 计算新残差，训练下一棵树重复上述流程 →<br>
+    7. 所有树输出累加，得到最终预测结果
+  </div>
+
+</div>
+
+<!-- ======================================================================== -->
+<!-- 第4章：什么是超参数和超参优化 -->
+<!-- ======================================================================== -->
+<div class="card" id="s4">
+  <h2><span class="icon">🔧</span> 四、什么是「超参数」和「超参优化」？</h2>
+
+  <h3>模型参数 vs 超参数</h3>
+  <table>
+    <tr><th>类型</th><th>谁来定？</th><th>举例</th><th>存在哪里？</th></tr>
+    <tr>
+      <td><strong>模型参数</strong></td>
+      <td>模型自己从数据中学</td>
+      <td>每棵树的分裂点、叶子节点的预测值</td>
+      <td>模型文件（.pkl / .txt）</td>
+    </tr>
+    <tr>
+      <td><strong>超参数</strong></td>
+      <td>人（或 Optuna）在训练前设定</td>
+      <td>学习率、树深度、叶子数</td>
+      <td>一个几十行的配置 / CSV 表格</td>
+    </tr>
+  </table>
+
+  <h3>为什么需要超参优化？</h3>
+  <ul class="rule-list">
+    <li>不同的超参组合会让同一个模型的预测精度天差地别</li>
+    <li>手工试参靠经验、靠运气，效率极低</li>
+    <li>Optuna 能自动探索参数空间，比网格搜索快 10~100 倍</li>
+    <li>它能「学习」哪些参数区域效果更好，越来越聪明地选择下一组尝试值</li>
+  </ul>
+</div>
+
+<!-- ======================================================================== -->
+<!-- 第5章：Optuna 是怎么工作的 -->
+<!-- ======================================================================== -->
+<div class="card" id="s5">
+  <h2><span class="icon">⚙️</span> 五、Optuna 是怎么工作的？</h2>
+
+  <h3>Optuna 的三板斧</h3>
+
+  <div class="concept-block">
+    <strong>① 定义目标函数（Objective Function）</strong><br>
+    你写一个函数，输入是一组超参数，输出是模型在验证集上的误差（如 MDA 或 MAPE）。Optuna 的目标就是让这个误差越小越好（MAPE 越小越好）或越大越好（MDA 越大越好，需取负数转换）。
+  </div>
+
+  <div class="concept-block green">
+    <strong>② 采样器（Sampler）决定下一组试什么参数</strong><br>
+    我们使用 <strong>TPESampler</strong>（Tree-structured Parzen Estimator）。它维护两个概率分布：
+    <ul class="rule-list" style="margin-top:0.3rem;">
+      <li><strong>好参数分布</strong> l(x)：历史试验中效果好的参数长什么样</li>
+      <li><strong>差参数分布</strong> g(x)：历史试验中效果差的参数长什么样</li>
+    </ul>
+    每次选新参数时，选那些在 l(x) 中概率高、在 g(x) 中概率低的值。越试越准。
+  </div>
+
+  <div class="concept-block warn">
+    <strong>③ 剪枝器（Pruner）提前终止差的试验</strong><br>
+    我们使用 <strong>MedianPruner</strong>：在训练的每个中间步骤，如果当前试验的效果差于所有已完成试验的中位数，就直接终止。节省大量时间。
+  </div>
+
+  <h3>完整优化流程图</h3>
+  <div style="background:#f9fafb;border-radius:8px;padding:1rem;text-align:center;font-size:0.9rem;line-height:2.2;">
+    ① Optuna 建议一组超参<br>
+    <span style="color:var(--muted);">↓</span><br>
+    ② 用这组超参训练 LightGBM（在时序交叉验证上评估）<br>
+    <span style="color:var(--muted);">↓</span><br>
+    ③ MedianPruner 检查：中期效果是否太差？→ 是 → 终止，回到①<br>
+    <span style="color:var(--muted);">↓ 否</span><br>
+    ④ 训练完成，记录 MDA / MAPE<br>
+    <span style="color:var(--muted);">↓</span><br>
+    ⑤ TPE 学习这组结果，更新「好参数」和「差参数」的分布<br>
+    <span style="color:var(--muted);">↓</span><br>
+    ⑥ 重复 ①~⑤，共 200~500 次<br>
+    <span style="color:var(--muted);">↓</span><br>
+    ⑦ 输出所有试验结果到 CSV，找出最优那组
+  </div>
+</div>
+
+<!-- ======================================================================== -->
+<!-- 第5b章：Optuna 深入原理 -->
+<!-- ======================================================================== -->
+<div class="card" id="s5b">
+  <h2><span class="icon">🔬</span> 五-B、Optuna 深入：TPE + MedianPruner 原理</h2>
+
+  <h3>TPE 是怎么「越猜越聪明」的？</h3>
+
+  <div class="concept-block">
+    <strong>核心思想：</strong>把所有已经试过的参数分成两组——效果好的前 25%（好参数组）和剩下的 75%（差参数组），然后分析两组各自的分布规律，下一次优先从「好参数组」分布中选值。
+  </div>
+
+  <table>
+    <tr><th>步骤</th><th>做什么</th><th>白话解释</th></tr>
+    <tr>
+      <td>1</td>
+      <td>按 MDA 排序所有已完成试验</td>
+      <td>把试过的参数按分数排个名次</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td>前 25% 标为「好参数组」，后 75% 标为「差参数组」</td>
+      <td>成绩好的放一边，差的放另一边</td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td>分别计算两组各自的概率分布</td>
+      <td>看看「好参数」有什么共同特点，「差参数」有什么共同特点</td>
+    </tr>
+    <tr>
+      <td>4</td>
+      <td>新参数选在「好参数分布」概率高、「差参数分布」概率低的位置</td>
+      <td>尽量选在好学生扎堆、坏学生不来的区域</td>
+    </tr>
+  </table>
+
+  <div class="concept-block green" style="margin-top:0.8rem;">
+    <strong>可视化理解：</strong><br>
+    试验 1~10：&nbsp; <code style="background:#e5e7eb;padding:2px 8px;border-radius:4px;">░░░░░░░░░░░░░░░░░░░░░░░░░░░</code> 到处试探<br>
+    试验 11~30：&nbsp; <code style="background:#e5e7eb;padding:2px 8px;border-radius:4px;">&nbsp;&nbsp;&nbsp;&nbsp;░░░░░░░░░░░░░░░░░░░░░░</code> 范围缩小了<br>
+    试验 31~50：&nbsp; <code style="background:#e5e7eb;padding:2px 8px;border-radius:4px;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;░░░░░░░░░░░░░░</code> 聚焦到好区域<br>
+    试验 51+：&nbsp;&nbsp;&nbsp; <code style="background:#e5e7eb;padding:2px 8px;border-radius:4px;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;░░░░░</code> 接近最优
+  </div>
+
+  <h3 style="margin-top:1.2rem;">MedianPruner 怎么提前终止差的试验？</h3>
+
+  <div class="concept-block warn">
+    <strong>工作方式：</strong>LightGBM 每加 100 棵树时，Optuna 检查一次中间分数。如果当前试验的中间分数 <strong>差于所有已完成试验的中位数</strong>，直接终止这组试验。
+  </div>
+
+  <table>
+    <tr><th>试验</th><th>100棵树 MDA</th><th>200棵树 MDA</th><th>300棵树 MDA</th><th>结果</th></tr>
+    <tr>
+      <td>A</td><td>0.55</td><td>0.58</td><td>0.62</td>
+      <td><span class="tag tag-green">通过</span> 持续向好</td>
+    </tr>
+    <tr>
+      <td>B</td><td>0.35</td><td>0.38</td><td>—</td>
+      <td><span class="tag tag-red">被剪枝</span> 低于中位数，直接终止</td>
+    </tr>
+  </table>
+
+  <div class="concept-block green">
+    <strong>好处：</strong>假设 200 次试验中有 60 次被提前终止，就能节省约 30% 的总时间。差的试验不浪费算力跑到底。
+  </div>
+
+  <h3 style="margin-top:1.2rem;">和网格搜索的直观对比</h3>
+  <table>
+    <tr><th></th><th>网格搜索</th><th>随机搜索</th><th>Optuna (TPE)</th></tr>
+    <tr>
+      <td>策略</td><td>列出所有组合，逐个试</td><td>纯随机抽</td><td>从历史中学习，越来越聪明</td>
+    </tr>
+    <tr>
+      <td>9参数各10值</td><td>10⁹ = 10亿次（不可能）</td><td>200次，纯靠运气</td><td>200次，越到后面越准</td>
+    </tr>
+    <tr>
+      <td>比喻</td><td>把整片海的水抽干找鱼</td><td>蒙眼撒网</td><td>用声呐探测鱼群，然后精准撒网</td>
+    </tr>
+  </table>
+</div>
+
+<!-- ======================================================================== -->
+<!-- 第6章：9个核心超参详解 -->
+<!-- ======================================================================== -->
+<div class="card" id="s6">
+  <h2><span class="icon">🎛️</span> 六、9 个核心超参逐个详解</h2>
+  <p style="color:var(--muted);font-size:0.9rem;margin-bottom:1rem;">
+    每一个参数都附带「调大了会怎样」「调小了会怎样」和「典型范围」。
+  </p>
+
+  <table>
+    <tr>
+      <th style="width:12%">参数名</th>
+      <th style="width:14%">一句话含义</th>
+      <th style="width:30%">详细解释</th>
+      <th style="width:10%">范围</th>
+      <th style="width:16%">调太大会？</th>
+      <th style="width:16%">调太小会？</th>
+    </tr>
+
+    <tr>
+      <td><code>learning_rate</code></td>
+      <td>学习率 / 步长</td>
+      <td>每棵新树对最终预测的贡献权重。学习率小 = 每步走得少 = 需要更多树 = 更稳健但更慢</td>
+      <td>0.01~0.3</td>
+      <td>可能跳过了最优解，震荡不收敛</td>
+      <td>收敛太慢，需要很多棵树才能学好</td>
+    </tr>
+
+    <tr>
+      <td><code>num_leaves</code></td>
+      <td>叶子节点数</td>
+      <td>每棵树最多有多少个叶子节点。叶子越多 = 树越复杂 = 能捕捉更精细的模式</td>
+      <td>16~256</td>
+      <td><span class="tag tag-red">过拟合</span> 记住噪声而不是规律</td>
+      <td><span class="tag tag-yellow">欠拟合</span> 模型太简单，学不到复杂关系</td>
+    </tr>
+
+    <tr>
+      <td><code>max_depth</code></td>
+      <td>树最大深度</td>
+      <td>树从根到叶子最多经过几层。和 num_leaves 配合使用，一起控制模型复杂度</td>
+      <td>3~12</td>
+      <td><span class="tag tag-red">过拟合</span></td>
+      <td><span class="tag tag-yellow">欠拟合</span></td>
+    </tr>
+
+    <tr>
+      <td><code>min_child_samples</code></td>
+      <td>叶子最少样本数</td>
+      <td>一个叶子节点至少包含多少条训练数据。值越大，树越不容易在数据稀疏的地方分裂</td>
+      <td>5~100</td>
+      <td><span class="tag tag-yellow">欠拟合</span> 阻止了有用的分裂</td>
+      <td><span class="tag tag-red">过拟合</span> 可能在只有几条数据的地方也分裂</td>
+    </tr>
+
+    <tr>
+      <td><code>subsample</code></td>
+      <td>样本采样比例</td>
+      <td>每棵树只用多少比例的训练数据（随机抽取）。&lt;1.0 能防止过拟合，增加泛化能力</td>
+      <td>0.5~1.0</td>
+      <td>1.0 失去正则化效果，可能过拟合</td>
+      <td>用太少数据，模型学不充分</td>
+    </tr>
+
+    <tr>
+      <td><code>colsample_bytree</code></td>
+      <td>特征采样比例</td>
+      <td>每棵树只用多少比例的特征列（随机抽取）。类似 subsample，但是按列采样</td>
+      <td>0.5~1.0</td>
+      <td>1.0 失去正则化效果</td>
+      <td>丢失重要特征，影响精度</td>
+    </tr>
+
+    <tr>
+      <td><code>reg_alpha</code></td>
+      <td>L1 正则化</td>
+      <td>给损失函数加上「参数绝对值之和」的惩罚。会把不重要的特征权重压成 0，相当于自动做特征选择</td>
+      <td>1e-8~10</td>
+      <td><span class="tag tag-yellow">欠拟合</span> 把有用特征也压成 0 了</td>
+      <td>正则化太弱，起不到防止过拟合的作用</td>
+    </tr>
+
+    <tr>
+      <td><code>reg_lambda</code></td>
+      <td>L2 正则化</td>
+      <td>给损失函数加上「参数平方和」的惩罚。让所有参数都尽量小但不会变 0，更平滑地防止过拟合</td>
+      <td>1e-8~10</td>
+      <td><span class="tag tag-yellow">欠拟合</span></td>
+      <td>正则化太弱，可能过拟合</td>
+    </tr>
+
+    <tr>
+      <td><code>n_estimators</code></td>
+      <td>树的数量</td>
+      <td>一共建多少棵树。配合 learning_rate：学习率小就需要更多树</td>
+      <td>100~2000</td>
+      <td>训练慢、可能过拟合（但通常配合小学习率就还好）</td>
+      <td>学习不充分，欠拟合</td>
+    </tr>
+  </table>
+
+  <div class="concept-block warn" style="margin-top:1rem;">
+    <strong>关键理解：</strong>这些参数不是独立的——它们相互影响。比如 <code>num_leaves</code> 很大时就需要加大 <code>reg_alpha/reg_lambda</code> 来防止过拟合；<code>learning_rate</code> 很小就需要更多的 <code>n_estimators</code>。Optuna 的价值就在于能自动找到这些参数之间的最佳平衡点。
+  </div>
+</div>
+
+<!-- ======================================================================== -->
+<!-- 第7章：评估指标 -->
+<!-- ======================================================================== -->
+<div class="card" id="s7">
+  <h2><span class="icon">📏</span> 七、评估指标：MDA / MAPE</h2>
+  <p style="color:var(--muted);font-size:0.9rem;margin-bottom:1rem;">
+    我们需要用数字来衡量「预测得准不准」。两个指标从不同角度衡量预测效果。
+  </p>
+
+  <table>
+    <tr><th style="width:10%">指标</th><th style="width:20%">全称</th><th style="width:30%">公式含义</th><th>大白话解释</th></tr>
+    <tr>
+      <td><strong>MDA</strong></td>
+      <td>Mean Directional Accuracy<br>平均方向准确率</td>
+      <td>预测方向正确的天数 ÷ 总天数 × 100%</td>
+      <td>只关心「方向预测对了吗」——预测明天涨、实际也涨，就计为正确。<strong>MDA 越高越好</strong>，范围 0%~100%。MDA=60% 表示 10 次里有 6 次涨跌方向预测对了。<strong>优点：直接反映模型对趋势方向的判断能力。缺点：不关心涨跌幅度的大小。</strong></td>
+    </tr>
+    <tr>
+      <td><strong>MAPE</strong></td>
+      <td>Mean Absolute Percentage Error<br>平均绝对百分比误差</td>
+      <td>所有 |(预测值-真实值)/真实值| 的平均 × 100%</td>
+      <td>用<strong>百分比</strong>表示误差。<strong>MAPE 越低越好</strong>。MAPE=5% 意思是平均每次预测偏差 5%。<strong>优点：百分比直观，不同数据集之间可比较。缺点：真实值接近 0 时数值会爆炸。</strong></td>
+    </tr>
+  </table>
+
+  <div class="concept-block green">
+    <strong>MDA 的计算细节：</strong>方向正确 = sign(预测值<sub>t</sub> - 真实值<sub>t-1</sub>) == sign(真实值<sub>t</sub> - 真实值<sub>t-1</sub>)。只要预测的「变化方向」（涨/跌）和实际的「变化方向」一致就算对，涨跌幅度不重要。
+  </div>
+
+  <div class="concept-block" style="margin-top:0.8rem;">
+    <strong>MDA 和 MAPE 为什么搭配使用？</strong>MDA 衡量「方向对不对」，MAPE 衡量「数值准不准」。两者互补：一个模型可能方向全对但数值偏差很大（MDA 高、MAPE 差），也可能数值很准但方向经常错（MAPE 好、MDA 低）。同时看两个指标才能全面评估模型好坏。
+  </div>
+
+  <div class="concept-block warn" style="margin-top:0.8rem;">
+    <strong>Optuna 优化注意事项：</strong>Optuna 默认<strong>最小化</strong>目标函数，而 MDA 是<strong>越大越好</strong>。因此在定义 objective 函数时，如果以 MDA 为优化目标，需要返回 <strong>1 - MDA</strong> 或 <strong>-MDA</strong> 来转换为最小化问题。MAPE 本身就是越小越好，可以直接作为目标。
+  </div>
+</div>
+
+<!-- ======================================================================== -->
+<!-- 第7b章：objective(trial) 函数详解 -->
+<!-- ======================================================================== -->
+<div class="card" id="s7b">
+  <h2><span class="icon">🎯</span> 七-B、objective(trial) 函数详解</h2>
+
+  <div class="concept-block">
+    <strong>一句话：</strong><code>objective(trial)</code> 是你写给 Optuna 的「评分函数」——Optuna 给你一组超参数，你训练模型后返回一个分数，Optuna 想办法让这个分数越小越好。
+  </div>
+
+  <h3>它做了三件事</h3>
+
+  <div style="background:#f9fafb;border-radius:8px;padding:1.2rem;margin:0.8rem 0;line-height:2.2;font-size:0.9rem;">
+    <strong>① trial 建议一组超参</strong><br>
+    <code style="background:#e5e7eb;padding:1px 6px;border-radius:3px;">num_leaves = trial.suggest_int("num_leaves", 15, 255)</code> &nbsp; → 比如这次猜 128<br>
+    <code style="background:#e5e7eb;padding:1px 6px;border-radius:3px;">learning_rate = trial.suggest_float("learning_rate", 0.01, 0.3, log=True)</code> &nbsp; → 比如猜 0.05<br>
+    ...（共 9 个参数）<br><br>
+
+    <strong>② 用这组参数训练 LightGBM，在验证集上算 MDA</strong><br>
+    <code style="background:#e5e7eb;padding:1px 6px;border-radius:3px;">model = LGBMRegressor(num_leaves=128, learning_rate=0.05, ...)</code><br>
+    <code style="background:#e5e7eb;padding:1px 6px;border-radius:3px;">model.fit(X_train, y_train)</code><br>
+    <code style="background:#e5e7eb;padding:1px 6px;border-radius:3px;">y_pred = model.predict(X_val)</code><br>
+    <code style="background:#e5e7eb;padding:1px 6px;border-radius:3px;">mda = 计算方向准确率(y_val, y_pred)</code> &nbsp; → 比如 MDA = 0.62<br><br>
+
+    <strong>③ 返回分数（Optuna 会最小化这个分数）</strong><br>
+    <code style="background:#e5e7eb;padding:1px 6px;border-radius:3px;">return 1.0 - mda</code> &nbsp; → 返回 0.38
+  </div>
+
+  <h3>为什么返回 1 - MDA 而不是直接返回 MDA？</h3>
+
+  <div class="concept-block warn">
+    <strong>Optuna 的设计是「分数越小越好」（最小化），但 MDA 是「越大越好」。</strong>所以用 <code>1 - MDA</code> 做转换：
+  </div>
+
+  <table>
+    <tr><th>MDA</th><th>返回给 Optuna 的值</th><th>Optuna 的判断</th></tr>
+    <tr><td>0.62</td><td>1 - 0.62 = <strong>0.38</strong></td><td>0.38 &lt; 0.45，所以<strong>选这个 ✓</strong></td></tr>
+    <tr><td>0.55</td><td>1 - 0.55 = 0.45</td><td>分数更高，不选 ✗</td></tr>
+  </table>
+
+  <h3>trial 对象是什么？</h3>
+
+  <div class="concept-block">
+    <strong>一句话：</strong><code>trial</code> 是 Optuna 每次试验时专门为你创建的一个「参数顾问」对象——它的核心工作就是根据之前的历史经验，给你建议这一轮该试什么参数值。
+  </div>
+
+  <div style="background:#f9fafb;border-radius:8px;padding:1.2rem;margin:0.8rem 0;line-height:2.2;font-size:0.9rem;">
+    <strong>注意一个关键点：</strong><br>
+    每一次 trial 都是<strong>独立的对象</strong>！<br>
+    &nbsp;&nbsp;• 第 1 次试验 → trial_1 对象<br>
+    &nbsp;&nbsp;• 第 2 次试验 → trial_2 对象<br>
+    &nbsp;&nbsp;• 第 200 次试验 → trial_200 对象<br><br>
+    每个 trial 对象只负责<strong>当前这一轮</strong>的参数建议，但它能「看到」前面所有 trial 的历史结果。
+  </div>
+
+  <h3>trial.suggest_xxx 的工作原理（三步理解）</h3>
+
+  <table>
+    <tr><th style="width:8%">步骤</th><th>做什么</th><th>大白话</th></tr>
+    <tr>
+      <td>1</td>
+      <td><strong>接收历史数据</strong></td>
+      <td>trial 对象内部能看到前面 1~N 次试验用了什么参数、得到了什么 MDA 分数</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td><strong>TPE 算法计算</strong></td>
+      <td>把历史分成「好参数组」和「差参数组」，计算两组的概率分布</td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td><strong>建议新值</strong></td>
+      <td>从「好参数分布」概率高、「差参数分布」概率低的区域抽一个值返回给你</td>
+    </tr>
+  </table>
+
+  <h3>trial 的核心方法详解</h3>
+  <table>
+    <tr><th style="width:22%">方法</th><th style="width:15%">参数类型</th><th>作用</th><th>我们代码中的示例</th></tr>
+    <tr>
+      <td><code>suggest_int(name, low, high)</code></td>
+      <td>整数</td>
+      <td>在 [low, high] 范围内建议一个整数</td>
+      <td><code>trial.suggest_int("num_leaves", 15, 255)</code><br>→ 比如返回 128</td>
+    </tr>
+    <tr>
+      <td><code>suggest_float(name, low, high)</code></td>
+      <td>浮点数</td>
+      <td>在 [low, high] 范围内建议一个浮点数（均匀分布）</td>
+      <td><code>trial.suggest_float("subsample", 0.5, 1.0)</code><br>→ 比如返回 0.82</td>
+    </tr>
+    <tr>
+      <td><code>suggest_float(name, low, high, log=True)</code></td>
+      <td>浮点数</td>
+      <td>在 [low, high] 范围内建议一个浮点数（<strong>对数分布</strong>）</td>
+      <td><code>trial.suggest_float("learning_rate", 0.01, 0.3, log=True)</code><br>→ 比如返回 0.047</td>
+    </tr>
+  </table>
+
+  <div class="concept-block green">
+    <strong>为什么 learning_rate 需要 log=True？</strong><br>
+    学习率 0.01 和 0.02 之间的差距，比 0.2 和 0.3 之间的差距重要得多。用对数尺度可以让小值区域被更密集地采样。
+  </div>
+
+  <h3>trial 的其他有用方法</h3>
+  <table>
+    <tr><th style="width:22%">方法</th><th>作用</th><th>示例</th></tr>
+    <tr>
+      <td><code>trial.set_user_attr(key, value)</code></td>
+      <td>给当前 trial 附加额外信息（不会影响优化）</td>
+      <td><code>trial.set_user_attr("mda", 0.62)</code><br><code>trial.set_user_attr("mape", 0.15)</code></td>
+    </tr>
+    <tr>
+      <td><code>trial.number</code></td>
+      <td>当前是第几次试验（从 0 开始）</td>
+      <td>第 5 次试验 → <code>trial.number == 4</code></td>
+    </tr>
+    <tr>
+      <td><code>trial.params</code></td>
+      <td>当前 trial 已经选好的所有参数字典</td>
+      <td><code>{'num_leaves': 128, 'learning_rate': 0.05, ...}</code></td>
+    </tr>
+  </table>
+
+  <div class="concept-block">
+    <strong>trial.suggest_xxx 不是纯随机抽——</strong>它背后是 TPE 算法在运作，会根据之前试验的结果越来越聪明地选值。第 1 次可能是乱猜，第 200 次就已经非常聚焦了。
+  </div>
+
+  <h3>直观理解：trial 的「学习曲线」</h3>
+
+  <div style="background:#f9fafb;border-radius:8px;padding:1.2rem;margin:0.8rem 0;line-height:2.1;font-size:0.9rem;">
+    <strong>第 1~10 次试验：</strong>「盲人摸象」<br>
+    &nbsp;&nbsp;trial：我不知道哪个区域好 → 到处乱试<br>
+    &nbsp;&nbsp;num_leaves 可能是 20、200、50、180... 分布很散<br><br>
+
+    <strong>第 11~50 次试验：</strong>「找到方向」<br>
+    &nbsp;&nbsp;trial：看起来 num_leaves 在 80~150 之间效果比较好 → 往这个区域聚焦<br>
+    &nbsp;&nbsp;num_leaves 更多出现在 80~150 之间<br><br>
+
+    <strong>第 51~200 次试验：</strong>「精准搜索」<br>
+    &nbsp;&nbsp;trial：num_leaves 在 110~130 之间表现最好 → 在这个小范围内精细搜索<br>
+    &nbsp;&nbsp;num_leaves 可能是 112、118、125、121... 非常集中
+  </div>
+
+  <div class="concept-block warn">
+    <strong>重要 1：suggest_xxx 必须每次都按相同顺序调用！</strong><br>
+    如果你在 objective 函数里一会儿先 suggest num_leaves，一会儿先 suggest learning_rate，Optuna 会搞混的。必须保持顺序一致。
+  </div>
+
+  <div class="concept-block">
+    <strong>重要 2：trial 对象每次都传，但方法按需调用！</strong><br>
+    trial 对象身上有很多方法可用，但你不需要把它们都用一遍：<br>
+    &nbsp;&nbsp;• <code>suggest_int/suggest_float</code> → 必须调用（用来建议超参数）<br>
+    &nbsp;&nbsp;• <code>set_user_attr</code> → 可选调用（用来记录额外信息）<br><br>
+    看我们的代码：我们只用了 suggest_int（4次）、suggest_float（5次）、set_user_attr（3次），其他 trial 方法根本没碰。
+  </div>
+
+  <h3>完整的 trial 生命周期示例</h3>
+
+  <div style="background:#f9fafb;border-radius:8px;padding:1.2rem;margin:0.8rem 0;line-height:2.2;font-size:0.9rem;border:1px solid var(--border);">
+    <strong>第 50 次试验的 trial 对象：</strong><br><br>
+
+    <code style="background:#e5e7eb;padding:1px 6px;border-radius:3px;">
+    # trial 出生了，它能看到前 49 次的历史
+    def objective(trial):
+        # 第 1 步：trial 根据前 49 次的经验建议参数
+        num_leaves = trial.suggest_int("num_leaves", 15, 255)
+        # → trial 想：前 49 次里 110~130 效果最好，这次猜 122
+        learning_rate = trial.suggest_float("learning_rate", 0.01, 0.3, log=True)
+        # → trial 想：0.03~0.07 之间不错，这次猜 0.048
+        ...
+
+        # 第 2 步：用这组参数训练模型
+        model.fit(...)
+
+        # 第 3 步：算 MDA = 0.65
+        mda = 计算...
+
+        # 第 4 步：把额外信息记在 trial 身上
+        trial.set_user_attr("mda", mda)
+        trial.set_user_attr("mape", mape)
+
+        # 第 5 步：返回目标值，trial 完成使命退场
+        return 1.0 - mda
+    </code>
+  </div>
+
+</div>
+
+<!-- ======================================================================== -->
+<!-- 第7c章：LightGBM + Optuna 完整配合流程 -->
+<!-- ======================================================================== -->
+<div class="card" id="s7c">
+  <h2><span class="icon">🔄</span> 七-C、LightGBM + Optuna 完整配合流程</h2>
+
+  <p style="color:var(--muted);font-size:0.9rem;margin-bottom:1rem;">
+    理解了各自的工作原理后，看它们是怎么配合的。
+  </p>
+
+  <div style="background:#f9fafb;border-radius:10px;padding:1.4rem;margin:0.8rem 0;line-height:2.3;font-size:0.92rem;border:1px solid var(--border);">
+    ┌──────────────────────────────────────────────────────────────┐<br>
+    │&nbsp; <strong>Optuna（外层指挥：决定试什么参数）</strong> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│<br>
+    │&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│<br>
+    │&nbsp; ① TPE 建议一组超参 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│<br>
+    │&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;↓ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│<br>
+    │&nbsp; ② 传给 LightGBM &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│<br>
+    │&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;↓ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│<br>
+    │&nbsp; ┌─────────────────────────────────────────────┐ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│<br>
+    │&nbsp; │ <strong>LightGBM（内层士兵：用这组参数训练模型）</strong> │ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│<br>
+    │&nbsp; │&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│<br>
+    │&nbsp; │ ③ 建第1棵树 → 算残差 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│<br>
+    │&nbsp; │ ④ 建第2棵树 → 修正残差 → 算中间MDA &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│<br>
+    │&nbsp; │ ⑤ MedianPruner 检查：太差就终止 ────→ 回到① &nbsp;│ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│<br>
+    │&nbsp; │ ⑥ 建第N棵树 → 训练完成 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│<br>
+    │&nbsp; │ ⑦ 在 val 集上算最终 MDA &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│<br>
+    │&nbsp; └─────────────────────────────────────────────┘ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│<br>
+    │&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;↓ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│<br>
+    │&nbsp; ⑧ 把 MDA 返回给 TPE，更新「好/差参数」分布 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│<br>
+    │&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;↓ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│<br>
+    │&nbsp; ⑨ 回到①，下一轮更聪明地选参数 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│<br>
+    │&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│<br>
+    │&nbsp; 重复 50~200 次，取 MDA 最高的那组参数 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│<br>
+    └──────────────────────────────────────────────────────────────┘
+  </div>
+
+  <h3>三个角色的分工</h3>
+  <table>
+    <tr><th>角色</th><th>是什么</th><th>职责</th><th>比喻</th></tr>
+    <tr>
+      <td><strong>Optuna (TPE)</strong></td>
+      <td>外层指挥官</td>
+      <td>决定每一轮试什么参数，学习历史结果</td>
+      <td>总厨：根据之前的试吃反馈，决定下一锅怎么调味</td>
+    </tr>
+    <tr>
+      <td><strong>LightGBM</strong></td>
+      <td>内层士兵</td>
+      <td>接收参数，训练模型，产出预测和分数</td>
+      <td>厨师：按配方做菜，端出来给人试吃打分</td>
+    </tr>
+    <tr>
+      <td><strong>MedianPruner</strong></td>
+      <td>监工</td>
+      <td>中途检查，太差就喊停，节省算力</td>
+      <td>试吃员：尝一口发现咸得没法吃，直接倒掉</td>
+    </tr>
+  </table>
+
+  <h3>train / val / test 在这个流程中的用途</h3>
+  <div class="concept-block green">
+    <strong>Optuna 优化阶段：</strong><br>
+    &nbsp;&nbsp;<code>train.csv</code> → 训练模型（学习数据中的规律）<br>
+    &nbsp;&nbsp;<code>val.csv</code> → 验证效果（Optuna 根据这个分数调整搜索方向）<br>
+    &nbsp;&nbsp;<code>test.csv</code> → <span class="tag tag-red">❌ 完全不碰！</span>（最后的考试卷，调参时不能偷看）<br><br>
+    <strong>复现推理阶段：</strong><br>
+    &nbsp;&nbsp;<code>train.csv + val.csv</code> → 合并后，用最优参数重新训练<br>
+    &nbsp;&nbsp;<code>test.csv</code> → 最终考试，得出真正的 MDA/MAPE
+  </div>
+
+  <div class="concept-block warn">
+    <strong>为什么 test.csv 全程不能碰？</strong>如果你在调参过程中看了 test 的分数，然后根据这个分数回去调整参数，就等于「考前偷看了答案再复习」——最后考出来的高分是假的，因为你的参数是为这套特定考题优化的，换一套新题就不灵了。
+  </div>
+</div>
+
+<!-- ======================================================================== -->
+<!-- 第8章：为什么要复现？ -->
+<!-- ======================================================================== -->
+<div class="card" id="s8">
+  <h2><span class="icon">🔄</span> 八、为什么要复现？随机种子是什么？</h2>
+
+  <h3>为什么需要「可复现」？</h3>
+  <ul class="rule-list">
+    <li>如果每次运行结果都不一样，你无法判断「改了参数」还是「运气好」导致效果变好</li>
+    <li>团队协作时，别人跑你的代码应该得到完全相同的数字</li>
+    <li>上线部署时，你需要确保训练环境和生产环境的模型一致</li>
+    <li>学术/工作中，结果不可复现 = 结果无效</li>
+  </ul>
+
+  <h3>「随机」到底从哪来？</h3>
+  <p>机器学习中有很多看起来「随机」但其实可以控制的地方：</p>
+  <table>
+    <tr><th>随机来源</th><th>影响什么</th><th>怎么控制</th></tr>
+    <tr><td>Python 内置 random</td><td>数据采样、打乱顺序</td><td><code>random.seed(42)</code></td></tr>
+    <tr><td>NumPy 随机数</td><td>数组操作中的随机</td><td><code>np.random.seed(42)</code></td></tr>
+    <tr><td>LightGBM 训练</td><td>特征采样、数据采样、树的构建</td><td><code>random_state=42, deterministic=True</code></td></tr>
+    <tr><td>Optuna 采样器</td><td>每次建议哪组参数</td><td><code>TPESampler(seed=42)</code></td></tr>
+  </table>
+
+  <div class="concept-block">
+    <strong>关键技巧：</strong>所有地方用<strong>同一个种子数字</strong>（比如 42），并且把 LightGBM 的 <code>deterministic=True</code> 打开，就能确保每次运行结果完全一致。我们的复现标准是<strong>两次运行的预测值差异 &lt; 1e-6</strong>（小于百万分之一）。
+  </div>
+</div>
+
+<!-- ======================================================================== -->
+<!-- 第9章：任务执行计划 -->
+<!-- ======================================================================== -->
+<div class="card" id="s9">
+  <h2><span class="icon">📅</span> 九、任务执行计划</h2>
+
+  <h3>两阶段，总耗时 2~3 天</h3>
+
+  <div style="margin-bottom:1.3rem;">
+    <h3><span class="tag tag-purple">阶段 1</span> 前置准备（0.5 天）</h3>
+    <table>
+      <tr><th>#</th><th>做什么</th><th>为什么做</th></tr>
+      <tr><td>1</td><td>安装 optuna、lightgbm、pandas、numpy、scikit-learn</td><td>没有这些包脚本跑不起来</td></tr>
+      <tr><td>2</td><td>确认使用已划分好的 train/val/test 数据集</td><td>数据分割规则已经定好，不能改</td></tr>
+      <tr><td>3</td><td>设定全局随机种子（所有地方同一个数字）</td><td>保证每次运行结果一样（见第八章）</td></tr>
+      <tr><td>4</td><td>确定 9 个超参的搜索范围</td><td>范围太大浪费算力，太小可能漏掉最优解</td></tr>
+    </table>
+  </div>
+
+  <div>
+    <h3><span class="tag tag-purple">阶段 2</span> 规范整理（0.5 天）</h3>
+    <table>
+      <tr><th>#</th><th>做什么</th><th>为什么做</th></tr>
+      <tr><td>1</td><td>代码添加清晰注释</td><td>方便别人（和未来的自己）看懂</td></tr>
+      <tr><td>2</td><td>整理最终交付物</td><td>确保 2 个脚本 + 1 个 CSV 都能独立运行</td></tr>
+      <tr><td>3</td><td>写运行说明（怎么执行、参数含义）</td><td>降低使用门槛</td></tr>
+    </table>
+  </div>
+
+  <h3>每日排期</h3>
+  <div class="timeline">
+    <div class="timeline-day">
+      <h4><span class="tag tag-yellow">周一</span> 前置准备 + 优化脚本框架</h4>
+      <p>完成标准：环境装好，脚本能跑通小规模优化（比如 10 次试验）</p>
+    </div>
+    <div class="timeline-day">
+      <h4><span class="tag tag-green">周二</span> Optuna 优化脚本完整开发 + 结果保存</h4>
+      <p>完成标准：200~500 次试验跑完，成功导出超参+指标的 CSV 文件</p>
+    </div>
+    <div class="timeline-day">
+      <h4><span class="tag tag-green">周三</span> 编写复现推理脚本</h4>
+      <p>完成标准：脚本能读取最优参数 CSV，用同样数据训练并输出预测结果</p>
+    </div>
+    <div class="timeline-day">
+      <h4><span class="tag tag-yellow">周四</span> 联调验证 + 修 Bug</h4>
+      <p>完成标准：复现脚本跑出来的评估指标和优化时记录的一致（误差 &lt; 1e-6）</p>
+    </div>
+    <div class="timeline-day">
+      <h4><span class="tag tag-green">周五</span> 代码整理 + 交付</h4>
+      <p>完成标准：代码整洁有注释，3 个文件打包交付</p>
+    </div>
+  </div>
+</div>
+
+<!-- ======================================================================== -->
+<!-- 第10章：交付物清单 + 硬性规则 -->
+<!-- ======================================================================== -->
+<div class="card" id="s10">
+  <h2><span class="icon">📦</span> 十、交付物清单 + 硬性规则</h2>
+
+  <h3>三个交付物</h3>
+  <div class="deliverable"><div class="idx">1</div><code>optuna_lgbm_optimize.py</code> — 用 Optuna 自动搜索最优超参，输出 CSV 结果表</div>
+  <div class="deliverable"><div class="idx">2</div><code>lgbm_infer_reproduce.py</code> — 读取最优参数 CSV，用相同数据训练并预测，复现优化结果</div>
+  <div class="deliverable"><div class="idx">3</div><code>optuna_hyperparam_results.csv</code> — 所有试验的超参组合 + MDA/MAPE 评估指标</div>
+
+  <h3 style="margin-top:1.5rem;">五条硬性规则</h3>
+  <table>
+    <tr>
+      <td><span class="tag tag-red">禁止</span></td>
+      <td>使用网格搜索或手动调参 —— 必须用 Optuna 自动优化</td>
+    </tr>
+    <tr>
+      <td><span class="tag tag-red">禁止</span></td>
+      <td>保存模型文件（.pkl / .txt）—— 只保存超参数组合和评估指标</td>
+    </tr>
+    <tr>
+      <td><span class="tag tag-red">必须</span></td>
+      <td>所有随机种子统一，复现脚本的结果必须和优化记录完全一致</td>
+    </tr>
+    <tr>
+      <td><span class="tag tag-red">必须</span></td>
+      <td>使用已划分好的固定训练集/验证集/测试集，不能改数据划分</td>
+    </tr>
+    <tr>
+      <td><span class="tag tag-red">必须</span></td>
+      <td>输出结构化 CSV 文件（DataFrame 格式），包含完整的超参 + 评估指标</td>
+    </tr>
+  </table>
+
+  <div class="highlight-box" style="margin-top:1.3rem;">
+    <strong>一句话记住全部：</strong><br>
+    Optuna（智能调参工具）自动帮 LightGBM（预测模型）找到最优超参数组合 → 只保存参数表（CSV）→ 提供复现脚本确保结果可验证 → 2个脚本 + 1个CSV 交付。
+  </div>
+</div>
+
+</div>
+</body>
+</html>

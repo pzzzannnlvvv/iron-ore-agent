@@ -1,0 +1,28 @@
+{
+  "target_id": "ID01517220",
+  "target_name": "卡拉加斯粉：港口库存：长江沿江地区：江阴港：明细（周度）",
+  "trained_at": "2026-06-04 13:56:17",
+  "optuna_trials": 50,
+  "optimization_time_seconds": 164.20646500587463,
+  "train_samples": 370,
+  "feature_count": 3196,
+  "train_mda": 0.9941690962099126,
+  "validation_mda": 0.7,
+  "test_mda": 0.5882352941176471,
+  "test_rmse": 2.9854406090341836,
+  "best_params": {
+    "num_leaves": 175,
+    "max_depth": 3,
+    "learning_rate": 0.02907827638930087,
+    "n_estimators": 1628,
+    "min_child_samples": 25,
+    "subsample": 0.6667318795419634,
+    "colsample_bytree": 0.5104043964357017,
+    "reg_alpha": 1.609272592956049e-06,
+    "reg_lambda": 0.00030854675626875485,
+    "random_state": 42,
+    "deterministic": true,
+    "verbosity": -1,
+    "n_jobs": -1
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "target_id": "ID01517120",
+  "target_name": "PB粉：港口库存：华东地区：青岛港：明细（周度）",
+  "group": "C",
+  "trained_at": "2026-06-04 14:59:05",
+  "optuna_trials": 100,
+  "optimization_time_seconds": 83.9387743473053,
+  "train_samples": 341,
+  "test_samples": 55,
+  "feature_count": 300,
+  "used_feature_selection": true,
+  "original_mda": 0.5472,
+  "new_validation_mda": 0.7941176470588235,
+  "new_test_mda": 0.48148148148148145,
+  "new_test_rmse": 13.872014264592114,
+  "mda_improvement": -0.06571851851851856,
+  "best_params": {
+    "num_leaves": 63,
+    "max_depth": 3,
+    "learning_rate": 0.08287207561620799,
+    "n_estimators": 1365,
+    "min_child_samples": 38,
+    "subsample": 0.5624677110862181,
+    "colsample_bytree": 0.6881271758144613,
+    "reg_alpha": 0.0016735916184510136,
+    "reg_lambda": 0.1183808101308876,
+    "random_state": 42,
+    "deterministic": true,
+    "verbosity": -1,
+    "n_jobs": -1
+  }
+}

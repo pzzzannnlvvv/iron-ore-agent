@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>周频模型训练总结</title>
+<style>
+  :root {
+    --bg: #f8f9fa;
+    --card-bg: #fff;
+    --text: #2c3e50;
+    --muted: #6c757d;
+    --accent: #2563eb;
+    --accent-light: #dbeafe;
+    --success: #16a34a;
+    --success-light: #dcfce7;
+    --warning: #ea580c;
+    --warning-light: #fff7ed;
+    --danger: #dc2626;
+    --danger-light: #fef2f2;
+    --border: #e5e7eb;
+    --code-bg: #1e293b;
+    --code-text: #e2e8f0;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    padding: 2rem;
+  }
+  .container { max-width: 960px; margin: 0 auto; }
+  h1 {
+    font-size: 1.8rem;
+    margin-bottom: 0.25rem;
+    color: #1e293b;
+  }
+  h2 {
+    font-size: 1.35rem;
+    margin: 2rem 0 0.75rem;
+    padding-bottom: 0.4rem;
+    border-bottom: 2px solid var(--accent);
+    color: #1e293b;
+  }
+  h3 {
+    font-size: 1.1rem;
+    margin: 1.25rem 0 0.5rem;
+    color: #334155;
+  }
+  p { margin: 0.5rem 0; }
+  .subtitle { color: var(--muted); font-size: 0.95rem; margin-bottom: 1.5rem; }
+
+  .card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.25rem 1.5rem;
+    margin: 1rem 0;
+    box-shadow: 0 1px 3px rgba(0,0,0,.04);
+  }
+  .card.warn { border-left: 4px solid var(--danger); }
+  .card.info { border-left: 4px solid var(--accent); }
+  .card.ok   { border-left: 4px solid var(--success); }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0.75rem 0;
+    font-size: 0.92rem;
+  }
+  th, td {
+    text-align: left;
+    padding: 0.55rem 0.75rem;
+    border-bottom: 1px solid var(--border);
+  }
+  th {
+    background: #f1f5f9;
+    font-weight: 600;
+    color: #475569;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: .03em;
+  }
+  tr:last-child td { border-bottom: none; }
+
+  .metric-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 0.75rem;
+    margin: 1rem 0;
+  }
+  .metric {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem;
+    text-align: center;
+  }
+  .metric .value {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--accent);
+  }
+  .metric .label {
+    font-size: 0.8rem;
+    color: var(--muted);
+    margin-top: 0.2rem;
+  }
+
+  .timeline {
+    position: relative;
+    padding-left: 1.5rem;
+    margin: 1rem 0;
+    border-left: 2px solid var(--border);
+  }
+  .timeline-item {
+    position: relative;
+    margin-bottom: 1.25rem;
+    padding-left: 1rem;
+  }
+  .timeline-item::before {
+    content: "";
+    position: absolute;
+    left: -1.625rem;
+    top: 0.35rem;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: 2px solid #fff;
+    box-shadow: 0 0 0 2px var(--accent);
+  }
+  .timeline-item.fix::before { background: var(--danger); box-shadow: 0 0 0 2px var(--danger); }
+  .timeline-item.ok::before  { background: var(--success); box-shadow: 0 0 0 2px var(--success); }
+
+  .timeline-time {
+    font-size: 0.78rem;
+    color: var(--muted);
+    font-weight: 500;
+  }
+  .timeline-title {
+    font-weight: 600;
+    margin: 0.15rem 0;
+  }
+
+  pre {
+    background: var(--code-bg);
+    color: var(--code-text);
+    padding: 1rem 1.25rem;
+    border-radius: 8px;
+    overflow-x: auto;
+    font-size: 0.85rem;
+    line-height: 1.5;
+    margin: 0.75rem 0;
+  }
+  code {
+    font-family: "SF Mono", "Fira Code", "Cascadia Code", monospace;
+    font-size: 0.88em;
+  }
+  :not(pre) > code {
+    background: #f1f5f9;
+    color: #e11d48;
+    padding: 0.15em 0.35em;
+    border-radius: 4px;
+  }
+
+  .badge {
+    display: inline-block;
+    padding: 0.2em 0.55em;
+    border-radius: 5px;
+    font-size: 0.78rem;
+    font-weight: 600;
+  }
+  .badge.fix { background: var(--danger-light); color: var(--danger); }
+  .badge.ok  { background: var(--success-light); color: var(--success); }
+  .badge.info { background: var(--accent-light); color: var(--accent); }
+
+  .flow {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    font-size: 0.88rem;
+    margin: 1rem 0;
+  }
+  .flow-box {
+    background: var(--accent-light);
+    color: var(--accent);
+    padding: 0.35rem 0.7rem;
+    border-radius: 6px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .flow-arrow { color: var(--muted); font-weight: bold; }
+
+  .callout {
+    background: var(--warning-light);
+    border: 1px solid #fdba74;
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    margin: 1rem 0;
+    font-size: 0.9rem;
+    color: #9a3412;
+  }
+
+  hr { border: none; border-top: 1px solid var(--border); margin: 1.5rem 0; }
+
+  /* ---------- 可折叠参数卡片 ---------- */
+  .param-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    margin: 0.6rem 0;
+    overflow: hidden;
+  }
+  .param-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1.1rem;
+    cursor: pointer;
+    user-select: none;
+    transition: background .15s;
+  }
+  .param-header:hover { background: #f8fafc; }
+  .param-header.is-open { background: var(--accent-light); }
+  .param-left {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+  }
+  .param-name {
+    font-family: "SF Mono","Fira Code",monospace;
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: #1e293b;
+    min-width: 170px;
+  }
+  .param-val {
+    font-weight: 700;
+    font-size: 1.05rem;
+    color: var(--accent);
+    min-width: 90px;
+  }
+  .param-range {
+    font-size: 0.78rem;
+    color: var(--muted);
+  }
+  .param-toggle {
+    color: var(--muted);
+    font-size: 1.2rem;
+    transition: transform .2s;
+  }
+  .param-header.is-open .param-toggle {
+    transform: rotate(90deg);
+  }
+  .param-body {
+    display: none;
+    padding: 0 1.1rem 1rem;
+    border-top: 1px solid var(--border);
+  }
+  .param-body.is-open {
+    display: block;
+  }
+  .param-desc {
+    margin: 0.75rem 0 0.5rem;
+    font-size: 0.9rem;
+    color: #475569;
+  }
+  .param-note {
+    font-size: 0.85rem;
+    color: var(--muted);
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <h1>周频模型训练总结</h1>
+  <p class="subtitle">将日频数据聚合为周频，完成超参优化与模型训练</p>
+
+  <div class="card ok">
+    <strong>📌 任务目标</strong>
+    <ul style="margin-top:0.5rem; padding-left:1.25rem;">
+      <li>将日频特征聚合为周频（周五优先）</li>
+      <li>周频数据切分（无验证集，gap=14周）</li>
+      <li>Optuna超参优化（MDA为目标）</li>
+      <li>测试集验证与结果输出</li>
+    </ul>
+  </div>
+
+  <h2>一、数据流程总览</h2>
+
+  <div class="flow">
+    <span class="flow-box">日频数据</span>
+    <span class="flow-arrow">→</span>
+    <span class="flow-box">周频聚合</span>
+    <span class="flow-arrow">→</span>
+    <span class="flow-box">数据切分</span>
+    <span class="flow-arrow">→</span>
+    <span class="flow-box">超参优化</span>
+    <span class="flow-arrow">→</span>
+    <span class="flow-box">模型复现</span>
+  </div>
+
+  <h2>二、数据规模</h2>
+
+  <div class="metric-grid">
+    <div class="metric">
+      <div class="value">3,788</div>
+      <div class="label">日频数据行数</div>
+    </div>
+    <div class="metric">
+      <div class="value">542</div>
+      <div class="label">周频数据行数</div>
+    </div>
+    <div class="metric">
+      <div class="value">85.7%</div>
+      <div class="label">数据压缩率</div>
+    </div>
+    <div class="metric">
+      <div class="value">3,184</div>
+      <div class="label">特征数量</div>
+    </div>
+  </div>
+
+  <h2>三、数据切分</h2>
+
+  <table>
+    <thead><tr><th>数据集</th><th>行数</th><th>日期范围</th></tr></thead>
+    <tbody>
+      <tr><td><strong>训练集</strong></td><td>471</td><td>~ 2024-12-31</td></tr>
+      <tr><td><strong>测试集</strong></td><td>57</td><td>2025-04-11 ~ 2026-05-01</td></tr>
+      <tr><td><strong>Gap</strong></td><td>14周</td><td>2025-01-01 ~ 2025-04-04</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout">
+    <strong>注意：</strong> 周频版本无验证集，超参优化时在训练集内部做 9:1 简单拆分。
+  </div>
+
+  <h2>四、超参优化</h2>
+
+  <div class="metric-grid">
+    <div class="metric">
+      <div class="value">200</div>
+      <div class="label">总试验次数</div>
+    </div>
+    <div class="metric">
+      <div class="value">17.3</div>
+      <div class="label">耗时（分钟）</div>
+    </div>
+    <div class="metric">
+      <div class="value" style="color:var(--success);">86.05%</div>
+      <div class="label">最佳MDA（验证）</div>
+    </div>
+    <div class="metric">
+      <div class="value" style="color:var(--success);">1.22%</div>
+      <div class="label">最佳MAPE（验证）</div>
+    </div>
+  </div>
+
+  <h3>最优超参数</h3>
+
+  <div class="param-card">
+    <div class="param-header" onclick="toggleParam(this)">
+      <div class="param-left">
+        <span class="param-name">num_leaves</span>
+        <span class="param-val">187</span>
+        <span class="param-range">[15, 255]</span>
+      </div>
+      <span class="param-toggle">▸</span>
+    </div>
+    <div class="param-body">
+      <p class="param-desc">决策树的最大叶子节点数，控制模型复杂度。</p>
+    </div>
+  </div>
+
+  <div class="param-card">
+    <div class="param-header" onclick="toggleParam(this)">
+      <div class="param-left">
+        <span class="param-name">max_depth</span>
+        <span class="param-val">4</span>
+        <span class="param-range">[3, 15]</span>
+      </div>
+      <span class="param-toggle">▸</span>
+    </div>
+    <div class="param-body">
+      <p class="param-desc">树的最大深度，防止过拟合。</p>
+    </div>
+  </div>
+
+  <div class="param-card">
+    <div class="param-header" onclick="toggleParam(this)">
+      <div class="param-left">
+        <span class="param-name">learning_rate</span>
+        <span class="param-val">0.0201</span>
+        <span class="param-range">[0.01, 0.3] log</span>
+      </div>
+      <span class="param-toggle">▸</span>
+    </div>
+    <div class="param-body">
+      <p class="param-desc">学习率，越小越稳健但需要更多树。</p>
+    </div>
+  </div>
+
+  <div class="param-card">
+    <div class="param-header" onclick="toggleParam(this)">
+      <div class="param-left">
+        <span class="param-name">n_estimators</span>
+        <span class="param-val">1,664</span>
+        <span class="param-range">[100, 2000]</span>
+      </div>
+      <span class="param-toggle">▸</span>
+    </div>
+    <div class="param-body">
+      <p class="param-desc"> boosting 的轮数（树的数量）。</p>
+    </div>
+  </div>
+
+  <div class="param-card">
+    <div class="param-header" onclick="toggleParam(this)">
+      <div class="param-left">
+        <span class="param-name">min_child_samples</span>
+        <span class="param-val">30</span>
+        <span class="param-range">[5, 100]</span>
+      </div>
+      <span class="param-toggle">▸</span>
+    </div>
+    <div class="param-body">
+      <p class="param-desc">叶子节点最小样本数，控制过拟合。</p>
+    </div>
+  </div>
+
+  <div class="param-card">
+    <div class="param-header" onclick="toggleParam(this)">
+      <div class="param-left">
+        <span class="param-name">subsample</span>
+        <span class="param-val">0.6367</span>
+        <span class="param-range">[0.5, 1.0]</span>
+      </div>
+      <span class="param-toggle">▸</span>
+    </div>
+    <div class="param-body">
+      <p class="param-desc">样本采样比例，每棵树使用的数据比例。</p>
+    </div>
+  </div>
+
+  <div class="param-card">
+    <div class="param-header" onclick="toggleParam(this)">
+      <div class="param-left">
+        <span class="param-name">colsample_bytree</span>
+        <span class="param-val">0.6026</span>
+        <span class="param-range">[0.5, 1.0]</span>
+      </div>
+      <span class="param-toggle">▸</span>
+    </div>
+    <div class="param-body">
+      <p class="param-desc">特征采样比例，每棵树使用的特征比例。</p>
+    </div>
+  </div>
+
+  <div class="param-card">
+    <div class="param-header" onclick="toggleParam(this)">
+      <div class="param-left">
+        <span class="param-name">reg_alpha</span>
+        <span class="param-val">2.44e-07</span>
+        <span class="param-range">[1e-08, 10] log</span>
+      </div>
+      <span class="param-toggle">▸</span>
+    </div>
+    <div class="param-body">
+      <p class="param-desc">L1 正则化项权重。</p>
+    </div>
+  </div>
+
+  <div class="param-card">
+    <div class="param-header" onclick="toggleParam(this)">
+      <div class="param-left">
+        <span class="param-name">reg_lambda</span>
+        <span class="param-val">0.0009</span>
+        <span class="param-range">[1e-08, 10] log</span>
+      </div>
+      <span class="param-toggle">▸</span>
+    </div>
+    <div class="param-body">
+      <p class="param-desc">L2 正则化项权重。</p>
+    </div>
+  </div>
+
+  <h2>五、测试集结果</h2>
+
+  <div class="metric-grid">
+    <div class="metric">
+      <div class="value" style="color:var(--success);">84.91%</div>
+      <div class="label">MDA（测试集）</div>
+    </div>
+    <div class="metric">
+      <div class="value" style="color:var(--success);">2.87%</div>
+      <div class="label">MAPE（测试集）</div>
+    </div>
+    <div class="metric">
+      <div class="value">56</div>
+      <div class="label">预测周数</div>
+    </div>
+    <div class="metric">
+      <div class="value">2025-04~2026-05</div>
+      <div class="label">预测期间</div>
+    </div>
+  </div>
+
+  <h2>六、生成的文件</h2>
+
+  <table>
+    <thead><tr><th>文件路径</th><th>说明</th></tr></thead>
+    <tbody>
+      <tr><td><code>05_feature_engineering/outputs/09_features_final_weekly.csv</code></td><td>周频特征数据</td></tr>
+      <tr><td><code>06_data_split/outputs/train_weekly.csv</code></td><td>周频训练集</td></tr>
+      <tr><td><code>06_data_split/outputs/test_weekly.csv</code></td><td>周频测试集</td></tr>
+      <tr><td><code>07_model_training/outputs/best_params_weekly.json</code></td><td>最优超参数</td></tr>
+      <tr><td><code>07_model_training/outputs/optuna_hyperparam_results_weekly.csv</code></td><td>超参试验详情</td></tr>
+      <tr><td><code>07_model_training/outputs/test_predictions_weekly.csv</code></td><td>测试集预测结果</td></tr>
+    </tbody>
+  </table>
+
+  <h2>七、关键时间点</h2>
+
+  <div class="timeline">
+    <div class="timeline-item ok">
+      <div class="timeline-time">2025-04-11</div>
+      <div class="timeline-title">测试集预测起点</div>
+    </div>
+    <div class="timeline-item">
+      <div class="timeline-time">2025-11~2026-01</div>
+      <div class="timeline-title">预测误差较大时段</div>
+      <div style="font-size:0.85rem; color:var(--muted);">（库存快速上涨期）</div>
+    </div>
+    <div class="timeline-item ok">
+      <div class="timeline-time">2026-05-01</div>
+      <div class="timeline-title">测试集预测终点</div>
+    </div>
+  </div>
+
+  <hr>
+
+  <p style="text-align:center; color:var(--muted); font-size:0.85rem;">
+    文档生成时间：2026-05-28
+  </p>
+
+</div>
+
+<script>
+function toggleParam(header) {
+  const body = header.nextElementSibling;
+  header.classList.toggle('is-open');
+  body.classList.toggle('is-open');
+}
+</script>
+</body>
+</html>

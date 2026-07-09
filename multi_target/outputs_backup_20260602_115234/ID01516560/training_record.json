@@ -1,0 +1,27 @@
+{
+  "target_id": "ID01516560",
+  "target_name": "PB块：港口库存：华东地区：青岛港：明细（周度）",
+  "trained_at": "2026-05-29 17:19:24",
+  "optuna_trials": 50,
+  "optimization_time_seconds": 269.0234398841858,
+  "train_samples": 393,
+  "feature_count": 3184,
+  "validation_mda": 0.5675675675675675,
+  "test_mda": 0.6415094339622641,
+  "test_mape": 0.3027800614369152,
+  "best_params": {
+    "num_leaves": 188,
+    "max_depth": 7,
+    "learning_rate": 0.05107691264371285,
+    "n_estimators": 1787,
+    "min_child_samples": 49,
+    "subsample": 0.6922478291765145,
+    "colsample_bytree": 0.7586884765953772,
+    "reg_alpha": 2.381951770566822e-07,
+    "reg_lambda": 0.0060993784631180785,
+    "random_state": 42,
+    "deterministic": true,
+    "verbosity": -1,
+    "n_jobs": -1
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "study_name": "lgbm_mda_optimization_weekly",
+  "seed": 42,
+  "n_trials": 200,
+  "n_completed": 200,
+  "elapsed_seconds": 1037.1,
+  "best_mda": 0.860465,
+  "best_mape": 0.012185,
+  "best_value": 0.139535,
+  "best_params": {
+    "num_leaves": 187,
+    "max_depth": 4,
+    "learning_rate": 0.020054617307864002,
+    "n_estimators": 1664,
+    "min_child_samples": 30,
+    "subsample": 0.6367117410714839,
+    "colsample_bytree": 0.6025543436672339,
+    "reg_alpha": 2.443367601025133e-07,
+    "reg_lambda": 0.0009370462389523208,
+    "random_state": 42,
+    "deterministic": true,
+    "verbosity": -1
+  },
+  "feature_count": 3184,
+  "train_rows": 470
+}

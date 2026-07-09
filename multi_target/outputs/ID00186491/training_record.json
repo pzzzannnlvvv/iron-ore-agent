@@ -1,0 +1,27 @@
+{
+  "target_id": "ID00186491",
+  "target_name": "铁精粉：库存：45个港口（周度）",
+  "trained_at": "2026-06-03 17:50:27",
+  "optuna_trials": 50,
+  "optimization_time_seconds": 188.11163115501404,
+  "train_samples": 449,
+  "feature_count": 3196,
+  "validation_mda": 0.6590909090909091,
+  "test_mda": 0.35294117647058826,
+  "test_rmse": 36.04715175071249,
+  "best_params": {
+    "num_leaves": 213,
+    "max_depth": 3,
+    "learning_rate": 0.027449152351033526,
+    "n_estimators": 1625,
+    "min_child_samples": 22,
+    "subsample": 0.6831851588955976,
+    "colsample_bytree": 0.5567904094775699,
+    "reg_alpha": 1.5938673710957067e-07,
+    "reg_lambda": 0.00019442596554707697,
+    "random_state": 42,
+    "deterministic": true,
+    "verbosity": -1,
+    "n_jobs": -1
+  }
+}

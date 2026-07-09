@@ -1,0 +1,27 @@
+{
+  "target_id": "ID00414945",
+  "target_name": "铁矿石：进口：库存：华东地区：45个港口（周度）",
+  "trained_at": "2026-05-29 16:31:56",
+  "optuna_trials": 50,
+  "optimization_time_seconds": 260.74453687667847,
+  "train_samples": 471,
+  "feature_count": 3184,
+  "validation_mda": 0.8409090909090909,
+  "test_mda": 0.6415094339622641,
+  "test_mape": 0.0235998409966422,
+  "best_params": {
+    "num_leaves": 175,
+    "max_depth": 4,
+    "learning_rate": 0.01737443254023779,
+    "n_estimators": 1429,
+    "min_child_samples": 55,
+    "subsample": 0.5726884584909964,
+    "colsample_bytree": 0.718894605139921,
+    "reg_alpha": 1.5434209228174193e-07,
+    "reg_lambda": 0.00022188708805842943,
+    "random_state": 42,
+    "deterministic": true,
+    "verbosity": -1,
+    "n_jobs": -1
+  }
+}

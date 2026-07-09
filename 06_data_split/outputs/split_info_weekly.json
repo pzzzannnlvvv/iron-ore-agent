@@ -1,0 +1,18 @@
+{
+  "input_file": "/Users/huzhongyuan/Desktop/厦门实习/项目复现2/05_feature_engineering/outputs/09_features_final_weekly.csv",
+  "train_cutoff": "2024-12-31",
+  "gap_weeks": 14,
+  "test_start": "2025-04-08",
+  "splits": {
+    "train": {
+      "rows": 471,
+      "start": "2015-12-25",
+      "end": "2024-12-27"
+    },
+    "test": {
+      "rows": 57,
+      "start": "2025-04-11",
+      "end": "2026-05-08"
+    }
+  }
+}

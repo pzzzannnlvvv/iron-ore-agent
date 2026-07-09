@@ -1,0 +1,168 @@
+{
+  "created_at": "2026-06-04 15:05:58",
+  "total_targets": 20,
+  "trained_targets": 20,
+  "optuna_trials": 100,
+  "improvements": {
+    "ID00414945": {
+      "target_name": "铁矿石：进口：库存：华东地区：45个港口（周度）",
+      "group": "A",
+      "original_mda": 0.6415,
+      "new_test_mda": 0.42,
+      "improvement": -0.22149999999999997,
+      "feature_count": 500
+    },
+    "ID00186491": {
+      "target_name": "铁精粉：库存：45个港口（周度）",
+      "group": "A",
+      "original_mda": 0.6792,
+      "new_test_mda": 0.43478260869565216,
+      "improvement": -0.24441739130434786,
+      "feature_count": 500
+    },
+    "ID01135139": {
+      "target_name": "粗粉：进口：库存：45个港口（周度）",
+      "group": "A",
+      "original_mda": 0.6981,
+      "new_test_mda": 0.4444444444444444,
+      "improvement": -0.25365555555555563,
+      "feature_count": 500
+    },
+    "ID01512800": {
+      "target_name": "块矿：进口：库存：47个港口（周度）",
+      "group": "B",
+      "original_mda": 0.6792,
+      "new_test_mda": 0.5531914893617021,
+      "improvement": -0.12600851063829788,
+      "feature_count": 229
+    },
+    "ID01512793": {
+      "target_name": "球团矿：进口：库存：47个港口（周度）",
+      "group": "B",
+      "original_mda": 0.6604,
+      "new_test_mda": 0.5,
+      "improvement": -0.1604,
+      "feature_count": 228
+    },
+    "ID01512786": {
+      "target_name": "铁矿石：进口：库存：47个港口（周度）",
+      "group": "B",
+      "original_mda": 0.6226,
+      "new_test_mda": 0.66,
+      "improvement": 0.03739999999999999,
+      "feature_count": 205
+    },
+    "ID01517120": {
+      "target_name": "PB粉：港口库存：华东地区：青岛港：明细（周度）",
+      "group": "C",
+      "original_mda": 0.5472,
+      "new_test_mda": 0.48148148148148145,
+      "improvement": -0.06571851851851856,
+      "feature_count": 300
+    },
+    "ID01517067": {
+      "target_name": "PB粉：港口库存：华北地区：曹妃甸港：明细（周度）",
+      "group": "C",
+      "original_mda": 0.6038,
+      "new_test_mda": 0.5,
+      "improvement": -0.1038,
+      "feature_count": 300
+    },
+    "ID01516906": {
+      "target_name": "PB粉：港口库存：长江沿江地区：江阴港：明细（周度）",
+      "group": "C",
+      "original_mda": 0.4717,
+      "new_test_mda": 0.4897959183673469,
+      "improvement": 0.01809591836734692,
+      "feature_count": 300
+    },
+    "ID01516560": {
+      "target_name": "PB块：港口库存：华东地区：青岛港：明细（周度）",
+      "group": "C",
+      "original_mda": 0.6415,
+      "new_test_mda": 0.5098039215686274,
+      "improvement": -0.13169607843137254,
+      "feature_count": 300
+    },
+    "ID01516505": {
+      "target_name": "PB块：港口库存：华北地区：曹妃甸港：明细（周度）",
+      "group": "C",
+      "original_mda": 0.6,
+      "new_test_mda": 0.6341463414634146,
+      "improvement": 0.034146341463414664,
+      "feature_count": 300
+    },
+    "ID01516418": {
+      "target_name": "PB块：港口库存：长江沿江地区：江阴港：明细（周度）",
+      "group": "C",
+      "original_mda": 0.551,
+      "new_test_mda": 0.5121951219512195,
+      "improvement": -0.03880487804878052,
+      "feature_count": 300
+    },
+    "ID01517102": {
+      "target_name": "超特粉：港口库存：华东地区：青岛港：明细（周度）",
+      "group": "C",
+      "original_mda": 0.5472,
+      "new_test_mda": 0.5769230769230769,
+      "improvement": 0.029723076923076852,
+      "feature_count": 300
+    },
+    "ID01517011": {
+      "target_name": "超特粉：港口库存：华北地区：曹妃甸港：明细（周度）",
+      "group": "C",
+      "original_mda": 0.566,
+      "new_test_mda": 0.48,
+      "improvement": -0.08599999999999997,
+      "feature_count": 300
+    },
+    "ID01516873": {
+      "target_name": "超特粉：港口库存：长江沿江地区：江阴港：明细（周度）",
+      "group": "C",
+      "original_mda": 0.5102,
+      "new_test_mda": 0.46,
+      "improvement": -0.05019999999999997,
+      "feature_count": 300
+    },
+    "ID01517226": {
+      "target_name": "卡拉加斯粉：港口库存：华东地区：青岛港：明细（周度）",
+      "group": "C",
+      "original_mda": 0.5849,
+      "new_test_mda": 0.5,
+      "improvement": -0.08489999999999998,
+      "feature_count": 300
+    },
+    "ID01517224": {
+      "target_name": "卡拉加斯粉：港口库存：华北地区：曹妃甸港：明细（周度）",
+      "group": "C",
+      "original_mda": 0.5283,
+      "new_test_mda": 0.5416666666666666,
+      "improvement": 0.013366666666666638,
+      "feature_count": 300
+    },
+    "ID01517220": {
+      "target_name": "卡拉加斯粉：港口库存：长江沿江地区：江阴港：明细（周度）",
+      "group": "C",
+      "original_mda": 0.5814,
+      "new_test_mda": 0.5686274509803921,
+      "improvement": -0.012772549019607893,
+      "feature_count": 300
+    },
+    "ID01515465": {
+      "target_name": "铁精粉：港口库存：乌克兰→华东地区：岚山港：明细（周度）",
+      "group": "C",
+      "original_mda": 0.6346,
+      "new_test_mda": 0.4090909090909091,
+      "improvement": -0.22550909090909094,
+      "feature_count": 300
+    },
+    "ID01868329": {
+      "target_name": "粗粉：库存：47个港口（周度）",
+      "group": "D",
+      "original_mda": 0.6226,
+      "new_test_mda": 0.48,
+      "improvement": -0.14260000000000006,
+      "feature_count": 126
+    }
+  }
+}

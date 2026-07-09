@@ -1,0 +1,449 @@
+{
+  "processed_at": "2026-06-03 17:25:16",
+  "train_cutoff": "2024-12-31",
+  "gap_weeks": 14,
+  "splits": {
+    "ID02017483": {
+      "target_id": "ID02017483",
+      "target_name": "铁矿石：进口：库存：华北地区：45个港口（周度）",
+      "train_cutoff": "2024-12-31",
+      "gap_weeks": 14,
+      "test_start": "2025-04-08",
+      "train_rows": 442,
+      "test_rows": 54,
+      "train_date_range": [
+        "2015-12-25",
+        "2024-12-27"
+      ],
+      "test_date_range": [
+        "2025-04-18",
+        "2026-05-01"
+      ]
+    },
+    "ID02017488": {
+      "target_id": "ID02017488",
+      "target_name": "铁矿石：进口：库存：华南地区：45个港口（周度）",
+      "train_cutoff": "2024-12-31",
+      "gap_weeks": 14,
+      "test_start": "2025-04-08",
+      "train_rows": 442,
+      "test_rows": 48,
+      "train_date_range": [
+        "2015-12-25",
+        "2024-12-27"
+      ],
+      "test_date_range": [
+        "2025-04-11",
+        "2026-04-24"
+      ]
+    },
+    "ID02017501": {
+      "target_id": "ID02017501",
+      "target_name": "铁矿石：进口：库存：长江沿江地区：45个港口（周度）",
+      "train_cutoff": "2024-12-31",
+      "gap_weeks": 14,
+      "test_start": "2025-04-08",
+      "train_rows": 440,
+      "test_rows": 52,
+      "train_date_range": [
+        "2015-12-25",
+        "2024-12-27"
+      ],
+      "test_date_range": [
+        "2025-04-11",
+        "2026-05-01"
+      ]
+    },
+    "ID00414945": {
+      "target_id": "ID00414945",
+      "target_name": "铁矿石：进口：库存：华东地区：45个港口（周度）",
+      "train_cutoff": "2024-12-31",
+      "gap_weeks": 14,
+      "test_start": "2025-04-08",
+      "train_rows": 438,
+      "test_rows": 54,
+      "train_date_range": [
+        "2015-12-25",
+        "2024-12-27"
+      ],
+      "test_date_range": [
+        "2025-04-11",
+        "2026-05-01"
+      ]
+    },
+    "ID00186278": {
+      "target_id": "ID00186278",
+      "target_name": "块矿：库存：45个港口（周度）",
+      "train_cutoff": "2024-12-31",
+      "gap_weeks": 14,
+      "test_start": "2025-04-08",
+      "train_rows": 444,
+      "test_rows": 53,
+      "train_date_range": [
+        "2015-12-25",
+        "2024-12-27"
+      ],
+      "test_date_range": [
+        "2025-04-18",
+        "2026-05-01"
+      ]
+    },
+    "ID01135139": {
+      "target_id": "ID01135139",
+      "target_name": "粗粉：进口：库存：45个港口（周度）",
+      "train_cutoff": "2024-12-31",
+      "gap_weeks": 14,
+      "test_start": "2025-04-08",
+      "train_rows": 435,
+      "test_rows": 56,
+      "train_date_range": [
+        "2015-12-25",
+        "2024-12-27"
+      ],
+      "test_date_range": [
+        "2025-04-11",
+        "2026-05-01"
+      ]
+    },
+    "ID00186491": {
+      "target_id": "ID00186491",
+      "target_name": "铁精粉：库存：45个港口（周度）",
+      "train_cutoff": "2024-12-31",
+      "gap_weeks": 14,
+      "test_start": "2025-04-08",
+      "train_rows": 449,
+      "test_rows": 52,
+      "train_date_range": [
+        "2015-12-25",
+        "2024-12-27"
+      ],
+      "test_date_range": [
+        "2025-04-11",
+        "2026-05-01"
+      ]
+    },
+    "ID00186318": {
+      "target_id": "ID00186318",
+      "target_name": "球团矿：进口：库存：45个港口（周度）",
+      "train_cutoff": "2024-12-31",
+      "gap_weeks": 14,
+      "test_start": "2025-04-08",
+      "train_rows": 437,
+      "test_rows": 54,
+      "train_date_range": [
+        "2015-12-25",
+        "2024-12-27"
+      ],
+      "test_date_range": [
+        "2025-04-11",
+        "2026-05-01"
+      ]
+    },
+    "ID01512800": {
+      "target_id": "ID01512800",
+      "target_name": "块矿：进口：库存：47个港口（周度）",
+      "train_cutoff": "2024-12-31",
+      "gap_weeks": 14,
+      "test_start": "2025-04-08",
+      "train_rows": 150,
+      "test_rows": 52,
+      "train_date_range": [
+        "2021-12-17",
+        "2024-12-27"
+      ],
+      "test_date_range": [
+        "2025-04-18",
+        "2026-05-01"
+      ]
+    },
+    "ID01868329": {
+      "target_id": "ID01868329",
+      "target_name": "粗粉：库存：47个港口（周度）",
+      "train_cutoff": "2024-12-31",
+      "gap_weeks": 14,
+      "test_start": "2025-04-08",
+      "train_rows": 117,
+      "test_rows": 54,
+      "train_date_range": [
+        "2022-08-19",
+        "2024-12-27"
+      ],
+      "test_date_range": [
+        "2025-04-11",
+        "2026-05-01"
+      ]
+    },
+    "ID01512783": {
+      "target_id": "ID01512783",
+      "target_name": "铁精粉：进口：库存：47个港口（周度）",
+      "train_cutoff": "2024-12-31",
+      "gap_weeks": 14,
+      "test_start": "2025-04-08",
+      "train_rows": 150,
+      "test_rows": 52,
+      "train_date_range": [
+        "2021-12-17",
+        "2024-12-27"
+      ],
+      "test_date_range": [
+        "2025-04-11",
+        "2026-05-01"
+      ]
+    },
+    "ID01512793": {
+      "target_id": "ID01512793",
+      "target_name": "球团矿：进口：库存：47个港口（周度）",
+      "train_cutoff": "2024-12-31",
+      "gap_weeks": 14,
+      "test_start": "2025-04-08",
+      "train_rows": 153,
+      "test_rows": 53,
+      "train_date_range": [
+        "2021-12-17",
+        "2024-12-27"
+      ],
+      "test_date_range": [
+        "2025-04-11",
+        "2026-05-01"
+      ]
+    },
+    "ID01512786": {
+      "target_id": "ID01512786",
+      "target_name": "铁矿石：进口：库存：47个港口（周度）",
+      "train_cutoff": "2024-12-31",
+      "gap_weeks": 14,
+      "test_start": "2025-04-08",
+      "train_rows": 148,
+      "test_rows": 54,
+      "train_date_range": [
+        "2021-12-17",
+        "2024-12-27"
+      ],
+      "test_date_range": [
+        "2025-04-11",
+        "2026-05-01"
+      ]
+    },
+    "ID01517120": {
+      "target_id": "ID01517120",
+      "target_name": "PB粉：港口库存：华东地区：青岛港：明细（周度）",
+      "train_cutoff": "2024-12-31",
+      "gap_weeks": 14,
+      "test_start": "2025-04-08",
+      "train_rows": 366,
+      "test_rows": 56,
+      "train_date_range": [
+        "2017-06-23",
+        "2024-12-27"
+      ],
+      "test_date_range": [
+        "2025-04-11",
+        "2026-05-01"
+      ]
+    },
+    "ID01517067": {
+      "target_id": "ID01517067",
+      "target_name": "PB粉：港口库存：华北地区：曹妃甸港：明细（周度）",
+      "train_cutoff": "2024-12-31",
+      "gap_weeks": 14,
+      "test_start": "2025-04-08",
+      "train_rows": 368,
+      "test_rows": 52,
+      "train_date_range": [
+        "2017-06-23",
+        "2024-12-27"
+      ],
+      "test_date_range": [
+        "2025-04-11",
+        "2026-05-01"
+      ]
+    },
+    "ID01516906": {
+      "target_id": "ID01516906",
+      "target_name": "PB粉：港口库存：长江沿江地区：江阴港：明细（周度）",
+      "train_cutoff": "2024-12-31",
+      "gap_weeks": 14,
+      "test_start": "2025-04-08",
+      "train_rows": 363,
+      "test_rows": 54,
+      "train_date_range": [
+        "2017-06-23",
+        "2024-12-27"
+      ],
+      "test_date_range": [
+        "2025-04-11",
+        "2026-05-01"
+      ]
+    },
+    "ID01516560": {
+      "target_id": "ID01516560",
+      "target_name": "PB块：港口库存：华东地区：青岛港：明细（周度）",
+      "train_cutoff": "2024-12-31",
+      "gap_weeks": 14,
+      "test_start": "2025-04-08",
+      "train_rows": 371,
+      "test_rows": 54,
+      "train_date_range": [
+        "2017-06-23",
+        "2024-12-27"
+      ],
+      "test_date_range": [
+        "2025-04-11",
+        "2026-05-01"
+      ]
+    },
+    "ID01516505": {
+      "target_id": "ID01516505",
+      "target_name": "PB块：港口库存：华北地区：曹妃甸港：明细（周度）",
+      "train_cutoff": "2024-12-31",
+      "gap_weeks": 14,
+      "test_start": "2025-04-08",
+      "train_rows": 370,
+      "test_rows": 49,
+      "train_date_range": [
+        "2017-06-23",
+        "2024-12-27"
+      ],
+      "test_date_range": [
+        "2025-04-11",
+        "2026-05-01"
+      ]
+    },
+    "ID01516418": {
+      "target_id": "ID01516418",
+      "target_name": "PB块：港口库存：长江沿江地区：江阴港：明细（周度）",
+      "train_cutoff": "2024-12-31",
+      "gap_weeks": 14,
+      "test_start": "2025-04-08",
+      "train_rows": 366,
+      "test_rows": 50,
+      "train_date_range": [
+        "2017-06-23",
+        "2024-12-27"
+      ],
+      "test_date_range": [
+        "2025-04-11",
+        "2026-05-01"
+      ]
+    },
+    "ID01517102": {
+      "target_id": "ID01517102",
+      "target_name": "超特粉：港口库存：华东地区：青岛港：明细（周度）",
+      "train_cutoff": "2024-12-31",
+      "gap_weeks": 14,
+      "test_start": "2025-04-08",
+      "train_rows": 358,
+      "test_rows": 55,
+      "train_date_range": [
+        "2017-06-23",
+        "2024-12-27"
+      ],
+      "test_date_range": [
+        "2025-04-11",
+        "2026-05-01"
+      ]
+    },
+    "ID01517011": {
+      "target_id": "ID01517011",
+      "target_name": "超特粉：港口库存：华北地区：曹妃甸港：明细（周度）",
+      "train_cutoff": "2024-12-31",
+      "gap_weeks": 14,
+      "test_start": "2025-04-08",
+      "train_rows": 366,
+      "test_rows": 54,
+      "train_date_range": [
+        "2017-06-30",
+        "2024-12-27"
+      ],
+      "test_date_range": [
+        "2025-04-11",
+        "2026-05-01"
+      ]
+    },
+    "ID01516873": {
+      "target_id": "ID01516873",
+      "target_name": "超特粉：港口库存：长江沿江地区：江阴港：明细（周度）",
+      "train_cutoff": "2024-12-31",
+      "gap_weeks": 14,
+      "test_start": "2025-04-08",
+      "train_rows": 367,
+      "test_rows": 55,
+      "train_date_range": [
+        "2017-06-23",
+        "2024-12-27"
+      ],
+      "test_date_range": [
+        "2025-04-11",
+        "2026-05-01"
+      ]
+    },
+    "ID01517226": {
+      "target_id": "ID01517226",
+      "target_name": "卡拉加斯粉：港口库存：华东地区：青岛港：明细（周度）",
+      "train_cutoff": "2024-12-31",
+      "gap_weeks": 14,
+      "test_start": "2025-04-08",
+      "train_rows": 367,
+      "test_rows": 55,
+      "train_date_range": [
+        "2017-06-23",
+        "2024-12-27"
+      ],
+      "test_date_range": [
+        "2025-04-11",
+        "2026-05-01"
+      ]
+    },
+    "ID01517224": {
+      "target_id": "ID01517224",
+      "target_name": "卡拉加斯粉：港口库存：华北地区：曹妃甸港：明细（周度）",
+      "train_cutoff": "2024-12-31",
+      "gap_weeks": 14,
+      "test_start": "2025-04-08",
+      "train_rows": 369,
+      "test_rows": 53,
+      "train_date_range": [
+        "2017-06-23",
+        "2024-12-27"
+      ],
+      "test_date_range": [
+        "2025-04-11",
+        "2026-05-01"
+      ]
+    },
+    "ID01517220": {
+      "target_id": "ID01517220",
+      "target_name": "卡拉加斯粉：港口库存：长江沿江地区：江阴港：明细（周度）",
+      "train_cutoff": "2024-12-31",
+      "gap_weeks": 14,
+      "test_start": "2025-04-08",
+      "train_rows": 370,
+      "test_rows": 56,
+      "train_date_range": [
+        "2017-06-23",
+        "2024-12-27"
+      ],
+      "test_date_range": [
+        "2025-04-11",
+        "2026-05-01"
+      ]
+    },
+    "ID01515465": {
+      "target_id": "ID01515465",
+      "target_name": "铁精粉：港口库存：乌克兰→华东地区：岚山港：明细（周度）",
+      "train_cutoff": "2024-12-31",
+      "gap_weeks": 14,
+      "test_start": "2025-04-08",
+      "train_rows": 373,
+      "test_rows": 51,
+      "train_date_range": [
+        "2017-06-23",
+        "2024-12-27"
+      ],
+      "test_date_range": [
+        "2025-04-11",
+        "2026-05-01"
+      ]
+    }
+  }
+}

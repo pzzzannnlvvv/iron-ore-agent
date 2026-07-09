@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>铁矿石库存预测项目 - 数据清洗学习总结</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.7;
+            color: #2d3748;
+            background-color: #f7fafc;
+            padding: 40px 20px;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            padding: 50px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        }
+        h1 {
+            color: #1a365d;
+            font-size: 32px;
+            border-bottom: 4px solid #3182ce;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+        h2 {
+            color: #2c5282;
+            font-size: 24px;
+            margin-top: 40px;
+            margin-bottom: 20px;
+            border-left: 5px solid #4299e1;
+            padding-left: 15px;
+        }
+        h3 {
+            color: #2d3748;
+            font-size: 18px;
+            margin-top: 25px;
+            margin-bottom: 12px;
+        }
+        .info-box {
+            background: linear-gradient(135deg, #ebf8ff 0%, #e6fffa 100%);
+            padding: 20px 25px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border-left: 4px solid #3182ce;
+        }
+        .warning-box {
+            background: #fffaf0;
+            padding: 20px 25px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border-left: 4px solid #ed8936;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 14px;
+        }
+        th, td {
+            border: 1px solid #e2e8f0;
+            padding: 12px 15px;
+            text-align: left;
+        }
+        th {
+            background-color: #2d3748;
+            color: white;
+            font-weight: 600;
+        }
+        tr:nth-child(even) {
+            background-color: #f7fafc;
+        }
+        code {
+            background: #edf2f7;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-family: "SFMono-Regular", Consolas, monospace;
+            font-size: 14px;
+        }
+        .example {
+            background: #f7fafc;
+            padding: 18px 22px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border: 1px solid #e2e8f0;
+        }
+        .example-title {
+            font-weight: 700;
+            color: #2b6cb0;
+            margin-bottom: 10px;
+        }
+        ul, ol {
+            margin: 15px 0;
+            padding-left: 30px;
+        }
+        li {
+            margin: 8px 0;
+        }
+        .tag {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-right: 8px;
+        }
+        .tag-green {
+            background: #c6f6d5;
+            color: #22543d;
+        }
+        .tag-orange {
+            background: #feebc8;
+            color: #7c2d12;
+        }
+        .tag-red {
+            background: #fed7d7;
+            color: #742a2a;
+        }
+        .flow-step {
+            display: flex;
+            align-items: flex-start;
+            margin: 20px 0;
+            padding: 20px;
+            background: #f7fafc;
+            border-radius: 8px;
+        }
+        .step-number {
+            background: #3182ce;
+            color: white;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            margin-right: 20px;
+            flex-shrink: 0;
+        }
+        .step-content {
+            flex: 1;
+        }
+        .step-title {
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: #2b6cb0;
+        }
+        footer {
+            margin-top: 50px;
+            padding-top: 20px;
+            border-top: 1px solid #e2e8f0;
+            color: #718096;
+            font-size: 14px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📚 铁矿石库存预测项目 - 数据清洗学习总结</h1>
+
+        <div class="info-box">
+            <strong>项目背景：</strong>多频率数据对齐（日度/周度/月度/季度/年度）→ 统一日度时间轴 → 数据清洗 → 特征工程 → 模型训练
+        </div>
+
+        <h2>一、项目流程回顾</h2>
+
+        <div class="flow-step">
+            <div class="step-number">1</div>
+            <div class="step-content">
+                <div class="step-title">数据整合与对齐</div>
+                <div>整合标的数据（周度）和700多个因子（不同频率），统一对齐到日度时间轴（2015-2026），使用前向填充处理缺失值</div>
+            </div>
+        </div>
+
+        <div class="flow-step">
+            <div class="step-number">2</div>
+            <div class="step-content">
+                <div class="step-title">轻量校验与清洗</div>
+                <div>业务逻辑校验、极端异常值检测、异常跳变检测</div>
+            </div>
+        </div>
+
+        <div class="flow-step">
+            <div class="step-number">3</div>
+            <div class="step-content">
+                <div class="step-title">特征工程</div>
+                <div>分层处理：标的列只做滞后，核心因子做复杂特征，其他因子用原始值</div>
+            </div>
+        </div>
+
+        <h2>二、数据清洗三大利器</h2>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>校验类型</th>
+                    <th>判断标准</th>
+                    <th>处理方法</th>
+                    <th>业务逻辑</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>1. 库存负值</strong></td>
+                    <td>value &lt; 0</td>
+                    <td>设为缺失值（NaN）</td>
+                    <td>库存不可能为负，明显数据错误</td>
+                </tr>
+                <tr>
+                    <td><strong>2. 下界异常值</strong></td>
+                    <td>value &lt; Q1 - 3×IQR</td>
+                    <td>截断到下界</td>
+                    <td>保留趋势，避免极端值影响</td>
+                </tr>
+                <tr>
+                    <td><strong>3. 上界异常值</strong></td>
+                    <td>value &gt; Q3 + 3×IQR</td>
+                    <td>截断到上界</td>
+                    <td>保留趋势，避免极端值影响</td>
+                </tr>
+                <tr>
+                    <td><strong>4. 异常跳变</strong></td>
+                    <td>|Δt| &gt; 5×σ(Δ)</td>
+                    <td>设为缺失值（NaN）</td>
+                    <td>单日跳变过大，可能是数据错误</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h2>三、上下界异常值（IQR方法）详解</h2>
+
+        <h3>概念解释</h3>
+        <p>IQR（Interquartile Range，四分位距）是一种稳健的异常值检测方法，不受极端值影响。</p>
+
+        <h3>计算公式</h3>
+        <div class="example">
+            <div class="example-title">数学公式</div>
+            <code>Q1 = 第25百分位数</code> （数据从小到大排，第25%位置的值）<br>
+            <code>Q3 = 第75百分位数</code> （数据从小到大排，第75%位置的值）<br>
+            <code>IQR = Q3 - Q1</code> （中间50%数据的范围）<br>
+            <code>下界 = Q1 - 3 × IQR</code><br>
+            <code>上界 = Q3 + 3 × IQR</code>
+        </div>
+
+        <h3>实际例子</h3>
+        <div class="example">
+            <div class="example-title">铁矿石库存数据示例</div>
+            <p>数据序列：100, 102, 105, 110, 95, 98, 103, 9999（异常大值）</p>
+            <p>Q1 = 98，Q3 = 105，IQR = 7</p>
+            <p>下界 = 98 - 3×7 = 77，上界 = 105 + 3×7 = 126</p>
+            <p>发现：9999 > 126 → <span class="tag tag-red">上界异常值</span></p>
+        </div>
+
+        <h3>修正方式：截断（Winsorize）</h3>
+        <div class="warning-box">
+            不是删除，而是改成边界值！这样既保留了数据趋势，又避免极端值过度影响模型。
+            <div class="example" style="margin-top: 10px;">
+                原值：9999 → 修正为：126
+            </div>
+        </div>
+
+        <h3>为什么用3×IQR而不是1.5×IQR？</h3>
+        <ul>
+            <li><strong>1.5×IQR</strong>：太严格，容易误杀正常波动</li>
+            <li><strong>3×IQR</strong>：更宽松，只抓真正极端的异常值</li>
+        </ul>
+
+        <h2>四、异常跳变检测详解</h2>
+
+        <h3>概念解释</h3>
+        <p>关注的不是绝对值大小，而是<strong>相邻两天的变化量</strong>。</p>
+
+        <h3>实际例子</h3>
+        <div class="example">
+            <div class="example-title">异常跳变示例</div>
+            <p>
+                第1天：100<br>
+                第2天：102（正常，+2）<br>
+                第3天：105（正常，+3）<br>
+                第4天：9999（不正常，+9894）→ <span class="tag tag-red">跳变！</span><br>
+                第5天：101（又回来了）→ <span class="tag tag-red">跳变！</span>
+            </p>
+        </div>
+
+        <h3>计算方式</h3>
+        <div class="example">
+            <div class="example-title">计算步骤</div>
+            <ol>
+                <li>先计算每天的变化量 <code>Δt = 第t天 - 第t-1天</code></li>
+                <li>计算变化量的标准差 <code>σ(Δ)</code></li>
+                <li>如果 <code>|Δt| > 5×σ(Δ)</code> → 视为异常跳变</li>
+            </ol>
+        </div>
+
+        <h3>修正方式：设为缺失值</h3>
+        <div class="warning-box">
+            这种"过山车"式的数据明显是录入错误，直接设为空值，后续可以前向填充。
+            <div class="example" style="margin-top: 10px;">
+                第4天：9999 → 修正为：NaN<br>
+                第5天：101 → 修正为：NaN
+            </div>
+        </div>
+
+        <h2>五、两种异常值的区别</h2>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>维度</th>
+                    <th>上下界异常值</th>
+                    <th>异常跳变</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>判断依据</strong></td>
+                    <td>绝对值大小</td>
+                    <td>单日变化量</td>
+                </tr>
+                <tr>
+                    <td><strong>修正方式</strong></td>
+                    <td>截断到边界</td>
+                    <td>设为缺失</td>
+                </tr>
+                <tr>
+                    <td><strong>适用场景</strong></td>
+                    <td>极端但可能是真实的值</td>
+                    <td>明显是数据错误</td>
+                </tr>
+                <tr>
+                    <td><strong>是否保留趋势</strong></td>
+                    <td><span class="tag tag-green">是</span></td>
+                    <td><span class="tag tag-red">否</span></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h2>六、特征工程策略：不要对700列盲目做特征！</h2>
+
+        <h3>分层处理方案</h3>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>列类型</th>
+                    <th>数量</th>
+                    <th>特征工程内容</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>标的列（Y）</strong></td>
+                    <td>~27列</td>
+                    <td>只做滞后项（t-1, t-2, t-4, t-8, t-12）</td>
+                </tr>
+                <tr>
+                    <td><strong>核心因子</strong></td>
+                    <td>~30个</td>
+                    <td>滞后、移动平均、波动率、同比环比</td>
+                </tr>
+                <tr>
+                    <td><strong>次因子</strong></td>
+                    <td>~50个</td>
+                    <td>只做滞后项</td>
+                </tr>
+                <tr>
+                    <td><strong>其他因子</strong></td>
+                    <td>~600个</td>
+                    <td>暂时不做，或直接用原始值</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h3>从简到繁的迭代策略</h3>
+        <ol>
+            <li><strong>第一版</strong>：只用原始值（不做复杂特征工程），快速验证baseline</li>
+            <li><strong>第二版</strong>：逐步添加，先加标的滞后，再加核心因子特征</li>
+            <li><strong>第三版</strong>：看效果提升再继续扩展</li>
+        </ol>
+
+        <h2>七、训练数据时间范围建议</h2>
+
+        <div class="info-box">
+            <h3>方案对比</h3>
+            <table>
+                <tr>
+                    <th>方案</th>
+                    <th>时间范围</th>
+                    <th>优点</th>
+                    <th>缺点</th>
+                </tr>
+                <tr>
+                    <td>全量</td>
+                    <td>2015-2024</td>
+                    <td>包含完整周期（供给侧改革）</td>
+                    <td>早期数据缺失多</td>
+                </tr>
+                <tr>
+                    <td>截断</td>
+                    <td>2018-2024</td>
+                    <td>数据更完整，因子覆盖全</td>
+                    <td>丢失2015-2017周期</td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="warning-box">
+            <strong>建议</strong>：可以同时训练两个版本对比效果！大宗商品预测中，周期覆盖往往比数据完整更重要。
+        </div>
+
+        <h2>八、关键知识点总结</h2>
+
+        <div class="flow-step">
+            <div class="step-number">💡</div>
+            <div class="step-content">
+                <div class="step-title">时间序列对齐</div>
+                <div>不同频率数据 → 目标频率 → 前向填充（ffill）</div>
+            </div>
+        </div>
+
+        <div class="flow-step">
+            <div class="step-number">💡</div>
+            <div class="step-content">
+                <div class="step-title">IQR是稳健方法</div>
+                <div>不受极端值影响，适合金融/经济数据</div>
+            </div>
+        </div>
+
+        <div class="flow-step">
+            <div class="step-number">💡</div>
+            <div class="step-content">
+                <div class="step-title">截断优于删除</div>
+                <div>对于可能真实的极端值，保留趋势但削弱影响</div>
+            </div>
+        </div>
+
+        <div class="flow-step">
+            <div class="step-number">💡</div>
+            <div class="step-content">
+                <div class="step-title">特征工程要分层</div>
+                <div>不要对700列盲目做特征，先筛选再分层处理</div>
+            </div>
+        </div>
+
+        <footer>
+            <p>铁矿石库存预测项目 - 数据清洗学习总结</p>
+            <p>生成时间：2026年5月</p>
+        </footer>
+    </div>
+</body>
+</html>

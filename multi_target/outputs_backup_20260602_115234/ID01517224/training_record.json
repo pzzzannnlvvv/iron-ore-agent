@@ -1,0 +1,27 @@
+{
+  "target_id": "ID01517224",
+  "target_name": "卡拉加斯粉：港口库存：华北地区：曹妃甸港：明细（周度）",
+  "trained_at": "2026-05-29 16:05:11",
+  "optuna_trials": 50,
+  "optimization_time_seconds": 243.60667324066162,
+  "train_samples": 393,
+  "feature_count": 3184,
+  "validation_mda": 0.6578947368421053,
+  "test_mda": 0.5283018867924528,
+  "test_mape": 0.36379596136814757,
+  "best_params": {
+    "num_leaves": 170,
+    "max_depth": 4,
+    "learning_rate": 0.008611556324225259,
+    "n_estimators": 1364,
+    "min_child_samples": 33,
+    "subsample": 0.7784159319104033,
+    "colsample_bytree": 0.7659230652435188,
+    "reg_alpha": 3.7994819491083096e-07,
+    "reg_lambda": 0.0009317123722025587,
+    "random_state": 42,
+    "deterministic": true,
+    "verbosity": -1,
+    "n_jobs": -1
+  }
+}

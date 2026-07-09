@@ -1,0 +1,27 @@
+{
+  "target_id": "ID01516873",
+  "target_name": "超特粉：港口库存：长江沿江地区：江阴港：明细（周度）",
+  "trained_at": "2026-06-03 18:25:06",
+  "optuna_trials": 50,
+  "optimization_time_seconds": 129.65702176094055,
+  "train_samples": 367,
+  "feature_count": 3196,
+  "validation_mda": 0.6111111111111112,
+  "test_mda": 0.4807692307692308,
+  "test_rmse": 5.6834840919206435,
+  "best_params": {
+    "num_leaves": 176,
+    "max_depth": 3,
+    "learning_rate": 0.014541473055432718,
+    "n_estimators": 1464,
+    "min_child_samples": 58,
+    "subsample": 0.7797851410253248,
+    "colsample_bytree": 0.7379331633755716,
+    "reg_alpha": 1.7642161785284582e-07,
+    "reg_lambda": 0.00048613288264945647,
+    "random_state": 42,
+    "deterministic": true,
+    "verbosity": -1,
+    "n_jobs": -1
+  }
+}

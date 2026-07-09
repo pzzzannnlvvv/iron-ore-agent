@@ -1,0 +1,15 @@
+{
+  "num_leaves": 87,
+  "max_depth": 3,
+  "learning_rate": 0.16056237011208735,
+  "n_estimators": 1710,
+  "min_child_samples": 59,
+  "subsample": 0.7815919227281918,
+  "colsample_bytree": 0.6521856347269537,
+  "reg_alpha": 0.034005039819913006,
+  "reg_lambda": 1.1611565431130795,
+  "random_state": 42,
+  "deterministic": true,
+  "verbosity": -1,
+  "n_jobs": -1
+}

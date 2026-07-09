@@ -1,0 +1,1559 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>铁矿石库存预测 - ADF平稳性检验报告</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            margin: 40px;
+            background-color: #f5f7fa;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+        }
+        h1 {
+            color: #1a365d;
+            border-bottom: 3px solid #3182ce;
+            padding-bottom: 15px;
+        }
+        h2 {
+            color: #2d3748;
+            margin-top: 35px;
+            border-left: 4px solid #4299e1;
+            padding-left: 12px;
+        }
+        h3 {
+            color: #4a5568;
+        }
+        .summary-box {
+            background: linear-gradient(135deg, #ebf8ff 0%, #e6fffa 100%);
+            padding: 25px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 13px;
+        }
+        th, td {
+            border: 1px solid #e2e8f0;
+            padding: 10px 12px;
+            text-align: left;
+        }
+        th {
+            background-color: #2d3748;
+            color: white;
+            font-weight: 600;
+        }
+        tr:nth-child(even) {
+            background-color: #f7fafc;
+        }
+        tr:hover {
+            background-color: #ebf8ff;
+        }
+        .tag {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 14px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .tag-stationary {
+            background-color: #c6f6d5;
+            color: #22543d;
+        }
+        .tag-nonstationary {
+            background-color: #fed7d7;
+            color: #742a2a;
+        }
+        .tag-neutral {
+            background-color: #e2e8f0;
+            color: #2d3748;
+        }
+        .version-section {
+            margin-top: 40px;
+            padding: 25px;
+            background: #f7fafc;
+            border-radius: 10px;
+        }
+        .chart-card {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        .chart-container {
+            overflow-x: auto;
+        }
+        .chart-container img {
+            max-width: 100%;
+        }
+        .info-note {
+            background: #fffaf0;
+            border-left: 4px solid #ed8936;
+            padding: 15px 20px;
+            margin: 20px 0;
+        }
+        .result-summary {
+            display: flex;
+            gap: 20px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        .result-card {
+            flex: 1;
+            min-width: 200px;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        .result-card h4 {
+            margin: 0 0 10px 0;
+            font-size: 14px;
+            color: #718096;
+        }
+        .result-card .number {
+            font-size: 32px;
+            font-weight: 700;
+        }
+        .nav-tabs {
+            display: flex;
+            gap: 5px;
+            margin: 20px 0;
+        }
+        .nav-tab {
+            padding: 10px 20px;
+            background: #e2e8f0;
+            border-radius: 8px 8px 0 0;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        .nav-tab.active {
+            background: #3182ce;
+            color: white;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📊 铁矿石库存预测 - ADF平稳性检验报告</h1>
+
+        <div class="summary-box">
+            <h3>概览</h3>
+            <p><strong>分析时间范围:</strong> 2015-12-25 至 2026-05-08</p>
+            <p><strong>检验方法:</strong> 简易ADF单位根检验（自实现）</p>
+            <p><strong>预处理版本:</strong> 原始值、一阶差分、百分比变化</p>
+        </div>
+
+        <div class="info-note">
+            <strong>说明:</strong> 本报告使用简易ADF检验实现，仅供参考。
+            严谨的学术研究建议安装statsmodels库使用官方ADF检验。
+            <br><strong>ADF原假设:</strong> 存在单位根（序列非平稳）
+        </div>
+
+        <div class="version-section">
+            <h2>📈 原始值</h2>
+
+            <div class="result-summary">
+                <div class="result-card" style="background: #ebf8ff;">
+                    <h4>总列数</h4>
+                    <div class="number" style="color: #3182ce;">20</div>
+                </div>
+                <div class="result-card" style="background: #c6f6d5;">
+                    <h4>平稳列数</h4>
+                    <div class="number" style="color: #22543d;">20</div>
+                </div>
+                <div class="result-card" style="background: #fed7d7;">
+                    <h4>非平稳列数</h4>
+                    <div class="number" style="color: #742a2a;">0</div>
+                </div>
+            </div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>列ID</th>
+                        <th>列名</th>
+                        <th>样本数</th>
+                        <th>均值</th>
+                        <th>ADF t统计量</th>
+                        <th>检验结果</th>
+                    </tr>
+                </thead>
+                <tbody>
+    
+                    <tr>
+                        <td>ID02017483</td>
+                        <td>铁矿石：进口：库存：华北地区：45个港口（周度）</td>
+                        <td>3,788</td>
+                        <td>4147.6514</td>
+                        <td>-1.8792</td>
+                        <td><span class="tag tag-stationary">非平稳</span></td>
+                    </tr>
+        
+                    <tr>
+                        <td>ID02017488</td>
+                        <td>铁矿石：进口：库存：华南地区：45个港口（周度）</td>
+                        <td>3,788</td>
+                        <td>950.6258</td>
+                        <td>-2.4355</td>
+                        <td><span class="tag tag-stationary">非平稳</span></td>
+                    </tr>
+        
+                    <tr>
+                        <td>ID02017501</td>
+                        <td>铁矿石：进口：库存：长江沿江地区：45个港口（周度）</td>
+                        <td>3,788</td>
+                        <td>2034.7408</td>
+                        <td>-2.6520</td>
+                        <td><span class="tag tag-stationary">平稳 (90%)</span></td>
+                    </tr>
+        
+                    <tr>
+                        <td>ID00414945</td>
+                        <td>铁矿石：进口：库存：华东地区：45个港口（周度）</td>
+                        <td>3,788</td>
+                        <td>5533.7478</td>
+                        <td>-1.4777</td>
+                        <td><span class="tag tag-stationary">非平稳</span></td>
+                    </tr>
+        
+                    <tr>
+                        <td>ID00186052</td>
+                        <td>铁矿石：进口：库存：45个港口（周度）</td>
+                        <td>3,788</td>
+                        <td>13372.6543</td>
+                        <td>-1.5373</td>
+                        <td><span class="tag tag-stationary">非平稳</span></td>
+                    </tr>
+        
+                    <tr>
+                        <td>ID00186278</td>
+                        <td>块矿：库存：45个港口（周度）</td>
+                        <td>3,788</td>
+                        <td>1823.7825</td>
+                        <td>-2.0615</td>
+                        <td><span class="tag tag-stationary">非平稳</span></td>
+                    </tr>
+        
+                    <tr>
+                        <td>ID01135139</td>
+                        <td>粗粉：进口：库存：45个港口（周度）</td>
+                        <td>3,788</td>
+                        <td>10134.1648</td>
+                        <td>-1.4191</td>
+                        <td><span class="tag tag-stationary">非平稳</span></td>
+                    </tr>
+        
+                    <tr>
+                        <td>ID00186491</td>
+                        <td>铁精粉：库存：45个港口（周度）</td>
+                        <td>3,788</td>
+                        <td>948.0946</td>
+                        <td>-2.2175</td>
+                        <td><span class="tag tag-stationary">非平稳</span></td>
+                    </tr>
+        
+                    <tr>
+                        <td>ID00186318</td>
+                        <td>球团矿：进口：库存：45个港口（周度）</td>
+                        <td>3,788</td>
+                        <td>466.6124</td>
+                        <td>-1.5613</td>
+                        <td><span class="tag tag-stationary">非平稳</span></td>
+                    </tr>
+        
+                    <tr>
+                        <td>ID01512800</td>
+                        <td>块矿：进口：库存：47个港口（周度）</td>
+                        <td>1,604</td>
+                        <td>1857.5260</td>
+                        <td>-2.4953</td>
+                        <td><span class="tag tag-stationary">非平稳</span></td>
+                    </tr>
+        
+                    <tr>
+                        <td>ID01868329</td>
+                        <td>粗粉：库存：47个港口（周度）</td>
+                        <td>1,359</td>
+                        <td>11140.1903</td>
+                        <td>-1.8212</td>
+                        <td><span class="tag tag-stationary">非平稳</span></td>
+                    </tr>
+        
+                    <tr>
+                        <td>ID01512783</td>
+                        <td>铁精粉：进口：库存：47个港口（周度）</td>
+                        <td>1,604</td>
+                        <td>1170.0990</td>
+                        <td>-1.3418</td>
+                        <td><span class="tag tag-stationary">非平稳</span></td>
+                    </tr>
+        
+                    <tr>
+                        <td>ID01512793</td>
+                        <td>球团矿：进口：库存：47个港口（周度）</td>
+                        <td>1,604</td>
+                        <td>549.4850</td>
+                        <td>-2.0114</td>
+                        <td><span class="tag tag-stationary">非平稳</span></td>
+                    </tr>
+        
+                    <tr>
+                        <td>ID01512786</td>
+                        <td>铁矿石：进口：库存：47个港口（周度）</td>
+                        <td>1,604</td>
+                        <td>14784.6491</td>
+                        <td>-1.7235</td>
+                        <td><span class="tag tag-stationary">非平稳</span></td>
+                    </tr>
+        
+                    <tr>
+                        <td>ID01517120</td>
+                        <td>PB粉：港口库存：华东地区：青岛港：明细（周度）</td>
+                        <td>3,242</td>
+                        <td>169.1363</td>
+                        <td>-2.8525</td>
+                        <td><span class="tag tag-stationary">平稳 (90%)</span></td>
+                    </tr>
+        
+                    <tr>
+                        <td>ID01517067</td>
+                        <td>PB粉：港口库存：华北地区：曹妃甸港：明细（周度）</td>
+                        <td>3,242</td>
+                        <td>118.1247</td>
+                        <td>-4.6171</td>
+                        <td><span class="tag tag-stationary">平稳 (99%)</span></td>
+                    </tr>
+        
+                    <tr>
+                        <td>ID01516906</td>
+                        <td>PB粉：港口库存：长江沿江地区：江阴港：明细（周度）</td>
+                        <td>3,242</td>
+                        <td>44.7569</td>
+                        <td>-5.1304</td>
+                        <td><span class="tag tag-stationary">平稳 (99%)</span></td>
+                    </tr>
+        
+                    <tr>
+                        <td>ID01516560</td>
+                        <td>PB块：港口库存：华东地区：青岛港：明细（周度）</td>
+                        <td>3,242</td>
+                        <td>81.4504</td>
+                        <td>-3.5862</td>
+                        <td><span class="tag tag-stationary">平稳 (99%)</span></td>
+                    </tr>
+        
+                    <tr>
+                        <td>ID01516505</td>
+                        <td>PB块：港口库存：华北地区：曹妃甸港：明细（周度）</td>
+                        <td>3,242</td>
+                        <td>24.2193</td>
+                        <td>-4.4189</td>
+                        <td><span class="tag tag-stationary">平稳 (99%)</span></td>
+                    </tr>
+        
+                    <tr>
+                        <td>ID01516418</td>
+                        <td>PB块：港口库存：长江沿江地区：江阴港：明细（周度）</td>
+                        <td>3,242</td>
+                        <td>12.8490</td>
+                        <td>-6.6012</td>
+                        <td><span class="tag tag-stationary">平稳 (99%)</span></td>
+                    </tr>
+        
+                </tbody>
+            </table>
+
+            <h3>📊 序列图</h3>
+    
+            <div class="chart-card">
+                <h4>ID02017483 - 铁矿石：进口：库存：华北地区：45个港口（周度）
+                    <span class="tag tag-stationary" style="float:right;">非平稳</span>
+                </h4>
+                <div class="chart-container">
+                    <img src="../figures/原始值_col1_铁矿石_进口_库存_华北地区_45个港口_周度_.svg" alt="序列图">
+                </div>
+                <p style="font-size: 12px; color: #718096; margin: 10px 0 0 0;">
+                    ADF t统计量: -1.8792 | 样本数: 3,788 | 均值: 4147.6514
+                </p>
+            </div>
+        
+            <div class="chart-card">
+                <h4>ID02017488 - 铁矿石：进口：库存：华南地区：45个港口（周度）
+                    <span class="tag tag-stationary" style="float:right;">非平稳</span>
+                </h4>
+                <div class="chart-container">
+                    <img src="../figures/原始值_col2_铁矿石_进口_库存_华南地区_45个港口_周度_.svg" alt="序列图">
+                </div>
+                <p style="font-size: 12px; color: #718096; margin: 10px 0 0 0;">
+                    ADF t统计量: -2.4355 | 样本数: 3,788 | 均值: 950.6258
+                </p>
+            </div>
+        
+            <div class="chart-card">
+                <h4>ID02017501 - 铁矿石：进口：库存：长江沿江地区：45个港口（周度）
+                    <span class="tag tag-stationary" style="float:right;">平稳 (90%)</span>
+                </h4>
+                <div class="chart-container">
+                    <img src="../figures/原始值_col3_铁矿石_进口_库存_长江沿江地区_45个港口_周度_.svg" alt="序列图">
+                </div>
+                <p style="font-size: 12px; color: #718096; margin: 10px 0 0 0;">
+                    ADF t统计量: -2.6520 | 样本数: 3,788 | 均值: 2034.7408
+                </p>
+            </div>
+        
+            <div class="chart-card">
+                <h4>ID00414945 - 铁矿石：进口：库存：华东地区：45个港口（周度）
+                    <span class="tag tag-stationary" style="float:right;">非平稳</span>
+                </h4>
+                <div class="chart-container">
+                    <img src="../figures/原始值_col4_铁矿石_进口_库存_华东地区_45个港口_周度_.svg" alt="序列图">
+                </div>
+                <p style="font-size: 12px; color: #718096; margin: 10px 0 0 0;">
+                    ADF t统计量: -1.4777 | 样本数: 3,788 | 均值: 5533.7478
+                </p>
+            </div>
+        
+            <div class="chart-card">
+                <h4>ID00186052 - 铁矿石：进口：库存：45个港口（周度）
+                    <span class="tag tag-stationary" style="float:right;">非平稳</span>
+                </h4>
+                <div class="chart-container">
+                    <img src="../figures/原始值_col5_铁矿石_进口_库存_45个港口_周度_.svg" alt="序列图">
+                </div>
+                <p style="font-size: 12px; color: #718096; margin: 10px 0 0 0;">
+                    ADF t统计量: -1.5373 | 样本数: 3,788 | 均值: 13372.6543
+                </p>
+            </div>
+        
+            <div class="chart-card">
+                <h4>ID00186278 - 块矿：库存：45个港口（周度）
+                    <span class="tag tag-stationary" style="float:right;">非平稳</span>
+                </h4>
+                <div class="chart-container">
+                    <img src="../figures/原始值_col6_块矿_库存_45个港口_周度_.svg" alt="序列图">
+                </div>
+                <p style="font-size: 12px; color: #718096; margin: 10px 0 0 0;">
+                    ADF t统计量: -2.0615 | 样本数: 3,788 | 均值: 1823.7825
+                </p>
+            </div>
+        
+            <div class="chart-card">
+                <h4>ID01135139 - 粗粉：进口：库存：45个港口（周度）
+                    <span class="tag tag-stationary" style="float:right;">非平稳</span>
+                </h4>
+                <div class="chart-container">
+                    <img src="../figures/原始值_col7_粗粉_进口_库存_45个港口_周度_.svg" alt="序列图">
+                </div>
+                <p style="font-size: 12px; color: #718096; margin: 10px 0 0 0;">
+                    ADF t统计量: -1.4191 | 样本数: 3,788 | 均值: 10134.1648
+                </p>
+            </div>
+        
+            <div class="chart-card">
+                <h4>ID00186491 - 铁精粉：库存：45个港口（周度）
+                    <span class="tag tag-stationary" style="float:right;">非平稳</span>
+                </h4>
+                <div class="chart-container">
+                    <img src="../figures/原始值_col8_铁精粉_库存_45个港口_周度_.svg" alt="序列图">
+                </div>
+                <p style="font-size: 12px; color: #718096; margin: 10px 0 0 0;">
+                    ADF t统计量: -2.2175 | 样本数: 3,788 | 均值: 948.0946
+                </p>
+            </div>
+        
+            <div class="chart-card">
+                <h4>ID00186318 - 球团矿：进口：库存：45个港口（周度）
+                    <span class="tag tag-stationary" style="float:right;">非平稳</span>
+                </h4>
+                <div class="chart-container">
+                    <img src="../figures/原始值_col9_球团矿_进口_库存_45个港口_周度_.svg" alt="序列图">
+                </div>
+                <p style="font-size: 12px; color: #718096; margin: 10px 0 0 0;">
+                    ADF t统计量: -1.5613 | 样本数: 3,788 | 均值: 466.6124
+                </p>
+            </div>
+        
+            <div class="chart-card">
+                <h4>ID01512800 - 块矿：进口：库存：47个港口（周度）
+                    <span class="tag tag-stationary" style="float:right;">非平稳</span>
+                </h4>
+                <div class="chart-container">
+                    <img src="../figures/原始值_col10_块矿_进口_库存_47个港口_周度_.svg" alt="序列图">
+                </div>
+                <p style="font-size: 12px; color: #718096; margin: 10px 0 0 0;">
+                    ADF t统计量: -2.4953 | 样本数: 1,604 | 均值: 1857.5260
+                </p>
+            </div>
+        
+            <div class="chart-card">
+                <h4>ID01868329 - 粗粉：库存：47个港口（周度）
+                    <span class="tag tag-stationary" style="float:right;">非平稳</span>
+                </h4>
+                <div class="chart-container">
+                    <img src="../figures/原始值_col11_粗粉_库存_47个港口_周度_.svg" alt="序列图">
+                </div>
+                <p style="font-size: 12px; color: #718096; margin: 10px 0 0 0;">
+                    ADF t统计量: -1.8212 | 样本数: 1,359 | 均值: 11140.1903
+                </p>
+            </div>
+        
+            <div class="chart-card">
+                <h4>ID01512783 - 铁精粉：进口：库存：47个港口（周度）
+                    <span class="tag tag-stationary" style="float:right;">非平稳</span>
+                </h4>
+                <div class="chart-container">
+                    <img src="../figures/原始值_col12_铁精粉_进口_库存_47个港口_周度_.svg" alt="序列图">
+                </div>
+                <p style="font-size: 12px; color: #718096; margin: 10px 0 0 0;">
+                    ADF t统计量: -1.3418 | 样本数: 1,604 | 均值: 1170.0990
+                </p>
+            </div>
+        
+            <div class="chart-card">
+                <h4>ID01512793 - 球团矿：进口：库存：47个港口（周度）
+                    <span class="tag tag-stationary" style="float:right;">非平稳</span>
+                </h4>
+                <div class="chart-container">
+                    <img src="../figures/原始值_col13_球团矿_进口_库存_47个港口_周度_.svg" alt="序列图">
+                </div>
+                <p style="font-size: 12px; color: #718096; margin: 10px 0 0 0;">
+                    ADF t统计量: -2.0114 | 样本数: 1,604 | 均值: 549.4850
+                </p>
+            </div>
+        
+            <div class="chart-card">
+                <h4>ID01512786 - 铁矿石：进口：库存：47个港口（周度）
+                    <span class="tag tag-stationary" style="float:right;">非平稳</span>
+                </h4>
+                <div class="chart-container">
+                    <img src="../figures/原始值_col14_铁矿石_进口_库存_47个港口_周度_.svg" alt="序列图">
+                </div>
+                <p style="font-size: 12px; color: #718096; margin: 10px 0 0 0;">
+                    ADF t统计量: -1.7235 | 样本数: 1,604 | 均值: 14784.6491
+                </p>
+            </div>
+        
+            <div class="chart-card">
+                <h4>ID01517120 - PB粉：港口库存：华东地区：青岛港：明细（周度）
+                    <span class="tag tag-stationary" style="float:right;">平稳 (90%)</span>
+                </h4>
+                <div class="chart-container">
+                    <img src="../figures/原始值_col15_PB粉_港口库存_华东地区_青岛港_明细_周度_.svg" alt="序列图">
+                </div>
+                <p style="font-size: 12px; color: #718096; margin: 10px 0 0 0;">
+                    ADF t统计量: -2.8525 | 样本数: 3,242 | 均值: 169.1363
+                </p>
+            </div>
+        
+            <div class="chart-card">
+                <h4>ID01517067 - PB粉：港口库存：华北地区：曹妃甸港：明细（周度）
+                    <span class="tag tag-stationary" style="float:right;">平稳 (99%)</span>
+                </h4>
+                <div class="chart-container">
+                    <img src="../figures/原始值_col16_PB粉_港口库存_华北地区_曹妃甸港_明细_周度_.svg" alt="序列图">
+                </div>
+                <p style="font-size: 12px; color: #718096; margin: 10px 0 0 0;">
+                    ADF t统计量: -4.6171 | 样本数: 3,242 | 均值: 118.1247
+                </p>
+            </div>
+        
+            <div class="chart-card">
+                <h4>ID01516906 - PB粉：港口库存：长江沿江地区：江阴港：明细（周度）
+                    <span class="tag tag-stationary" style="float:right;">平稳 (99%)</span>
+                </h4>
+                <div class="chart-container">
+                    <img src="../figures/原始值_col17_PB粉_港口库存_长江沿江地区_江阴港_明细_周度_.svg" alt="序列图">
+                </div>
+                <p style="font-size: 12px; color: #718096; margin: 10px 0 0 0;">
+                    ADF t统计量: -5.1304 | 样本数: 3,242 | 均值: 44.7569
+                </p>
+            </div>
+        
+            <div class="chart-card">
+                <h4>ID01516560 - PB块：港口库存：华东地区：青岛港：明细（周度）
+                    <span class="tag tag-stationary" style="float:right;">平稳 (99%)</span>
+                </h4>
+                <div class="chart-container">
+                    <img src="../figures/原始值_col18_PB块_港口库存_华东地区_青岛港_明细_周度_.svg" alt="序列图">
+                </div>
+                <p style="font-size: 12px; color: #718096; margin: 10px 0 0 0;">
+                    ADF t统计量: -3.5862 | 样本数: 3,242 | 均值: 81.4504
+                </p>
+            </div>
+        
+            <div class="chart-card">
+                <h4>ID01516505 - PB块：港口库存：华北地区：曹妃甸港：明细（周度）
+                    <span class="tag tag-stationary" style="float:right;">平稳 (99%)</span>
+                </h4>
+                <div class="chart-container">
+                    <img src="../figures/原始值_col19_PB块_港口库存_华北地区_曹妃甸港_明细_周度_.svg" alt="序列图">
+                </div>
+                <p style="font-size: 12px; color: #718096; margin: 10px 0 0 0;">
+                    ADF t统计量: -4.4189 | 样本数: 3,242 | 均值: 24.2193
+                </p>
+            </div>
+        
+            <div class="chart-card">
+                <h4>ID01516418 - PB块：港口库存：长江沿江地区：江阴港：明细（周度）
+                    <span class="tag tag-stationary" style="float:right;">平稳 (99%)</span>
+                </h4>
+                <div class="chart-container">
+                    <img src="../figures/原始值_col20_PB块_港口库存_长江沿江地区_江阴港_明细_周度_.svg" alt="序列图">
+                </div>
+                <p style="font-size: 12px; color: #718096; margin: 10px 0 0 0;">
+                    ADF t统计量: -6.6012 | 样本数: 3,242 | 均值: 12.8490
+                </p>
+            </div>
+        
+        </div>
+    
+        <div class="version-section">
+            <h2>📈 一阶差分</h2>
+
+            <div class="result-summary">
+                <div class="result-card" style="background: #ebf8ff;">
+                    <h4>总列数</h4>
+                    <div class="number" style="color: #3182ce;">20</div>
+                </div>
+                <div class="result-card" style="background: #c6f6d5;">
+                    <h4>平稳列数</h4>
+                    <div class="number" style="color: #22543d;">20</div>
+                </div>
+                <div class="result-card" style="background: #fed7d7;">
+                    <h4>非平稳列数</h4>
+                    <div class="number" style="color: #742a2a;">0</div>
+                </div>
+            </div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>列ID</th>
+                        <th>列名</th>
+                        <th>样本数</th>
+                        <th>均值</th>
+                        <th>ADF t统计量</th>
+                        <th>检验结果</th>
+                    </tr>
+                </thead>
+                <tbody>
+    
+                    <tr>
+                        <td>ID02017483</td>
+                        <td>铁矿石：进口：库存：华北地区：45个港口（周度）</td>
+                        <td>3,787</td>
+                        <td>0.6609</td>
+                        <td>-30.7573</td>
+                        <td><span class="tag tag-stationary">平稳 (99%)</span></td>
+                    </tr>
+        
+                    <tr>
+                        <td>ID02017488</td>
+                        <td>铁矿石：进口：库存：华南地区：45个港口（周度）</td>
+                        <td>3,787</td>
+                        <td>0.0355</td>
+                        <td>-30.6413</td>
+                        <td><span class="tag tag-stationary">平稳 (99%)</span></td>
+                    </tr>
+        
+                    <tr>
+                        <td>ID02017501</td>
+                        <td>铁矿石：进口：库存：长江沿江地区：45个港口（周度）</td>
+                        <td>3,787</td>
+                        <td>0.2421</td>
+                        <td>-30.7477</td>
+                        <td><span class="tag tag-stationary">平稳 (99%)</span></td>
+                    </tr>
+        
+                    <tr>
+                        <td>ID00414945</td>
+                        <td>铁矿石：进口：库存：华东地区：45个港口（周度）</td>
+                        <td>3,787</td>
+                        <td>0.8317</td>
+                        <td>-30.7798</td>
+                        <td><span class="tag tag-stationary">平稳 (99%)</span></td>
+                    </tr>
+        
+                    <tr>
+                        <td>ID00186052</td>
+                        <td>铁矿石：进口：库存：45个港口（周度）</td>
+                        <td>3,787</td>
+                        <td>1.7913</td>
+                        <td>-30.7937</td>
+                        <td><span class="tag tag-stationary">平稳 (99%)</span></td>
+                    </tr>
+        
+                    <tr>
+                        <td>ID00186278</td>
+                        <td>块矿：库存：45个港口（周度）</td>
+                        <td>3,787</td>
+                        <td>0.1071</td>
+                        <td>-30.7475</td>
+                        <td><span class="tag tag-stationary">平稳 (99%)</span></td>
+                    </tr>
+        
+                    <tr>
+                        <td>ID01135139</td>
+                        <td>粗粉：进口：库存：45个港口（周度）</td>
+                        <td>3,787</td>
+                        <td>1.4823</td>
+                        <td>-30.7922</td>
+                        <td><span class="tag tag-stationary">平稳 (99%)</span></td>
+                    </tr>
+        
+                    <tr>
+                        <td>ID00186491</td>
+                        <td>铁精粉：库存：45个港口（周度）</td>
+                        <td>3,787</td>
+                        <td>0.2795</td>
+                        <td>-30.7930</td>
+                        <td><span class="tag tag-stationary">平稳 (99%)</span></td>
+                    </tr>
+        
+                    <tr>
+                        <td>ID00186318</td>
+                        <td>球团矿：进口：库存：45个港口（周度）</td>
+                        <td>3,787</td>
+                        <td>-0.0776</td>
+                        <td>-30.7440</td>
+                        <td><span class="tag tag-stationary">平稳 (99%)</span></td>
+                    </tr>
+        
+                    <tr>
+                        <td>ID01512800</td>
+                        <td>块矿：进口：库存：47个港口（周度）</td>
+                        <td>1,603</td>
+                        <td>-0.3300</td>
+                        <td>-20.0241</td>
+                        <td><span class="tag tag-stationary">平稳 (99%)</span></td>
+                    </tr>
+        
+                    <tr>
+                        <td>ID01868329</td>
+                        <td>粗粉：库存：47个港口（周度）</td>
+                        <td>1,358</td>
+                        <td>1.7862</td>
+                        <td>-18.5119</td>
+                        <td><span class="tag tag-stationary">平稳 (99%)</span></td>
+                    </tr>
+        
+                    <tr>
+                        <td>ID01512783</td>
+                        <td>铁精粉：进口：库存：47个港口（周度）</td>
+                        <td>1,603</td>
+                        <td>0.3508</td>
+                        <td>-20.1049</td>
+                        <td><span class="tag tag-stationary">平稳 (99%)</span></td>
+                    </tr>
+        
+                    <tr>
+                        <td>ID01512793</td>
+                        <td>球团矿：进口：库存：47个港口（周度）</td>
+                        <td>1,603</td>
+                        <td>-0.0625</td>
+                        <td>-20.0186</td>
+                        <td><span class="tag tag-stationary">平稳 (99%)</span></td>
+                    </tr>
+        
+                    <tr>
+                        <td>ID01512786</td>
+                        <td>铁矿石：进口：库存：47个港口（周度）</td>
+                        <td>1,603</td>
+                        <td>0.5511</td>
+                        <td>-20.1739</td>
+                        <td><span class="tag tag-stationary">平稳 (99%)</span></td>
+                    </tr>
+        
+                    <tr>
+                        <td>ID01517120</td>
+                        <td>PB粉：港口库存：华东地区：青岛港：明细（周度）</td>
+                        <td>3,241</td>
+                        <td>-0.0457</td>
+                        <td>-28.4396</td>
+                        <td><span class="tag tag-stationary">平稳 (99%)</span></td>
+                    </tr>
+        
+                    <tr>
+                        <td>ID01517067</td>
+                        <td>PB粉：港口库存：华北地区：曹妃甸港：明细（周度）</td>
+                        <td>3,241</td>
+                        <td>-0.0061</td>
+                        <td>-28.4351</td>
+                        <td><span class="tag tag-stationary">平稳 (99%)</span></td>
+                    </tr>
+        
+                    <tr>
+                        <td>ID01516906</td>
+                        <td>PB粉：港口库存：长江沿江地区：江阴港：明细（周度）</td>
+                        <td>3,241</td>
+                        <td>0.0029</td>
+                        <td>-28.4352</td>
+                        <td><span class="tag tag-stationary">平稳 (99%)</span></td>
+                    </tr>
+        
+                    <tr>
+                        <td>ID01516560</td>
+                        <td>PB块：港口库存：华东地区：青岛港：明细（周度）</td>
+                        <td>3,241</td>
+                        <td>-0.0154</td>
+                        <td>-28.4409</td>
+                        <td><span class="tag tag-stationary">平稳 (99%)</span></td>
+                    </tr>
+        
+                    <tr>
+                        <td>ID01516505</td>
+                        <td>PB块：港口库存：华北地区：曹妃甸港：明细（周度）</td>
+                        <td>3,241</td>
+                        <td>-0.0046</td>
+                        <td>-28.4348</td>
+                        <td><span class="tag tag-stationary">平稳 (99%)</span></td>
+                    </tr>
+        
+                    <tr>
+                        <td>ID01516418</td>
+                        <td>PB块：港口库存：长江沿江地区：江阴港：明细（周度）</td>
+                        <td>3,241</td>
+                        <td>0.0014</td>
+                        <td>-28.4358</td>
+                        <td><span class="tag tag-stationary">平稳 (99%)</span></td>
+                    </tr>
+        
+                </tbody>
+            </table>
+
+            <h3>📊 序列图</h3>
+    
+            <div class="chart-card">
+                <h4>ID02017483 - 铁矿石：进口：库存：华北地区：45个港口（周度）
+                    <span class="tag tag-stationary" style="float:right;">平稳 (99%)</span>
+                </h4>
+                <div class="chart-container">
+                    <img src="../figures/一阶差分_col1_铁矿石_进口_库存_华北地区_45个港口_周度_.svg" alt="序列图">
+                </div>
+                <p style="font-size: 12px; color: #718096; margin: 10px 0 0 0;">
+                    ADF t统计量: -30.7573 | 样本数: 3,787 | 均值: 0.6609
+                </p>
+            </div>
+        
+            <div class="chart-card">
+                <h4>ID02017488 - 铁矿石：进口：库存：华南地区：45个港口（周度）
+                    <span class="tag tag-stationary" style="float:right;">平稳 (99%)</span>
+                </h4>
+                <div class="chart-container">
+                    <img src="../figures/一阶差分_col2_铁矿石_进口_库存_华南地区_45个港口_周度_.svg" alt="序列图">
+                </div>
+                <p style="font-size: 12px; color: #718096; margin: 10px 0 0 0;">
+                    ADF t统计量: -30.6413 | 样本数: 3,787 | 均值: 0.0355
+                </p>
+            </div>
+        
+            <div class="chart-card">
+                <h4>ID02017501 - 铁矿石：进口：库存：长江沿江地区：45个港口（周度）
+                    <span class="tag tag-stationary" style="float:right;">平稳 (99%)</span>
+                </h4>
+                <div class="chart-container">
+                    <img src="../figures/一阶差分_col3_铁矿石_进口_库存_长江沿江地区_45个港口_周度_.svg" alt="序列图">
+                </div>
+                <p style="font-size: 12px; color: #718096; margin: 10px 0 0 0;">
+                    ADF t统计量: -30.7477 | 样本数: 3,787 | 均值: 0.2421
+                </p>
+            </div>
+        
+            <div class="chart-card">
+                <h4>ID00414945 - 铁矿石：进口：库存：华东地区：45个港口（周度）
+                    <span class="tag tag-stationary" style="float:right;">平稳 (99%)</span>
+                </h4>
+                <div class="chart-container">
+                    <img src="../figures/一阶差分_col4_铁矿石_进口_库存_华东地区_45个港口_周度_.svg" alt="序列图">
+                </div>
+                <p style="font-size: 12px; color: #718096; margin: 10px 0 0 0;">
+                    ADF t统计量: -30.7798 | 样本数: 3,787 | 均值: 0.8317
+                </p>
+            </div>
+        
+            <div class="chart-card">
+                <h4>ID00186052 - 铁矿石：进口：库存：45个港口（周度）
+                    <span class="tag tag-stationary" style="float:right;">平稳 (99%)</span>
+                </h4>
+                <div class="chart-container">
+                    <img src="../figures/一阶差分_col5_铁矿石_进口_库存_45个港口_周度_.svg" alt="序列图">
+                </div>
+                <p style="font-size: 12px; color: #718096; margin: 10px 0 0 0;">
+                    ADF t统计量: -30.7937 | 样本数: 3,787 | 均值: 1.7913
+                </p>
+            </div>
+        
+            <div class="chart-card">
+                <h4>ID00186278 - 块矿：库存：45个港口（周度）
+                    <span class="tag tag-stationary" style="float:right;">平稳 (99%)</span>
+                </h4>
+                <div class="chart-container">
+                    <img src="../figures/一阶差分_col6_块矿_库存_45个港口_周度_.svg" alt="序列图">
+                </div>
+                <p style="font-size: 12px; color: #718096; margin: 10px 0 0 0;">
+                    ADF t统计量: -30.7475 | 样本数: 3,787 | 均值: 0.1071
+                </p>
+            </div>
+        
+            <div class="chart-card">
+                <h4>ID01135139 - 粗粉：进口：库存：45个港口（周度）
+                    <span class="tag tag-stationary" style="float:right;">平稳 (99%)</span>
+                </h4>
+                <div class="chart-container">
+                    <img src="../figures/一阶差分_col7_粗粉_进口_库存_45个港口_周度_.svg" alt="序列图">
+                </div>
+                <p style="font-size: 12px; color: #718096; margin: 10px 0 0 0;">
+                    ADF t统计量: -30.7922 | 样本数: 3,787 | 均值: 1.4823
+                </p>
+            </div>
+        
+            <div class="chart-card">
+                <h4>ID00186491 - 铁精粉：库存：45个港口（周度）
+                    <span class="tag tag-stationary" style="float:right;">平稳 (99%)</span>
+                </h4>
+                <div class="chart-container">
+                    <img src="../figures/一阶差分_col8_铁精粉_库存_45个港口_周度_.svg" alt="序列图">
+                </div>
+                <p style="font-size: 12px; color: #718096; margin: 10px 0 0 0;">
+                    ADF t统计量: -30.7930 | 样本数: 3,787 | 均值: 0.2795
+                </p>
+            </div>
+        
+            <div class="chart-card">
+                <h4>ID00186318 - 球团矿：进口：库存：45个港口（周度）
+                    <span class="tag tag-stationary" style="float:right;">平稳 (99%)</span>
+                </h4>
+                <div class="chart-container">
+                    <img src="../figures/一阶差分_col9_球团矿_进口_库存_45个港口_周度_.svg" alt="序列图">
+                </div>
+                <p style="font-size: 12px; color: #718096; margin: 10px 0 0 0;">
+                    ADF t统计量: -30.7440 | 样本数: 3,787 | 均值: -0.0776
+                </p>
+            </div>
+        
+            <div class="chart-card">
+                <h4>ID01512800 - 块矿：进口：库存：47个港口（周度）
+                    <span class="tag tag-stationary" style="float:right;">平稳 (99%)</span>
+                </h4>
+                <div class="chart-container">
+                    <img src="../figures/一阶差分_col10_块矿_进口_库存_47个港口_周度_.svg" alt="序列图">
+                </div>
+                <p style="font-size: 12px; color: #718096; margin: 10px 0 0 0;">
+                    ADF t统计量: -20.0241 | 样本数: 1,603 | 均值: -0.3300
+                </p>
+            </div>
+        
+            <div class="chart-card">
+                <h4>ID01868329 - 粗粉：库存：47个港口（周度）
+                    <span class="tag tag-stationary" style="float:right;">平稳 (99%)</span>
+                </h4>
+                <div class="chart-container">
+                    <img src="../figures/一阶差分_col11_粗粉_库存_47个港口_周度_.svg" alt="序列图">
+                </div>
+                <p style="font-size: 12px; color: #718096; margin: 10px 0 0 0;">
+                    ADF t统计量: -18.5119 | 样本数: 1,358 | 均值: 1.7862
+                </p>
+            </div>
+        
+            <div class="chart-card">
+                <h4>ID01512783 - 铁精粉：进口：库存：47个港口（周度）
+                    <span class="tag tag-stationary" style="float:right;">平稳 (99%)</span>
+                </h4>
+                <div class="chart-container">
+                    <img src="../figures/一阶差分_col12_铁精粉_进口_库存_47个港口_周度_.svg" alt="序列图">
+                </div>
+                <p style="font-size: 12px; color: #718096; margin: 10px 0 0 0;">
+                    ADF t统计量: -20.1049 | 样本数: 1,603 | 均值: 0.3508
+                </p>
+            </div>
+        
+            <div class="chart-card">
+                <h4>ID01512793 - 球团矿：进口：库存：47个港口（周度）
+                    <span class="tag tag-stationary" style="float:right;">平稳 (99%)</span>
+                </h4>
+                <div class="chart-container">
+                    <img src="../figures/一阶差分_col13_球团矿_进口_库存_47个港口_周度_.svg" alt="序列图">
+                </div>
+                <p style="font-size: 12px; color: #718096; margin: 10px 0 0 0;">
+                    ADF t统计量: -20.0186 | 样本数: 1,603 | 均值: -0.0625
+                </p>
+            </div>
+        
+            <div class="chart-card">
+                <h4>ID01512786 - 铁矿石：进口：库存：47个港口（周度）
+                    <span class="tag tag-stationary" style="float:right;">平稳 (99%)</span>
+                </h4>
+                <div class="chart-container">
+                    <img src="../figures/一阶差分_col14_铁矿石_进口_库存_47个港口_周度_.svg" alt="序列图">
+                </div>
+                <p style="font-size: 12px; color: #718096; margin: 10px 0 0 0;">
+                    ADF t统计量: -20.1739 | 样本数: 1,603 | 均值: 0.5511
+                </p>
+            </div>
+        
+            <div class="chart-card">
+                <h4>ID01517120 - PB粉：港口库存：华东地区：青岛港：明细（周度）
+                    <span class="tag tag-stationary" style="float:right;">平稳 (99%)</span>
+                </h4>
+                <div class="chart-container">
+                    <img src="../figures/一阶差分_col15_PB粉_港口库存_华东地区_青岛港_明细_周度_.svg" alt="序列图">
+                </div>
+                <p style="font-size: 12px; color: #718096; margin: 10px 0 0 0;">
+                    ADF t统计量: -28.4396 | 样本数: 3,241 | 均值: -0.0457
+                </p>
+            </div>
+        
+            <div class="chart-card">
+                <h4>ID01517067 - PB粉：港口库存：华北地区：曹妃甸港：明细（周度）
+                    <span class="tag tag-stationary" style="float:right;">平稳 (99%)</span>
+                </h4>
+                <div class="chart-container">
+                    <img src="../figures/一阶差分_col16_PB粉_港口库存_华北地区_曹妃甸港_明细_周度_.svg" alt="序列图">
+                </div>
+                <p style="font-size: 12px; color: #718096; margin: 10px 0 0 0;">
+                    ADF t统计量: -28.4351 | 样本数: 3,241 | 均值: -0.0061
+                </p>
+            </div>
+        
+            <div class="chart-card">
+                <h4>ID01516906 - PB粉：港口库存：长江沿江地区：江阴港：明细（周度）
+                    <span class="tag tag-stationary" style="float:right;">平稳 (99%)</span>
+                </h4>
+                <div class="chart-container">
+                    <img src="../figures/一阶差分_col17_PB粉_港口库存_长江沿江地区_江阴港_明细_周度_.svg" alt="序列图">
+                </div>
+                <p style="font-size: 12px; color: #718096; margin: 10px 0 0 0;">
+                    ADF t统计量: -28.4352 | 样本数: 3,241 | 均值: 0.0029
+                </p>
+            </div>
+        
+            <div class="chart-card">
+                <h4>ID01516560 - PB块：港口库存：华东地区：青岛港：明细（周度）
+                    <span class="tag tag-stationary" style="float:right;">平稳 (99%)</span>
+                </h4>
+                <div class="chart-container">
+                    <img src="../figures/一阶差分_col18_PB块_港口库存_华东地区_青岛港_明细_周度_.svg" alt="序列图">
+                </div>
+                <p style="font-size: 12px; color: #718096; margin: 10px 0 0 0;">
+                    ADF t统计量: -28.4409 | 样本数: 3,241 | 均值: -0.0154
+                </p>
+            </div>
+        
+            <div class="chart-card">
+                <h4>ID01516505 - PB块：港口库存：华北地区：曹妃甸港：明细（周度）
+                    <span class="tag tag-stationary" style="float:right;">平稳 (99%)</span>
+                </h4>
+                <div class="chart-container">
+                    <img src="../figures/一阶差分_col19_PB块_港口库存_华北地区_曹妃甸港_明细_周度_.svg" alt="序列图">
+                </div>
+                <p style="font-size: 12px; color: #718096; margin: 10px 0 0 0;">
+                    ADF t统计量: -28.4348 | 样本数: 3,241 | 均值: -0.0046
+                </p>
+            </div>
+        
+            <div class="chart-card">
+                <h4>ID01516418 - PB块：港口库存：长江沿江地区：江阴港：明细（周度）
+                    <span class="tag tag-stationary" style="float:right;">平稳 (99%)</span>
+                </h4>
+                <div class="chart-container">
+                    <img src="../figures/一阶差分_col20_PB块_港口库存_长江沿江地区_江阴港_明细_周度_.svg" alt="序列图">
+                </div>
+                <p style="font-size: 12px; color: #718096; margin: 10px 0 0 0;">
+                    ADF t统计量: -28.4358 | 样本数: 3,241 | 均值: 0.0014
+                </p>
+            </div>
+        
+        </div>
+    
+        <div class="version-section">
+            <h2>📈 百分比变化</h2>
+
+            <div class="result-summary">
+                <div class="result-card" style="background: #ebf8ff;">
+                    <h4>总列数</h4>
+                    <div class="number" style="color: #3182ce;">20</div>
+                </div>
+                <div class="result-card" style="background: #c6f6d5;">
+                    <h4>平稳列数</h4>
+                    <div class="number" style="color: #22543d;">20</div>
+                </div>
+                <div class="result-card" style="background: #fed7d7;">
+                    <h4>非平稳列数</h4>
+                    <div class="number" style="color: #742a2a;">0</div>
+                </div>
+            </div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>列ID</th>
+                        <th>列名</th>
+                        <th>样本数</th>
+                        <th>均值</th>
+                        <th>ADF t统计量</th>
+                        <th>检验结果</th>
+                    </tr>
+                </thead>
+                <tbody>
+    
+                    <tr>
+                        <td>ID02017483</td>
+                        <td>铁矿石：进口：库存：华北地区：45个港口（周度）</td>
+                        <td>3,787</td>
+                        <td>0.0002</td>
+                        <td>-30.7762</td>
+                        <td><span class="tag tag-stationary">平稳 (99%)</span></td>
+                    </tr>
+        
+                    <tr>
+                        <td>ID02017488</td>
+                        <td>铁矿石：进口：库存：华南地区：45个港口（周度）</td>
+                        <td>3,787</td>
+                        <td>0.0001</td>
+                        <td>-30.6821</td>
+                        <td><span class="tag tag-stationary">平稳 (99%)</span></td>
+                    </tr>
+        
+                    <tr>
+                        <td>ID02017501</td>
+                        <td>铁矿石：进口：库存：长江沿江地区：45个港口（周度）</td>
+                        <td>3,787</td>
+                        <td>0.0002</td>
+                        <td>-30.7600</td>
+                        <td><span class="tag tag-stationary">平稳 (99%)</span></td>
+                    </tr>
+        
+                    <tr>
+                        <td>ID00414945</td>
+                        <td>铁矿石：进口：库存：华东地区：45个港口（周度）</td>
+                        <td>3,787</td>
+                        <td>0.0002</td>
+                        <td>-30.7988</td>
+                        <td><span class="tag tag-stationary">平稳 (99%)</span></td>
+                    </tr>
+        
+                    <tr>
+                        <td>ID00186052</td>
+                        <td>铁矿石：进口：库存：45个港口（周度）</td>
+                        <td>3,787</td>
+                        <td>0.0002</td>
+                        <td>-30.8109</td>
+                        <td><span class="tag tag-stationary">平稳 (99%)</span></td>
+                    </tr>
+        
+                    <tr>
+                        <td>ID00186278</td>
+                        <td>块矿：库存：45个港口（周度）</td>
+                        <td>3,787</td>
+                        <td>0.0001</td>
+                        <td>-30.7562</td>
+                        <td><span class="tag tag-stationary">平稳 (99%)</span></td>
+                    </tr>
+        
+                    <tr>
+                        <td>ID01135139</td>
+                        <td>粗粉：进口：库存：45个港口（周度）</td>
+                        <td>3,787</td>
+                        <td>0.0002</td>
+                        <td>-30.8141</td>
+                        <td><span class="tag tag-stationary">平稳 (99%)</span></td>
+                    </tr>
+        
+                    <tr>
+                        <td>ID00186491</td>
+                        <td>铁精粉：库存：45个港口（周度）</td>
+                        <td>3,787</td>
+                        <td>0.0004</td>
+                        <td>-30.7878</td>
+                        <td><span class="tag tag-stationary">平稳 (99%)</span></td>
+                    </tr>
+        
+                    <tr>
+                        <td>ID00186318</td>
+                        <td>球团矿：进口：库存：45个港口（周度）</td>
+                        <td>3,787</td>
+                        <td>0.0000</td>
+                        <td>-30.7336</td>
+                        <td><span class="tag tag-stationary">平稳 (99%)</span></td>
+                    </tr>
+        
+                    <tr>
+                        <td>ID01512800</td>
+                        <td>块矿：进口：库存：47个港口（周度）</td>
+                        <td>1,603</td>
+                        <td>-0.0001</td>
+                        <td>-20.0085</td>
+                        <td><span class="tag tag-stationary">平稳 (99%)</span></td>
+                    </tr>
+        
+                    <tr>
+                        <td>ID01868329</td>
+                        <td>粗粉：库存：47个港口（周度）</td>
+                        <td>1,358</td>
+                        <td>0.0002</td>
+                        <td>-18.4975</td>
+                        <td><span class="tag tag-stationary">平稳 (99%)</span></td>
+                    </tr>
+        
+                    <tr>
+                        <td>ID01512783</td>
+                        <td>铁精粉：进口：库存：47个港口（周度）</td>
+                        <td>1,603</td>
+                        <td>0.0003</td>
+                        <td>-20.0816</td>
+                        <td><span class="tag tag-stationary">平稳 (99%)</span></td>
+                    </tr>
+        
+                    <tr>
+                        <td>ID01512793</td>
+                        <td>球团矿：进口：库存：47个港口（周度）</td>
+                        <td>1,603</td>
+                        <td>-0.0000</td>
+                        <td>-19.9725</td>
+                        <td><span class="tag tag-stationary">平稳 (99%)</span></td>
+                    </tr>
+        
+                    <tr>
+                        <td>ID01512786</td>
+                        <td>铁矿石：进口：库存：47个港口（周度）</td>
+                        <td>1,603</td>
+                        <td>0.0000</td>
+                        <td>-20.1497</td>
+                        <td><span class="tag tag-stationary">平稳 (99%)</span></td>
+                    </tr>
+        
+                    <tr>
+                        <td>ID01517120</td>
+                        <td>PB粉：港口库存：华东地区：青岛港：明细（周度）</td>
+                        <td>3,234</td>
+                        <td>0.0004</td>
+                        <td>-28.4119</td>
+                        <td><span class="tag tag-stationary">平稳 (99%)</span></td>
+                    </tr>
+        
+                    <tr>
+                        <td>ID01517067</td>
+                        <td>PB粉：港口库存：华北地区：曹妃甸港：明细（周度）</td>
+                        <td>3,241</td>
+                        <td>0.0042</td>
+                        <td>-28.5352</td>
+                        <td><span class="tag tag-stationary">平稳 (99%)</span></td>
+                    </tr>
+        
+                    <tr>
+                        <td>ID01516906</td>
+                        <td>PB粉：港口库存：长江沿江地区：江阴港：明细（周度）</td>
+                        <td>3,241</td>
+                        <td>0.0091</td>
+                        <td>-28.5873</td>
+                        <td><span class="tag tag-stationary">平稳 (99%)</span></td>
+                    </tr>
+        
+                    <tr>
+                        <td>ID01516560</td>
+                        <td>PB块：港口库存：华东地区：青岛港：明细（周度）</td>
+                        <td>3,234</td>
+                        <td>0.0017</td>
+                        <td>-28.4377</td>
+                        <td><span class="tag tag-stationary">平稳 (99%)</span></td>
+                    </tr>
+        
+                    <tr>
+                        <td>ID01516505</td>
+                        <td>PB块：港口库存：华北地区：曹妃甸港：明细（周度）</td>
+                        <td>3,241</td>
+                        <td>0.1090</td>
+                        <td>-28.4857</td>
+                        <td><span class="tag tag-stationary">平稳 (99%)</span></td>
+                    </tr>
+        
+                    <tr>
+                        <td>ID01516418</td>
+                        <td>PB块：港口库存：长江沿江地区：江阴港：明细（周度）</td>
+                        <td>3,192</td>
+                        <td>0.0633</td>
+                        <td>-28.4149</td>
+                        <td><span class="tag tag-stationary">平稳 (99%)</span></td>
+                    </tr>
+        
+                </tbody>
+            </table>
+
+            <h3>📊 序列图</h3>
+    
+            <div class="chart-card">
+                <h4>ID02017483 - 铁矿石：进口：库存：华北地区：45个港口（周度）
+                    <span class="tag tag-stationary" style="float:right;">平稳 (99%)</span>
+                </h4>
+                <div class="chart-container">
+                    <img src="../figures/百分比变化_col1_铁矿石_进口_库存_华北地区_45个港口_周度_.svg" alt="序列图">
+                </div>
+                <p style="font-size: 12px; color: #718096; margin: 10px 0 0 0;">
+                    ADF t统计量: -30.7762 | 样本数: 3,787 | 均值: 0.0002
+                </p>
+            </div>
+        
+            <div class="chart-card">
+                <h4>ID02017488 - 铁矿石：进口：库存：华南地区：45个港口（周度）
+                    <span class="tag tag-stationary" style="float:right;">平稳 (99%)</span>
+                </h4>
+                <div class="chart-container">
+                    <img src="../figures/百分比变化_col2_铁矿石_进口_库存_华南地区_45个港口_周度_.svg" alt="序列图">
+                </div>
+                <p style="font-size: 12px; color: #718096; margin: 10px 0 0 0;">
+                    ADF t统计量: -30.6821 | 样本数: 3,787 | 均值: 0.0001
+                </p>
+            </div>
+        
+            <div class="chart-card">
+                <h4>ID02017501 - 铁矿石：进口：库存：长江沿江地区：45个港口（周度）
+                    <span class="tag tag-stationary" style="float:right;">平稳 (99%)</span>
+                </h4>
+                <div class="chart-container">
+                    <img src="../figures/百分比变化_col3_铁矿石_进口_库存_长江沿江地区_45个港口_周度_.svg" alt="序列图">
+                </div>
+                <p style="font-size: 12px; color: #718096; margin: 10px 0 0 0;">
+                    ADF t统计量: -30.7600 | 样本数: 3,787 | 均值: 0.0002
+                </p>
+            </div>
+        
+            <div class="chart-card">
+                <h4>ID00414945 - 铁矿石：进口：库存：华东地区：45个港口（周度）
+                    <span class="tag tag-stationary" style="float:right;">平稳 (99%)</span>
+                </h4>
+                <div class="chart-container">
+                    <img src="../figures/百分比变化_col4_铁矿石_进口_库存_华东地区_45个港口_周度_.svg" alt="序列图">
+                </div>
+                <p style="font-size: 12px; color: #718096; margin: 10px 0 0 0;">
+                    ADF t统计量: -30.7988 | 样本数: 3,787 | 均值: 0.0002
+                </p>
+            </div>
+        
+            <div class="chart-card">
+                <h4>ID00186052 - 铁矿石：进口：库存：45个港口（周度）
+                    <span class="tag tag-stationary" style="float:right;">平稳 (99%)</span>
+                </h4>
+                <div class="chart-container">
+                    <img src="../figures/百分比变化_col5_铁矿石_进口_库存_45个港口_周度_.svg" alt="序列图">
+                </div>
+                <p style="font-size: 12px; color: #718096; margin: 10px 0 0 0;">
+                    ADF t统计量: -30.8109 | 样本数: 3,787 | 均值: 0.0002
+                </p>
+            </div>
+        
+            <div class="chart-card">
+                <h4>ID00186278 - 块矿：库存：45个港口（周度）
+                    <span class="tag tag-stationary" style="float:right;">平稳 (99%)</span>
+                </h4>
+                <div class="chart-container">
+                    <img src="../figures/百分比变化_col6_块矿_库存_45个港口_周度_.svg" alt="序列图">
+                </div>
+                <p style="font-size: 12px; color: #718096; margin: 10px 0 0 0;">
+                    ADF t统计量: -30.7562 | 样本数: 3,787 | 均值: 0.0001
+                </p>
+            </div>
+        
+            <div class="chart-card">
+                <h4>ID01135139 - 粗粉：进口：库存：45个港口（周度）
+                    <span class="tag tag-stationary" style="float:right;">平稳 (99%)</span>
+                </h4>
+                <div class="chart-container">
+                    <img src="../figures/百分比变化_col7_粗粉_进口_库存_45个港口_周度_.svg" alt="序列图">
+                </div>
+                <p style="font-size: 12px; color: #718096; margin: 10px 0 0 0;">
+                    ADF t统计量: -30.8141 | 样本数: 3,787 | 均值: 0.0002
+                </p>
+            </div>
+        
+            <div class="chart-card">
+                <h4>ID00186491 - 铁精粉：库存：45个港口（周度）
+                    <span class="tag tag-stationary" style="float:right;">平稳 (99%)</span>
+                </h4>
+                <div class="chart-container">
+                    <img src="../figures/百分比变化_col8_铁精粉_库存_45个港口_周度_.svg" alt="序列图">
+                </div>
+                <p style="font-size: 12px; color: #718096; margin: 10px 0 0 0;">
+                    ADF t统计量: -30.7878 | 样本数: 3,787 | 均值: 0.0004
+                </p>
+            </div>
+        
+            <div class="chart-card">
+                <h4>ID00186318 - 球团矿：进口：库存：45个港口（周度）
+                    <span class="tag tag-stationary" style="float:right;">平稳 (99%)</span>
+                </h4>
+                <div class="chart-container">
+                    <img src="../figures/百分比变化_col9_球团矿_进口_库存_45个港口_周度_.svg" alt="序列图">
+                </div>
+                <p style="font-size: 12px; color: #718096; margin: 10px 0 0 0;">
+                    ADF t统计量: -30.7336 | 样本数: 3,787 | 均值: 0.0000
+                </p>
+            </div>
+        
+            <div class="chart-card">
+                <h4>ID01512800 - 块矿：进口：库存：47个港口（周度）
+                    <span class="tag tag-stationary" style="float:right;">平稳 (99%)</span>
+                </h4>
+                <div class="chart-container">
+                    <img src="../figures/百分比变化_col10_块矿_进口_库存_47个港口_周度_.svg" alt="序列图">
+                </div>
+                <p style="font-size: 12px; color: #718096; margin: 10px 0 0 0;">
+                    ADF t统计量: -20.0085 | 样本数: 1,603 | 均值: -0.0001
+                </p>
+            </div>
+        
+            <div class="chart-card">
+                <h4>ID01868329 - 粗粉：库存：47个港口（周度）
+                    <span class="tag tag-stationary" style="float:right;">平稳 (99%)</span>
+                </h4>
+                <div class="chart-container">
+                    <img src="../figures/百分比变化_col11_粗粉_库存_47个港口_周度_.svg" alt="序列图">
+                </div>
+                <p style="font-size: 12px; color: #718096; margin: 10px 0 0 0;">
+                    ADF t统计量: -18.4975 | 样本数: 1,358 | 均值: 0.0002
+                </p>
+            </div>
+        
+            <div class="chart-card">
+                <h4>ID01512783 - 铁精粉：进口：库存：47个港口（周度）
+                    <span class="tag tag-stationary" style="float:right;">平稳 (99%)</span>
+                </h4>
+                <div class="chart-container">
+                    <img src="../figures/百分比变化_col12_铁精粉_进口_库存_47个港口_周度_.svg" alt="序列图">
+                </div>
+                <p style="font-size: 12px; color: #718096; margin: 10px 0 0 0;">
+                    ADF t统计量: -20.0816 | 样本数: 1,603 | 均值: 0.0003
+                </p>
+            </div>
+        
+            <div class="chart-card">
+                <h4>ID01512793 - 球团矿：进口：库存：47个港口（周度）
+                    <span class="tag tag-stationary" style="float:right;">平稳 (99%)</span>
+                </h4>
+                <div class="chart-container">
+                    <img src="../figures/百分比变化_col13_球团矿_进口_库存_47个港口_周度_.svg" alt="序列图">
+                </div>
+                <p style="font-size: 12px; color: #718096; margin: 10px 0 0 0;">
+                    ADF t统计量: -19.9725 | 样本数: 1,603 | 均值: -0.0000
+                </p>
+            </div>
+        
+            <div class="chart-card">
+                <h4>ID01512786 - 铁矿石：进口：库存：47个港口（周度）
+                    <span class="tag tag-stationary" style="float:right;">平稳 (99%)</span>
+                </h4>
+                <div class="chart-container">
+                    <img src="../figures/百分比变化_col14_铁矿石_进口_库存_47个港口_周度_.svg" alt="序列图">
+                </div>
+                <p style="font-size: 12px; color: #718096; margin: 10px 0 0 0;">
+                    ADF t统计量: -20.1497 | 样本数: 1,603 | 均值: 0.0000
+                </p>
+            </div>
+        
+            <div class="chart-card">
+                <h4>ID01517120 - PB粉：港口库存：华东地区：青岛港：明细（周度）
+                    <span class="tag tag-stationary" style="float:right;">平稳 (99%)</span>
+                </h4>
+                <div class="chart-container">
+                    <img src="../figures/百分比变化_col15_PB粉_港口库存_华东地区_青岛港_明细_周度_.svg" alt="序列图">
+                </div>
+                <p style="font-size: 12px; color: #718096; margin: 10px 0 0 0;">
+                    ADF t统计量: -28.4119 | 样本数: 3,234 | 均值: 0.0004
+                </p>
+            </div>
+        
+            <div class="chart-card">
+                <h4>ID01517067 - PB粉：港口库存：华北地区：曹妃甸港：明细（周度）
+                    <span class="tag tag-stationary" style="float:right;">平稳 (99%)</span>
+                </h4>
+                <div class="chart-container">
+                    <img src="../figures/百分比变化_col16_PB粉_港口库存_华北地区_曹妃甸港_明细_周度_.svg" alt="序列图">
+                </div>
+                <p style="font-size: 12px; color: #718096; margin: 10px 0 0 0;">
+                    ADF t统计量: -28.5352 | 样本数: 3,241 | 均值: 0.0042
+                </p>
+            </div>
+        
+            <div class="chart-card">
+                <h4>ID01516906 - PB粉：港口库存：长江沿江地区：江阴港：明细（周度）
+                    <span class="tag tag-stationary" style="float:right;">平稳 (99%)</span>
+                </h4>
+                <div class="chart-container">
+                    <img src="../figures/百分比变化_col17_PB粉_港口库存_长江沿江地区_江阴港_明细_周度_.svg" alt="序列图">
+                </div>
+                <p style="font-size: 12px; color: #718096; margin: 10px 0 0 0;">
+                    ADF t统计量: -28.5873 | 样本数: 3,241 | 均值: 0.0091
+                </p>
+            </div>
+        
+            <div class="chart-card">
+                <h4>ID01516560 - PB块：港口库存：华东地区：青岛港：明细（周度）
+                    <span class="tag tag-stationary" style="float:right;">平稳 (99%)</span>
+                </h4>
+                <div class="chart-container">
+                    <img src="../figures/百分比变化_col18_PB块_港口库存_华东地区_青岛港_明细_周度_.svg" alt="序列图">
+                </div>
+                <p style="font-size: 12px; color: #718096; margin: 10px 0 0 0;">
+                    ADF t统计量: -28.4377 | 样本数: 3,234 | 均值: 0.0017
+                </p>
+            </div>
+        
+            <div class="chart-card">
+                <h4>ID01516505 - PB块：港口库存：华北地区：曹妃甸港：明细（周度）
+                    <span class="tag tag-stationary" style="float:right;">平稳 (99%)</span>
+                </h4>
+                <div class="chart-container">
+                    <img src="../figures/百分比变化_col19_PB块_港口库存_华北地区_曹妃甸港_明细_周度_.svg" alt="序列图">
+                </div>
+                <p style="font-size: 12px; color: #718096; margin: 10px 0 0 0;">
+                    ADF t统计量: -28.4857 | 样本数: 3,241 | 均值: 0.1090
+                </p>
+            </div>
+        
+            <div class="chart-card">
+                <h4>ID01516418 - PB块：港口库存：长江沿江地区：江阴港：明细（周度）
+                    <span class="tag tag-stationary" style="float:right;">平稳 (99%)</span>
+                </h4>
+                <div class="chart-container">
+                    <img src="../figures/百分比变化_col20_PB块_港口库存_长江沿江地区_江阴港_明细_周度_.svg" alt="序列图">
+                </div>
+                <p style="font-size: 12px; color: #718096; margin: 10px 0 0 0;">
+                    ADF t统计量: -28.4149 | 样本数: 3,192 | 均值: 0.0633
+                </p>
+            </div>
+        
+        </div>
+    
+        <h2>💡 建议</h2>
+        <div class="summary-box">
+            <ul>
+                <li><strong>原始值:</strong> 通常非平稳，适合树模型、神经网络（不需要严格平稳）</li>
+                <li><strong>一阶差分/百分比变化:</strong> 通常更平稳，适合ARIMA等传统时间序列模型</li>
+                <li><strong>实践策略:</strong> 保留三个版本，在模型训练阶段对比效果</li>
+                <li><strong>时间范围:</strong> 建议使用2018-2024年数据（更完整）</li>
+            </ul>
+        </div>
+
+        <footer style="margin-top: 50px; padding-top: 20px; border-top: 1px solid #e2e8f0; color: #718096;">
+            <p>生成时间: 2026-05-22 15:29:37</p>
+        </footer>
+    </div>
+</body>
+</html>

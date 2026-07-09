@@ -1,0 +1,17 @@
+{
+  "target_id": "ID01512800",
+  "target_name": "块矿：进口：库存：47个港口（周度）",
+  "train_cutoff": "2024-12-31",
+  "gap_weeks": 14,
+  "test_start": "2025-04-08",
+  "train_rows": 159,
+  "test_rows": 56,
+  "train_date_range": [
+    "2021-12-17",
+    "2024-12-27"
+  ],
+  "test_date_range": [
+    "2025-04-11",
+    "2026-05-01"
+  ]
+}
