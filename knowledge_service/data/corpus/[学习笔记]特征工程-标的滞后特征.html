@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>铁矿石库存预测项目 - 标的滞后特征学习总结</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.7;
+            color: #2d3748;
+            background-color: #f7fafc;
+            padding: 40px 20px;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            padding: 50px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        }
+        h1 {
+            color: #1a365d;
+            font-size: 32px;
+            border-bottom: 4px solid #3182ce;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+        h2 {
+            color: #2c5282;
+            font-size: 24px;
+            margin-top: 40px;
+            margin-bottom: 20px;
+            border-left: 5px solid #4299e1;
+            padding-left: 15px;
+        }
+        h3 {
+            color: #2d3748;
+            font-size: 18px;
+            margin-top: 25px;
+            margin-bottom: 12px;
+        }
+        .info-box {
+            background: linear-gradient(135deg, #ebf8ff 0%, #e6fffa 100%);
+            padding: 20px 25px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border-left: 4px solid #3182ce;
+        }
+        .concept-box {
+            background: linear-gradient(135deg, #fef5e7 0%, #fdebd0 100%);
+            padding: 20px 25px;
+            border-radius: 10px;
+            margin: 15px 0;
+            border-left: 4px solid #e67e22;
+        }
+        .concept-title {
+            font-weight: 700;
+            color: #d35400;
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+        .warning-box {
+            background: #fffaf0;
+            padding: 20px 25px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border-left: 4px solid #ed8936;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 14px;
+        }
+        th, td {
+            border: 1px solid #e2e8f0;
+            padding: 12px 15px;
+            text-align: left;
+        }
+        th {
+            background-color: #2d3748;
+            color: white;
+            font-weight: 600;
+        }
+        tr:nth-child(even) {
+            background-color: #f7fafc;
+        }
+        code {
+            background: #edf2f7;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-family: "SFMono-Regular", Consolas, monospace;
+            font-size: 14px;
+        }
+        pre {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 18px 22px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-size: 13px;
+            margin: 15px 0;
+        }
+        .example {
+            background: #f7fafc;
+            padding: 18px 22px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border: 1px solid #e2e8f0;
+        }
+        .example-title {
+            font-weight: 700;
+            color: #2b6cb0;
+            margin-bottom: 10px;
+        }
+        ul, ol {
+            margin: 15px 0;
+            padding-left: 30px;
+        }
+        li {
+            margin: 8px 0;
+        }
+        .tag {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-right: 8px;
+        }
+        .tag-green {
+            background: #c6f6d5;
+            color: #22543d;
+        }
+        .tag-blue {
+            background: #bee3f8;
+            color: #2a4365;
+        }
+        .tag-orange {
+            background: #feebc8;
+            color: #7c2d12;
+        }
+        .feature-card {
+            background: #f7fafc;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 15px 0;
+            border-left: 4px solid #3182ce;
+        }
+        .feature-name {
+            font-weight: 700;
+            font-size: 16px;
+            color: #2b6cb0;
+            margin-bottom: 8px;
+        }
+        .feature-desc {
+            margin-bottom: 10px;
+        }
+        .code-explain {
+            background: white;
+            border-left: 3px solid #3182ce;
+            padding: 12px 16px;
+            margin: 8px 0;
+        }
+        .code-fragment {
+            font-weight: 600;
+            color: #2b6cb0;
+        }
+        .toggle-btn {
+            background: #3182ce;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            margin: 10px 0;
+        }
+        .toggle-btn:hover {
+            background: #2b6cb0;
+        }
+        .toggle-content {
+            display: none;
+            margin-top: 10px;
+        }
+        .toggle-content.show {
+            display: block;
+        }
+        .diagram-box {
+            text-align: center;
+            margin: 20px 0;
+            padding: 20px;
+            background: #f7fafc;
+            border-radius: 8px;
+        }
+        footer {
+            margin-top: 50px;
+            padding-top: 20px;
+            border-top: 1px solid #e2e8f0;
+            color: #718096;
+            font-size: 14px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>⏰ 铁矿石库存预测项目 - 标的滞后特征学习总结</h1>
+
+        <div class="info-box">
+            <strong>文件位置：</strong><code>05_feature_engineering/scripts/03_target_lags.py</code><br>
+            <strong>输出文件：</strong><code>05_feature_engineering/outputs/02_target_lags.csv</code><br>
+            <strong>标的：</strong>铁矿石：进口：库存：45个港口（周度）<br>
+            <strong>生成特征数：</strong>16个特征
+        </div>
+
+        <h2>一、特征总览表</h2>
+
+        <table>
+            <tr>
+                <th>类别</th>
+                <th>特征列名</th>
+                <th>中文名称</th>
+                <th>说明</th>
+                <th>数量</th>
+            </tr>
+            <tr>
+                <td rowspan="5"><span class="tag-blue">短期滞后</span></td>
+                <td><code>target_lag_1</code></td>
+                <td>标的滞后1日</td>
+                <td>用昨天的库存预测今天</td>
+                <td rowspan="5">5</td>
+            </tr>
+            <tr>
+                <td><code>target_lag_2</code></td>
+                <td>标的滞后2日</td>
+                <td>用2天前的库存预测今天</td>
+            </tr>
+            <tr>
+                <td><code>target_lag_3</code></td>
+                <td>标的滞后3日</td>
+                <td>用3天前的库存预测今天</td>
+            </tr>
+            <tr>
+                <td><code>target_lag_5</code></td>
+                <td>标的滞后5日</td>
+                <td>用5天前的库存预测今天</td>
+            </tr>
+            <tr>
+                <td><code>target_lag_7</code></td>
+                <td>标的滞后7日</td>
+                <td>用一周前的库存预测今天</td>
+            </tr>
+            <tr>
+                <td rowspan="3"><span class="tag-orange">中期滞后</span></td>
+                <td><code>target_lag_14</code></td>
+                <td>标的滞后14日</td>
+                <td>两周前</td>
+                <td rowspan="3">3</td>
+            </tr>
+            <tr>
+                <td><code>target_lag_21</code></td>
+                <td>标的滞后21日</td>
+                <td>三周前</td>
+            </tr>
+            <tr>
+                <td><code>target_lag_30</code></td>
+                <td>标的滞后30日</td>
+                <td>一个月前</td>
+            </tr>
+            <tr>
+                <td rowspan="4"><span class="tag-green">长期滞后</span></td>
+                <td><code>target_lag_60</code></td>
+                <td>标的滞后60日</td>
+                <td>两个月前</td>
+                <td rowspan="4">4</td>
+            </tr>
+            <tr>
+                <td><code>target_lag_90</code></td>
+                <td>标的滞后90日</td>
+                <td>一季度前</td>
+            </tr>
+            <tr>
+                <td><code>target_lag_180</code></td>
+                <td>标的滞后180日</td>
+                <td>半年前</td>
+            </tr>
+            <tr>
+                <td><code>target_lag_365</code></td>
+                <td>标的滞后365日</td>
+                <td>一年前（同比参考）</td>
+            </tr>
+            <tr>
+                <td rowspan="2"><span class="tag-blue">差分特征</span></td>
+                <td><code>target_diff_1</code></td>
+                <td>标的差分(lag=1)</td>
+                <td>今日库存 - 昨日库存</td>
+                <td rowspan="2">2</td>
+            </tr>
+            <tr>
+                <td><code>target_diff_7</code></td>
+                <td>标的差分(lag=7)</td>
+                <td>今日库存 - 一周前库存</td>
+            </tr>
+            <tr>
+                <td rowspan="2"><span class="tag-orange">变化率特征</span></td>
+                <td><code>target_pct_1</code></td>
+                <td>标的变化率(lag=1)</td>
+                <td>(今日 - 昨日)/昨日</td>
+                <td rowspan="2">2</td>
+            </tr>
+            <tr>
+                <td><code>target_pct_7</code></td>
+                <td>标的变化率(lag=7)</td>
+                <td>(今日 - 一周前)/一周前</td>
+            </tr>
+        </table>
+
+        <h2>二、分模块详解</h2>
+
+        <h3>2.1 读取数据和标的选择</h3>
+
+        <div class="feature-card">
+            <div class="feature-name">数据读取</div>
+            <div class="feature-desc">读取清洗后的数据，找到标的列（45个港口总库存）</div>
+            <div class="concept-box">
+                <div class="concept-title">概念解释</div>
+                <p><strong>什么是标的（Y变量）？</strong></p>
+                <ul>
+                    <li>标的就是我们要预测的目标值</li>
+                    <li>这里我们要预测的是：45个港口的铁矿石库存</li>
+                    <li>滞后特征就是用「过去的库存」来预测「现在的库存」</li>
+                </ul>
+                <div class="diagram-box">
+                    <svg width="400" height="80" viewBox="0 0 400 80">
+                        <rect x="20" y="25" width="60" height="30" rx="5" fill="#e2e8f0" stroke="#94a3b8"/>
+                        <text x="50" y="45" text-anchor="middle" font-size="12">t-7</text>
+                        <rect x="100" y="25" width="60" height="30" rx="5" fill="#93c5fd" stroke="#3b82f6"/>
+                        <text x="130" y="45" text-anchor="middle" font-size="12">t-1</text>
+                        <rect x="180" y="25" width="60" height="30" rx="5" fill="#3182ce" stroke="#1e40af"/>
+                        <text x="210" y="45" text-anchor="middle" font-size="12" fill="white">t</text>
+                        <rect x="260" y="25" width="60" height="30" rx="5" fill="#fca5a5" stroke="#ef4444"/>
+                        <text x="290" y="45" text-anchor="middle" font-size="12">t+1</text>
+                        <path d="M 80 40 L 95 40" stroke="#64748b" stroke-width="2" marker-end="url(#arrow1)"/>
+                        <path d="M 240 40 L 255 40" stroke="#64748b" stroke-width="2" marker-end="url(#arrow1)"/>
+                        <text x="130" y="70" text-anchor="middle" font-size="11" fill="#2b6cb0">用过去预测未来</text>
+                        <defs>
+                            <marker id="arrow1" markerWidth="6" markerHeight="4" refX="6" refY="2" orient="auto">
+                                <polygon points="0 0, 6 2, 0 4" fill="#64748b"/>
+                            </marker>
+                        </defs>
+                    </svg>
+                </div>
+            </div>
+            <div class="example">
+                <div class="example-title">代码实现</div>
+                <pre>df = pd.read_csv(input_path, header=[0, 1], encoding='utf-8-sig')
+date_col = df.iloc[:, 0]
+values_df = df.iloc[:, 1:].apply(pd.to_numeric, errors='coerce')
+target_data = values_df.iloc[:, target_idx].values</pre>
+            </div>
+            <button class="toggle-btn" onclick="toggleContent('read_data')">点击展开逐行解释</button>
+            <div id="read_data" class="toggle-content">
+                <div class="example-title">逐行解释</div>
+                <div class="code-explain">
+                    <span class="code-fragment">pd.read_csv(input_path, header=[0, 1])</span><br>
+                    小白理解：读取CSV文件，用前两行作为表头
+                </div>
+                <div class="code-explain">
+                    <span class="code-fragment">date_col = df.iloc[:, 0]</span><br>
+                    小白理解：第一列是日期列
+                </div>
+                <div class="code-explain">
+                    <span class="code-fragment">values_df = df.iloc[:, 1:]</span><br>
+                    小白理解：第二列开始是数据列
+                </div>
+                <div class="code-explain">
+                    <span class="code-fragment">values_df.iloc[:, target_idx]</span><br>
+                    小白理解：从数据列中取出标的列（45个港口库存）
+                </div>
+            </div>
+        </div>
+
+        <h3>2.2 滞后特征（Lag Features）</h3>
+
+        <div class="feature-card">
+            <div class="feature-name">短期、中期、长期滞后特征</div>
+            <div class="feature-desc">用过去的库存值作为预测现在的特征</div>
+            <div class="concept-box">
+                <div class="concept-title">概念解释</div>
+                <p><strong>什么是滞后特征？</strong></p>
+                <ul>
+                    <li>比如今天是 t，昨天是 t-1，前天是 t-2</li>
+                    <li>用昨天（t-1）的库存作为特征来预测今天（t）的库存</li>
+                    <li>这就是：target_lag_1</li>
+                </ul>
+                <div class="diagram-box">
+                    <svg width="500" height="100" viewBox="0 0 500 100">
+                        <rect x="30" y="30" width="70" height="40" rx="5" fill="#c6f6d5" stroke="#22543d"/>
+                        <text x="65" y="55" text-anchor="middle" font-size="11">库存(t-7)</text>
+                        <rect x="120" y="30" width="70" height="40" rx="5" fill="#93c5fd" stroke="#3b82f6"/>
+                        <text x="155" y="55" text-anchor="middle" font-size="11">库存(t-1)</text>
+                        <rect x="210" y="30" width="70" height="40" rx="5" fill="#e2e8f0" stroke="#64748b"/>
+                        <text x="245" y="55" text-anchor="middle" font-size="11">库存(t)</text>
+                        <rect x="300" y="30" width="70" height="40" rx="5" fill="#fecaca" stroke="#dc2626"/>
+                        <text x="335" y="55" text-anchor="middle" font-size="11">待预测?</text>
+                        <path d="M 100 50 L 115 50" stroke="#64748b" stroke-width="2" marker-end="url(#arrow2)"/>
+                        <path d="M 190 50 L 205 50" stroke="#64748b" stroke-width="2" marker-end="url(#arrow2)"/>
+                        <path d="M 280 50 L 295 50" stroke="#64748b" stroke-width="2" marker-end="url(#arrow2)"/>
+                        <text x="65" y="85" text-anchor="middle" font-size="10" fill="#2b6cb0">输入特征</text>
+                        <text x="335" y="85" text-anchor="middle" font-size="10" fill="#dc2626">输出预测</text>
+                        <defs>
+                            <marker id="arrow2" markerWidth="6" markerHeight="4" refX="6" refY="2" orient="auto">
+                                <polygon points="0 0, 6 2, 0 4" fill="#64748b"/>
+                            </marker>
+                        </defs>
+                    </svg>
+                </div>
+                <p><strong>为什么要分短期、中期、长期？</strong></p>
+                <ul>
+                    <li>短期：最近几天的库存变化，反应短期趋势</li>
+                    <li>中期：半个月到一个月，反应中期趋势</li>
+                    <li>长期：一季度到一年，反应季节性、周期性规律</li>
+                </ul>
+            </div>
+            <div class="example">
+                <div class="example-title">代码实现</div>
+                <pre>short_lags = [1, 2, 3, 5, 7]
+for lag in short_lags:
+    arr = np.full(n, np.nan, dtype=np.float32)
+    arr[lag:] = target_data[:-lag]
+    features[fid] = arr</pre>
+            </div>
+            <button class="toggle-btn" onclick="toggleContent('lag_features')">点击展开逐行解释</button>
+            <div id="lag_features" class="toggle-content">
+                <div class="example-title">逐行解释</div>
+                <div class="code-explain">
+                    <span class="code-fragment">short_lags = [1, 2, 3, 5, 7]</span><br>
+                    小白理解：定义短期滞后天数：1天、2天、3天、5天、7天
+                </div>
+                <div class="code-explain">
+                    <span class="code-fragment">np.full(n, np.nan)</span><br>
+                    小白理解：先创建一个全是NaN的数组
+                </div>
+                <div class="code-explain">
+                    <span class="code-fragment">arr[lag:] = target_data[:-lag]</span><br>
+                    小白理解：核心！把「过去的数」放到「现在的位置」
+                </div>
+                <div class="example">
+                    <div class="example-title">举个例子（假设 lag=2）</div>
+                    <table style="font-size: 13px;">
+                        <tr><th>日期</th><th>原库存</th><th>lag_2特征</th><th>说明</th></tr>
+                        <tr><td>Day 1</td><td>100</td><td>NaN</td><td>前两天还没数据</td></tr>
+                        <tr><td>Day 2</td><td>105</td><td>NaN</td><td>前一天还没数据</td></tr>
+                        <tr><td>Day 3</td><td>102</td><td>100</td><td>用Day 1的库存作为特征</td></tr>
+                        <tr><td>Day 4</td><td>108</td><td>105</td><td>用Day 2的库存作为特征</td></tr>
+                        <tr><td>Day 5</td><td>110</td><td>102</td><td>用Day 3的库存作为特征</td></tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <h3>2.3 差分特征（Difference Features）</h3>
+
+        <div class="feature-card">
+            <div class="feature-name">target_diff_1, target_diff_7</div>
+            <div class="feature-desc">库存的变化量：今日库存 - 昨日库存</div>
+            <div class="concept-box">
+                <div class="concept-title">概念解释</div>
+                <p><strong>什么是差分？</strong></p>
+                <ul>
+                    <li>差分 = 现在的值 - 过去的值</li>
+                    <li>差分能看出来「库存是在涨还是跌」</li>
+                </ul>
+                <p><strong>差分 > 0</strong> → 库存增加</p>
+                <p><strong>差分 < 0</strong> → 库存减少</p>
+                <p><strong>差分 ≈ 0</strong> → 库存稳定</p>
+            </div>
+            <div class="example">
+                <div class="example-title">代码实现</div>
+                <pre>diff_arr = np.full(n, np.nan, dtype=np.float32)
+diff_arr[lag:] = target_data[lag:] - target_data[:-lag]</pre>
+            </div>
+            <button class="toggle-btn" onclick="toggleContent('diff_features')">点击展开逐行解释</button>
+            <div id="diff_features" class="toggle-content">
+                <div class="example-title">逐行解释</div>
+                <div class="code-explain">
+                    <span class="code-fragment">target_data[lag:] - target_data[:-lag]</span><br>
+                    小白理解：用「现在的数据」减去「过去的数据」，得到变化量
+                </div>
+                <div class="example">
+                    <div class="example-title">举个例子</div>
+                    <table style="font-size: 13px;">
+                        <tr><th>日期</th><th>库存</th><th>diff_1</th><th>说明</th></tr>
+                        <tr><td>Day 1</td><td>100</td><td>NaN</td><td></td></tr>
+                        <tr><td>Day 2</td><td>105</td><td>5</td><td>涨了5</td></tr>
+                        <tr><td>Day 3</td><td>102</td><td>-3</td><td>跌了3</td></tr>
+                        <tr><td>Day 4</td><td>108</td><td>6</td><td>涨了6</td></tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <h3>2.4 变化率特征（Percent Change Features）</h3>
+
+        <div class="feature-card">
+            <div class="feature-name">target_pct_1, target_pct_7</div>
+            <div class="feature-desc">库存的变化率，用百分比表示</div>
+            <div class="concept-box">
+                <div class="concept-title">概念解释</div>
+                <p><strong>什么是变化率？</strong></p>
+                <ul>
+                    <li>变化率 = (现在的值 - 过去的值) / 过去的值</li>
+                    <li>好处是可以对比不同基数的变化</li>
+                </ul>
+                <div class="example">
+                    <div class="example-title">举个例子：为什么要用变化率？</div>
+                    <table style="font-size: 13px;">
+                        <tr><th></th><th>库存</th><th>diff_1</th><th>pct_1</th></tr>
+                        <tr><td>A仓库</td><td>100 → 105</td><td>5</td><td>5%</td></tr>
+                        <tr><td>B仓库</td><td>1000 → 1030</td><td>30</td><td>3%</td></tr>
+                    </table>
+                    <p>虽然B仓库涨了30（绝对值更多），但其实A仓库涨幅更大（5% > 3%）</p>
+                </div>
+            </div>
+            <div class="example">
+                <div class="example-title">代码实现</div>
+                <pre>safe_denom = np.where(np.abs(target_data[:-lag]) > 1e-10,
+                      target_data[:-lag], np.nan)
+ratio = (target_data[lag:] - target_data[:-lag]) / safe_denom</pre>
+            </div>
+            <button class="toggle-btn" onclick="toggleContent('pct_features')">点击展开逐行解释</button>
+            <div id="pct_features" class="toggle-content">
+                <div class="example-title">逐行解释</div>
+                <div class="code-explain">
+                    <span class="code-fragment">np.where(np.abs(target_data[:-lag]) > 1e-10, ...)</span><br>
+                    小白理解：避免除以0！如果过去的值接近0，就设为NaN
+                </div>
+                <div class="code-explain">
+                    <span class="code-fragment">ratio = (现在 - 过去) / 过去</span><br>
+                    小白理解：计算变化率
+                </div>
+            </div>
+        </div>
+
+        <h3>2.5 特征覆盖率统计</h3>
+
+        <div class="feature-card">
+            <div class="feature-name">统计每个特征有多少非NaN值</div>
+            <div class="feature-desc">滞后越长，NaN越多，覆盖率越低</div>
+            <div class="example">
+                <div class="example-title">代码实现</div>
+                <pre>for fid in feature_ids:
+    valid_count = np.sum(~np.isnan(features[fid]))
+    coverage = valid_count / n * 100</pre>
+            </div>
+            <button class="toggle-btn" onclick="toggleContent('coverage')">点击展开逐行解释</button>
+            <div id="coverage" class="toggle-content">
+                <div class="example-title">逐行解释</div>
+                <div class="code-explain">
+                    <span class="code-fragment">~np.isnan(features[fid])</span><br>
+                    小白理解：找出所有不是NaN的值
+                </div>
+                <div class="code-explain">
+                    <span class="code-fragment">np.sum(...)</span><br>
+                    小白理解：统计有多少个有效值
+                </div>
+                <div class="code-explain">
+                    <span class="code-fragment">coverage = valid_count / n * 100</span><br>
+                    小白理解：计算覆盖率百分比
+                </div>
+                <div class="example">
+                    <div class="example-title">覆盖率规律</div>
+                    <table style="font-size: 13px;">
+                        <tr><th>特征</th><th>覆盖率</th><th>原因</th></tr>
+                        <tr><td>lag_1</td><td>99.9%</td><td>只缺第一天</td></tr>
+                        <tr><td>lag_7</td><td>98%</td><td>缺前7天</td></tr>
+                        <tr><td>lag_30</td><td>90%</td><td>缺前30天</td></tr>
+                        <tr><td>lag_365</td><td>75%</td><td>缺前一年</td></tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <h2>三、小结与复习要点</h2>
+
+        <div class="info-box">
+            <strong>复习重点：</strong>
+            <ul>
+                <li>什么是滞后特征？为什么能用过去预测现在？</li>
+                <li>为什么要分短期、中期、长期滞后？</li>
+                <li>差分和变化率的区别：绝对值 vs 百分比</li>
+                <li>为什么要做防除以0处理？</li>
+                <li>为什么滞后越长，覆盖率越低？</li>
+            </ul>
+        </div>
+
+        <div class="example">
+            <div class="example-title">整体流程回顾</div>
+            <ol>
+                <li>读取清洗后的数据</li>
+                <li>找到标的列：45个港口库存</li>
+                <li>生成短期滞后特征：1, 2, 3, 5, 7</li>
+                <li>生成中期滞后特征：14, 21, 30</li>
+                <li>生成长期滞后特征：60, 90, 180, 365</li>
+                <li>生成差分特征：diff_1, diff_7</li>
+                <li>生成变化率特征：pct_1, pct_7</li>
+                <li>统计覆盖率</li>
+                <li>保存为：02_target_lags.csv</li>
+            </ol>
+        </div>
+
+        <footer>
+            铁矿石库存预测项目 · 特征工程 · 标的滞后特征 · 复习文档
+        </footer>
+    </div>
+
+    <script>
+        function toggleContent(id) {
+            var content = document.getElementById(id);
+            if (content.classList.toggle('show')) {
+                event.target.textContent = '点击收起逐行解释';
+            } else {
+                event.target.textContent = '点击展开逐行解释';
+            }
+        }
+    </script>
+</body>
+</html>

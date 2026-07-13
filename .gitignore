@@ -33,3 +33,9 @@ Thumbs.db
 *.log
 logs/
 *.tmp
+
+# ===== Claude Code 本地配置(个人权限设置,不提交) =====
+.claude/settings.local.json
+
+# ===== knowledge_service 向量库(可由 scripts/ingest.py + bge 模型重建,不提交) =====
+knowledge_service/data/chroma/

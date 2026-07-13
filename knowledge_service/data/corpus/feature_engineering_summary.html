@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>特征工程执行报告</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+            background-color: #f0f2f5;
+            color: #1a202c;
+            line-height: 1.6;
+        }
+        .container { max-width: 1200px; margin: 0 auto; padding: 40px 20px; }
+        .header {
+            background: linear-gradient(135deg, #1a365d 0%, #2d3748 100%);
+            color: white; padding: 48px; border-radius: 16px; margin-bottom: 32px;
+        }
+        .header h1 { font-size: 32px; margin-bottom: 12px; }
+        .header .subtitle { opacity: 0.8; font-size: 16px; }
+        .card {
+            background: white; border-radius: 12px; padding: 32px;
+            margin-bottom: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .card h2 {
+            font-size: 20px; color: #1a365d; margin-bottom: 20px;
+            padding-bottom: 12px; border-bottom: 2px solid #e2e8f0;
+        }
+        .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 32px; }
+        .stat-card {
+            padding: 24px; border-radius: 10px; text-align: center;
+        }
+        .stat-card .number { font-size: 36px; font-weight: 700; margin-bottom: 4px; }
+        .stat-card .label { font-size: 14px; color: #718096; }
+        .stat-blue { background: #ebf8ff; }
+        .stat-blue .number { color: #3182ce; }
+        .stat-green { background: #e6fffa; }
+        .stat-green .number { color: #319795; }
+        .stat-purple { background: #faf5ff; }
+        .stat-purple .number { color: #805ad5; }
+        .stat-orange { background: #fffaf0; }
+        .stat-orange .number { color: #dd6b20; }
+
+        table { width: 100%; border-collapse: collapse; font-size: 14px; }
+        th {
+            background: #2d3748; color: white; padding: 12px 16px;
+            text-align: left; font-weight: 600;
+        }
+        td { padding: 10px 16px; border-bottom: 1px solid #e2e8f0; }
+        tr:hover { background: #ebf8ff; }
+        .tag {
+            display: inline-block; padding: 2px 10px; border-radius: 12px;
+            font-size: 12px; font-weight: 600;
+        }
+        .tag-done { background: #c6f6d5; color: #22543d; }
+        .tag-final { background: #e6fffa; color: #234e52; }
+
+        .flow-container { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0; }
+        .flow-step {
+            background: #edf2f7; border-radius: 8px; padding: 10px 16px;
+            font-size: 13px; display: flex; align-items: center; gap: 8px;
+        }
+        .flow-step .step-num {
+            background: #3182ce; color: white; width: 24px; height: 24px;
+            border-radius: 50%; display: flex; align-items: center;
+            justify-content: center; font-weight: 700; font-size: 12px;
+        }
+        .flow-arrow { display: flex; align-items: center; color: #a0aec0; font-size: 18px; }
+
+        .highlight-box {
+            background: linear-gradient(135deg, #fffff0, #fefcbf);
+            border-left: 4px solid #d69e2e; padding: 16px 20px;
+            border-radius: 0 8px 8px 0; margin: 16px 0;
+        }
+        .highlight-box strong { color: #975a16; }
+
+        .footer { text-align: center; color: #a0aec0; font-size: 13px; margin-top: 40px; padding-top: 20px; border-top: 1px solid #e2e8f0; }
+
+        .group-tag { display: inline-block; padding: 1px 8px; border-radius: 8px; font-size: 11px; margin: 1px; }
+        .tg-supply { background: #bee3f8; color: #2b6cb0; }
+        .tg-demand { background: #fefcbf; color: #975a16; }
+        .tg-price { background: #fed7d7; color: #742a2a; }
+        .tg-macro { background: #e9d8fd; color: #553c9a; }
+        .tg-target { background: #c6f6d5; color: #22543d; }
+        .tg-other { background: #e2e8f0; color: #4a5568; }
+
+        .pipeline { position: relative; padding: 16px 0; }
+        .pipeline-line { height: 4px; background: #e2e8f0; border-radius: 2px; margin: 20px 0; position: relative; }
+        .pipeline-node {
+            position: absolute; top: -8px; width: 16px; height: 16px;
+            background: #3182ce; border-radius: 50%; border: 3px solid white;
+            box-shadow: 0 0 0 2px #3182ce;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <div class="header">
+        <h1>铁矿石库存预测 — 特征工程执行报告</h1>
+        <div class="subtitle">05_feature_engineering · 十步特征工程流水线 · 2026-05-28</div>
+    </div>
+
+    <!-- 总览 -->
+    <div class="summary-grid">
+        <div class="stat-card stat-blue">
+            <div class="number">10</div>
+            <div class="label">执行任务数</div>
+        </div>
+        <div class="stat-card stat-green">
+            <div class="number">3,200</div>
+            <div class="label">最终特征数</div>
+        </div>
+        <div class="stat-card stat-purple">
+            <div class="number">9,067</div>
+            <div class="label">原始生成特征数</div>
+        </div>
+        <div class="stat-card stat-orange">
+            <div class="number">118 MB</div>
+            <div class="label">最终数据大小</div>
+        </div>
+    </div>
+
+    <!-- 执行流水线 -->
+    <div class="card">
+        <h2>执行流水线</h2>
+        <div class="flow-container">
+            <div class="flow-step"><span class="step-num">1</span>列分组分析</div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-step"><span class="step-num">2</span>时间特征</div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-step"><span class="step-num">3</span>标的滞后</div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-step"><span class="step-num">4</span>因子滞后</div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-step"><span class="step-num">5</span>趋势波动</div>
+        </div>
+        <div class="flow-container">
+            <div class="flow-step"><span class="step-num">6</span>业务特征</div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-step"><span class="step-num">7</span>技术指标</div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-step"><span class="step-num">8</span>同比环比</div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-step"><span class="step-num">9</span>合并与清洗</div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-step"><span class="step-num">10</span>特征选择</div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-step" style="background:#c6f6d5;"><span class="step-num" style="background:#38a169;">✓</span>最终产出</div>
+        </div>
+    </div>
+
+    <!-- 任务详情表 -->
+    <div class="card">
+        <h2>任务详情</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th style="width:40px">#</th>
+                    <th style="width:180px">脚本</th>
+                    <th style="width:200px">输出文件</th>
+                    <th style="width:70px">生成列数</th>
+                    <th style="width:80px">状态</th>
+                    <th>说明</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>1</td>
+                    <td>01_analyze_columns.py</td>
+                    <td>feature_group_mapping.csv<br>core_factors_list.csv<br>feature_group_summary.csv</td>
+                    <td>—</td>
+                    <td><span class="tag tag-done">完成</span></td>
+                    <td>解析双重表头，按关键词将732列分为21组，识别186个核心因子</td>
+                </tr>
+                <tr>
+                    <td>2</td>
+                    <td>02_time_features.py</td>
+                    <td>01_time_features.csv</td>
+                    <td>31</td>
+                    <td><span class="tag tag-done">完成</span></td>
+                    <td>年/月/日/季度/星期、月度季度哑变量、正弦余弦编码、春节标记(前/中/后15天)、采暖季标记、月初月末标记</td>
+                </tr>
+                <tr>
+                    <td>3</td>
+                    <td>03_target_lags.py</td>
+                    <td>02_target_lags.csv</td>
+                    <td>16</td>
+                    <td><span class="tag tag-done">完成</span></td>
+                    <td>标的(45港总库存 ID00186052) 的短期滞后(t-1~t-7)、中期(t-14~t-30)、长期(t-60~t-365)、差分Δ(1,7)、变化率</td>
+                </tr>
+                <tr>
+                    <td>4</td>
+                    <td>04_factor_lags.py</td>
+                    <td>03_factor_lags.csv</td>
+                    <td>3,122</td>
+                    <td><span class="tag tag-done">完成</span></td>
+                    <td>三层滞后策略：186核心因子(10特征/列) + 358重要因子(3特征/列) + 188基础因子(1特征/列)</td>
+                </tr>
+                <tr>
+                    <td>5</td>
+                    <td>05_trend_volatility.py</td>
+                    <td>04_trend_volatility.csv</td>
+                    <td>4,836</td>
+                    <td><span class="tag tag-done">完成</span></td>
+                    <td>186列(标的+核心因子)的MA(3/5/7/14/30/60/90)、STD(7/14/30/60)、分位数(P10/P90/Spread 30/60/90d)、趋势指标(Ratio_MA7/MA30, MA7_MA30)、动量(MOM5/10/20)，每列26特征</td>
+                </tr>
+                <tr>
+                    <td>6</td>
+                    <td>06_business_features.py</td>
+                    <td>05_business_features.csv</td>
+                    <td>20</td>
+                    <td><span class="tag tag-done">完成</span></td>
+                    <td>四大矿山发运总量及占比、库存/疏港量比率、产能利用率变化及趋势、铁矿石日度收益率及波动率、普钢-铁矿石价差比价、高炉利润变化、废钢铁水价差、到港量变化、澳洲发货变化</td>
+                </tr>
+                <tr>
+                    <td>7</td>
+                    <td>07_technical_indicators.py</td>
+                    <td>06_technical_indicators.csv</td>
+                    <td>112</td>
+                    <td><span class="tag tag-done">完成</span></td>
+                    <td>8个价格列(普钢指数、品牌价格×4、落地利润×2、现金利润)的RSI(7/14)、Price/MA(5/10/20/40/60)、MA5/MA20发散、金叉死叉标记、布林带位置、MACD(线/信号/柱)、14日波动率</td>
+                </tr>
+                <tr>
+                    <td>8</td>
+                    <td>08_yoy_mom_features.py</td>
+                    <td>07_yoy_mom_features.csv</td>
+                    <td>930</td>
+                    <td><span class="tag tag-done">完成</span></td>
+                    <td>186列(标的+核心因子)的YoY(t-365)、MoM(t-30, t-90)、WoW(t-7, t-14)</td>
+                </tr>
+                <tr>
+                    <td>9</td>
+                    <td>09_merge_features.py</td>
+                    <td>08_features_merged.csv</td>
+                    <td>7,112</td>
+                    <td><span class="tag tag-done">完成</span></td>
+                    <td>合并上述7个特征表(9,067列) → 删除全NaN(92列) → 删除NaN>50%(1,777列) → 删除常数(86列) → ffill + bfill → 7,112列，0缺失值</td>
+                </tr>
+                <tr style="background: #f0fff4;">
+                    <td>10</td>
+                    <td>10_feature_selection.py</td>
+                    <td><strong>09_features_final.csv</strong><br>final_feature_list.csv</td>
+                    <td><strong>3,200</strong></td>
+                    <td><span class="tag tag-final">最终完成</span></td>
+                    <td><strong>三层漏斗筛选：</strong><br>
+                        1. 保护层：时间+目标+库存相关因子 → 全部保留<br>
+                        2. 组内去重：按基础因子ID分组，组内|corr|>0.98只保留高方差者<br>
+                        3. 全局去重：贪心选择保留不冗余因子，最终 7,112 → 3,200 列<br>
+                        <strong>筛选率：45.0%</strong></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- 数据概况 -->
+    <div class="card">
+        <h2>关键数据信息</h2>
+        <div class="summary-grid" style="grid-template-columns: repeat(3, 1fr);">
+            <div class="stat-card stat-blue">
+                <div class="number">3,200</div>
+                <div class="label">最终特征列数</div>
+            </div>
+            <div class="stat-card stat-green">
+                <div class="number">3,788</div>
+                <div class="label">样本行数</div>
+            </div>
+            <div class="stat-card stat-purple">
+                <div class="number">45%</div>
+                <div class="label">筛选压缩率</div>
+            </div>
+        </div>
+        <table style="margin-top: 16px;">
+            <thead><tr><th>输入数据</th><th>时间范围</th><th>原始列数</th><th>目标列</th></tr></thead>
+            <tbody><tr>
+                <td>03_data_cleaning/outputs/cleaned_data_daily.csv</td>
+                <td>2015-12-25 至 2026-05-08</td>
+                <td>733列 (日期 + 732因子)</td>
+                <td>ID00186052: 铁矿石：进口：库存：45个港口（周度）</td>
+            </tr></tbody>
+        </table>
+    </div>
+
+    <!-- 特征选择详情 -->
+    <div class="card">
+        <h2>特征选择过程（三层漏斗）</h2>
+        <table>
+            <thead><tr><th>步骤</th><th>操作</th><th>筛选结果</th></tr></thead>
+            <tbody>
+                <tr><td>0</td><td>初始特征矩阵（任务9合并结果）</td><td>7,112列</td></tr>
+                <tr style="background: #f7fafc;"><td>1</td><td><strong>保护层：保留关键特征</strong><br>时间特征(31) + 目标特征(16) + 库存相关衍生特征 → 全部保护</td><td>~500+列受保护</td></tr>
+                <tr><td>2</td><td><strong>组内去重</strong><br>按基础因子ID分组，组内|corr|>0.98只保留方差最高者</td><td>↓ 减少冗余</td></tr>
+                <tr><td>3</td><td><strong>全局去重</strong><br>按方差降序，与已保留列比相关性，贪心选择</td><td>↓ 最终精简</td></tr>
+                <tr style="background: #f0fff4; font-weight: 600;"><td>4</td><td><strong>最终产出</strong></td><td><strong>3,200列</strong></td></tr>
+            </tbody>
+        </table>
+
+        <div class="concept-block green" style="margin-top: 20px;">
+            <strong>最终特征组成（3,200列）：</strong><br>
+            • 时间特征 (31): 年/月/日/季度/星期、春节标记、采暖季等<br>
+            • 目标滞后 (16): 45港总库存的滞后、差分、变化率<br>
+            • 库存相关：各区域/品种库存的衍生特征<br>
+            • 因子特征：供应/需求/价格/宏观等精选因子
+        </div>
+    </div>
+
+    <!-- 分组统计 -->
+    <div class="card">
+        <h2>原始因子分组统计 (732列)</h2>
+        <table>
+            <thead><tr><th>分组</th><th>总列数</th><th>核心列数</th><th>典型列示例</th></tr></thead>
+            <tbody>
+                <tr><td><span class="group-tag tg-target">标的(Y变量)</span></td><td>223</td><td>42</td><td>铁矿石：进口：库存：45个港口, 各区域/品种库存明细</td></tr>
+                <tr><td><span class="group-tag tg-supply">供应-到港</span></td><td>112</td><td>50</td><td>各港口/品种到港量明细(周度)</td></tr>
+                <tr><td><span class="group-tag tg-supply">供应-产量</span></td><td>130</td><td>10</td><td>四大矿山季度产量数据</td></tr>
+                <tr><td><span class="group-tag tg-supply">供应-发货量</span></td><td>60</td><td>12</td><td>澳洲港口发货量(周度), 矿山→中国发货量</td></tr>
+                <tr><td><span class="group-tag tg-supply">供应-矿山</span></td><td>47</td><td>41</td><td>四大矿山压港量、销售数量、季度数据</td></tr>
+                <tr><td><span class="group-tag tg-supply">供应-发运</span></td><td>14</td><td>3</td><td>四大矿山→中国日度发运量</td></tr>
+                <tr><td><span class="group-tag tg-demand">需求-疏港</span></td><td>23</td><td>23</td><td>各港口日均疏港量(31/41/45/47港口)</td></tr>
+                <tr><td><span class="group-tag tg-demand">需求-开工率</span></td><td>26</td><td>2</td><td>247家钢厂高炉开工率/产能利用率</td></tr>
+                <tr><td><span class="group-tag tg-demand">需求-生铁粗钢</span></td><td>1</td><td>0</td><td>废钢铁水价差</td></tr>
+                <tr><td><span class="group-tag tg-demand">需求-消费</span></td><td>18</td><td>0</td><td>钢厂废钢日耗等</td></tr>
+                <tr><td><span class="group-tag tg-price">价格-矿石价格</span></td><td>31</td><td>0</td><td>品牌价格、普钢指数、新交所掉期</td></tr>
+                <tr><td><span class="group-tag tg-price">价格-价差利润</span></td><td>4</td><td>1</td><td>现货落地利润、高炉现金利润</td></tr>
+                <tr><td><span class="group-tag tg-price">价格-关联商品</span></td><td>3</td><td>0</td><td>废钢到货、螺纹钢毛利、废钢毛利</td></tr>
+                <tr><td><span class="group-tag tg-macro">宏观-PMI</span></td><td>2</td><td>2</td><td>中国制造业PMI, 美国ISM制造业PMI</td></tr>
+                <tr><td><span class="group-tag tg-macro">宏观-投资/货币/GDP/地产/基建</span></td><td>18</td><td>0</td><td>各类宏观指标</td></tr>
+                <tr><td><span class="group-tag tg-other">供需平衡/其他</span></td><td>20</td><td>0</td><td>海漂量、压港量、配比、可用天数等</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- 特征构造方法 -->
+    <div class="card">
+        <h2>特征构造方法说明</h2>
+
+        <h3 style="color:#3182ce; margin: 20px 0 12px;">1. 滞后特征 (Lag Features)</h3>
+        <p>对序列值进行时间平移，捕获历史信息对未来的影响。三层分级：<br>
+        <strong>核心因子</strong>(186列)：t-1, t-2, t-3, t-7, t-14, t-30 + 差分(t-1, t-7) + 变化率(t-1, t-7) = 10特征/列<br>
+        <strong>重要因子</strong>(358列)：t-1, t-7, t-30 = 3特征/列<br>
+        <strong>基础因子</strong>(188列)：t-1 = 1特征/列</p>
+
+        <h3 style="color:#3182ce; margin: 20px 0 12px;">2. 趋势波动特征 (Trend & Volatility)</h3>
+        <p>滚动窗口统计量，刻画序列的中长期行为模式：<br>
+        MA(3,5,7,14,30,60,90) — 移动平均捕获趋势<br>
+        STD(7,14,30,60) — 波动率<br>
+        P10/P90/Spread(30,60,90d) — 分位数及范围<br>
+        Ratio_MA7, Ratio_MA30 — 当前值与均线的偏离<br>
+        MOM(5,10,20) — 动量变化率</p>
+
+        <h3 style="color:#3182ce; margin: 20px 0 12px;">3. 业务逻辑特征 (Business Features)</h3>
+        <p>基于铁矿石行业领域知识构建的复合指标：<br>
+        四大矿山发运总量及各自占比、库存/疏港量比率(库存周转)、产能利用率变化及趋势<br>
+        铁矿石日度收益率及30日波动率、普钢-铁矿石价差及比价<br>
+        高炉现金利润变化、废钢铁水价差、到港量/发货量周度变化</p>
+
+        <h3 style="color:#3182ce; margin: 20px 0 12px;">4. 技术指标 (Technical Indicators)</h3>
+        <p>借鉴金融时间序列分析的技术指标，应用于价格序列：<br>
+        RSI(7,14) — 相对强弱，判断超买超卖<br>
+        Price/MA(5,10,20,40,60) — 价格相对均线位置<br>
+        MA5/MA20发散 — 短期与中期趋势关系<br>
+        金叉死叉标记 — 均线交叉信号<br>
+        布林带位置 — 价格在布林带中的相对位置<br>
+        MACD(线/信号/柱) — 趋势跟踪指标</p>
+
+        <h3 style="color:#3182ce; margin: 20px 0 12px;">5. 同比环比特征 (YoY/MoM/WoW)</h3>
+        <p>跨周期比较，消除季节性和趋势影响：<br>
+        YoY: value(t)/value(t-365)-1 — 年度同比<br>
+        MoM: value(t)/value(t-30)-1, value(t)/value(t-90)-1 — 月度/季度环比<br>
+        WoW: value(t)/value(t-7)-1, value(t)/value(t-14)-1 — 周度环比</p>
+
+        <h3 style="color:#3182ce; margin: 20px 0 12px;">6. 时间特征 (Time Features)</h3>
+        <p>捕获时间本身的信息：年月日季度星期、月度季度哑变量(11+3)、正弦余弦编码(4)、<br>
+        春节标记(前15天/节中/后15天)、采暖季标记(11/15-3/15)、月初月末标记</p>
+    </div>
+
+    <!-- 清洗过程 -->
+    <div class="card">
+        <h2>数据清洗过程</h2>
+        <table>
+            <thead><tr><th>步骤</th><th>操作</th><th>删除列数</th><th>剩余列数</th></tr></thead>
+            <tbody>
+                <tr><td>0</td><td>初始合并 (任务2-8所有输出)</td><td>—</td><td>9,067</td></tr>
+                <tr><td>1</td><td>删除全部为 NaN 的列</td><td>92</td><td>8,975</td></tr>
+                <tr><td>2</td><td>删除 NaN 比例 > 50% 的列 (主要是长滞后特征引入)</td><td>1,777</td><td>7,198</td></tr>
+                <tr><td>3</td><td>删除常数列 (标准差 < 1e-10)</td><td>86</td><td>7,112</td></tr>
+                <tr><td>4</td><td>前向填充 (ffill) → 后向填充兜底 (bfill)</td><td>—</td><td>7,112</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- 关键文件 -->
+    <div class="card">
+        <h2>输出文件清单</h2>
+        <table>
+            <thead><tr><th>文件名</th><th>大小</th><th>内容</th></tr></thead>
+            <tbody>
+                <tr style="background: #f0fff4;"><td><strong>09_features_final.csv</strong></td><td><strong>118 MB</strong></td><td><strong>最终特征矩阵 (3788行×3200列)</strong></td></tr>
+                <tr style="background: #f0fff4;"><td><strong>final_feature_list.csv</strong></td><td><strong>95 KB</strong></td><td><strong>3,200列清单及类型标注</strong></td></tr>
+                <tr><td>08_features_merged.csv</td><td>261 MB</td><td>合并后特征矩阵 (3788行×7112列)</td></tr>
+                <tr><td>04_trend_volatility.csv</td><td>133 MB</td><td>趋势波动特征 (186列×26特征)</td></tr>
+                <tr><td>03_factor_lags.csv</td><td>91 MB</td><td>因子滞后特征 (732列三层策略)</td></tr>
+                <tr><td>07_yoy_mom_features.csv</td><td>21 MB</td><td>同比环比特征 (186列×5特征)</td></tr>
+                <tr><td>06_technical_indicators.csv</td><td>3.4 MB</td><td>技术指标特征 (8个价格列×14特征)</td></tr>
+                <tr><td>01_time_features.csv</td><td>1.1 MB</td><td>时间特征 (31特征)</td></tr>
+                <tr><td>02_target_lags.csv</td><td>743 KB</td><td>标的滞后特征 (16特征)</td></tr>
+                <tr><td>05_business_features.csv</td><td>636 KB</td><td>业务逻辑特征 (20特征)</td></tr>
+                <tr><td>feature_group_mapping.csv</td><td>84 KB</td><td>732列分组映射表</td></tr>
+                <tr><td>core_factors_list.csv</td><td>20 KB</td><td>186个核心因子清单</td></tr>
+                <tr><td>feature_group_summary.csv</td><td>547 B</td><td>分组统计摘要</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="highlight-box">
+        <strong>下一步：</strong> 特征工程已完成！可直接进入 <strong>07_model_training（模型训练）</strong>阶段，使用 09_features_final.csv 的 3,200 列特征进行 LGBM + Optuna 超参优化。
+    </div>
+
+    <div class="footer">
+        生成时间：2026-05-28 · 铁矿石库存预测项目 · 05_feature_engineering
+    </div>
+
+</div>
+</body>
+</html>

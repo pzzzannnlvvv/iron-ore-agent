@@ -119,6 +119,40 @@ def fetch_graph(query: str) -> str:
 
 
 @mcp.tool()
+def fetch_knowledge(query: str, topK: int = 5, reRank: int = 1) -> str:
+    """知识库检索：在已入库的铁矿石分析文档（报告/学习笔记/项目文档）里检索相关片段。
+    bge-m3 向量召回 + BM25 关键词召回 + RRF 融合 + bge-reranker 重排。
+    当需要查找过往分析报告结论、建模方法笔记、特征工程说明等已有文档内容时调用本工具。
+
+    Args:
+        query: 自然语言查询，例如"铁矿石库存预测结果""LightGBM超参优化""特征工程时间特征"
+        topK: 返回条数，默认5
+        reRank: 1=重排（更准，约10s） 0=不重排（快）
+    """
+    import httpx
+    try:
+        r = httpx.post(
+            "http://127.0.0.1:8092/knowledge-base/report/search",
+            json={"content": query, "topK": topK, "reRank": reRank, "mode": "mix"},
+            timeout=120,
+        )
+        r.raise_for_status()
+        data = r.json().get("data", [])
+    except Exception as e:
+        return f"（知识库检索失败: {e}。请确认 knowledge_service 已启动: uvicorn main:app --port 8092）"
+    if not data:
+        return f"（知识库无命中: {query}）"
+    parts = [f"【知识库检索 {len(data)} 条】查询: {query}"]
+    for i, h in enumerate(data, 1):
+        snippet = (h.get("content") or "").replace("\n", " ").strip()
+        parts.append(
+            f"{i}. [{h.get('fileName')}] {snippet}\n"
+            f"   来源:{h.get('source')}  相关度:{h.get('score')}"
+        )
+    return "\n\n".join(parts)
+
+
+@mcp.tool()
 def model_choice(query: str) -> str:
     """模型选择与评估详情：最优超参、训练/测试指标、优化摘要、过拟合判断。
     当需要模型性能、超参组合、是否过拟合、Optuna 优化结果时调用本工具。

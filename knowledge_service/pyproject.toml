@@ -1,0 +1,22 @@
+[project]
+name = "knowledge_service"
+version = "0.1.0"
+description = "项目复现2 知识库检索服务(Python 复刻 knowledge_be)"
+requires-python = ">=3.12"
+# torch 不列在这里:本机无 GPU,要用 CPU 轮子单独装(见 README),
+# 否则 pip 会拉默认 CUDA 版(2.5G)。FlagEmbedding 依赖 torch,会复用已装的。
+dependencies = [
+    "FlagEmbedding>=1.2.10",
+    "transformers>=4.40.0",
+    "numpy>=1.26.0",
+    "chromadb>=0.5.0",
+    "rank-bm25>=0.2.2",
+    "fastapi[standard]>=0.115.0",
+    "uvicorn>=0.30.0",
+    "httpx>=0.27.0",
+    "python-dotenv>=1.0.0",
+]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"

@@ -145,7 +145,13 @@
   <a href="#q8" class="nav">Q8 vs 现成 AI</a>
   <div class="group">收尾</div>
   <a href="#glossary" class="nav">术语表</a>
-  <a href="#next" class="nav">下一步学什么</a>
+  <a href="#next" class="nav">第一阶段回顾</a>
+  <div class="group">第二阶段 · 深入源码</div>
+  <a href="#phase2" class="nav">第二阶段总览</a>
+  <a href="#l1" class="nav">L1 共享引擎</a>
+  <a href="#l2" class="nav">L2 节点内部</a>
+  <a href="#l3" class="nav">L3 被略过的子系统</a>
+  <a href="#l4" class="nav">L4 动手改造</a>
 </nav>
 
 <main>
@@ -768,7 +774,7 @@ data: {"agent": "researcher", "tool_calls": [{"name": "fetch_data"}]}</code></pr
 </section>
 
 <section id="next">
-  <h2>🎓 你现在到哪了 · 下一步学什么</h2>
+  <h2>🎓 第一阶段回顾（你已掌握的）</h2>
   <div class="card key"><div class="t">学完这份，你建立的认知</div>
   <p>你理解了 agent 不是"一个很聪明的函数"，而是<b>一张由节点和边编起来的图</b>，流程由 LLM 动态决定；理解了<b>工具/数据通过 MCP 解耦</b>、<b>结果通过 state 流转</b>、<b>输出通过 SSE 流式</b>。这套思想能迁移到任何 agent 项目。</p></div>
 
@@ -791,6 +797,172 @@ data: {"agent": "researcher", "tool_calls": [{"name": "fetch_data"}]}</code></pr
   <div class="remember"><b>📌 配套文件</b>：① <code>项目复现2/agent复刻进度.md</code> — 全部改动与运行命令（恢复用）。② <code>项目复现2/完整agent服务集成方案.md</code> — 原始方案。③ <code>项目复现2/11_report_generation/outputs/</code> — 真实报告样本。</div>
 
   <div class="card tip"><div class="t">一句话送你</div><p>agent 的核心不是"模型多强"，而是"怎么把模型、工具、状态组织成可靠流水线"。你现在已经有这张图了。继续动手，会越看越透。</p></div>
+</section>
+
+<section id="phase2">
+  <h2>🔬 第二阶段 · 深入源码（从能跑到能改）</h2>
+  <p class="sub">第一阶段你建立了"地图"：8 个问题搞懂流程怎么走。第二阶段下到"发动机舱"：每个节点内部到底怎么跑、指南里一笔带过的机制到底是什么。分 4 层递进，"读节点内部代码"是第 2 层。</p>
+
+  <div class="card key">
+    <div class="t">先回答你的问题：要不要"掌握每个流程内部的代码"？</div>
+    <p><b>要，但不是只做这个。</b>"读每个节点内部代码"是第二阶段的正确主轴，可单独做会误读——因为有 3 个"共享引擎"每个节点都在调、第一阶段却没打开过；而且指南还漏了 SSE 服务端那座桥、和"项目其实是多场景平台"这两块。所以分 4 层：</p>
+  </div>
+  <div class="flow">
+    <div class="node"><b>L1</b>共享引擎<br>先学语法</div>
+    <div class="arr">-></div>
+    <div class="node green"><b>L2</b>节点内部<br>再读句子</div>
+    <div class="arr">-></div>
+    <div class="node purple"><b>L3</b>被略过的<br>子系统</div>
+    <div class="arr">-></div>
+    <div class="node pink"><b>L4</b>动手改造<br>验证</div>
+  </div>
+  <div class="remember"><b>为什么 L1 在前</b>：节点代码里全是 <code>get_llm_by_type</code>、<code>create_agent</code>、<code>compressed_state</code> 这些调用。不懂它们，读节点就像读外语——字都认识，意思不对。先花半天过 L1，L2 的节点代码就会"自己读自己"。</div>
+
+  <h3 id="l1">L1 · 共享引擎（先学语法，再读句子）</h3>
+  <div class="qbox"><div class="qt">这一层回答</div><div class="qq">每个节点都在调、但指南从没打开的 3 个机制是什么？</div></div>
+  <div class="ans"><div class="at">💡 一句话答案</div><div class="aa">① <b>LLM 层</b>（统一造/缓存模型客户端）② <b>ReAct+中间件</b>（造一个会调工具的 agent）③ <b>上下文压缩</b>（别让对话撑爆 token）。三者分别在 <code>src/llms/llm.py</code>、<code>src/agents/agents.py</code>、<code>src/utils/context_manager.py</code>，被 <code>nodes.py</code> 所有节点复用。</div></div>
+
+  <h4>L1-1 · LLM 层：<code>get_llm_by_type</code> + 多 vendor</h4>
+  <p>所有节点不直接 <code>ChatOpenAI(...)</code>，而是 <code>get_llm_by_type(llm_type)</code> 拿一个模型客户端。它做两件事：① <b>缓存</b>（同类型只造一次）② <b>按 vendor 分发</b>：</p>
+  <pre><code><span class="c"># agent_service/src/llms/llm.py</span>
+<span class="k">def</span> get_llm_by_type(llm_type):
+    <span class="k">if</span> llm_type <span class="k">in</span> _llm_cache: <span class="k">return</span> _llm_cache[llm_type]   <span class="c"># 全局缓存</span>
+    llm = _create_llm_use_conf(llm_type)
+    _llm_cache[llm_type] = llm
+    <span class="k">return</span> llm
+
+<span class="c"># _create_llm_use_conf 按 LLM_VENDOR 造不同客户端：</span>
+<span class="c">#   hiagent    -> CustomChatOpenAI（extra_body 注入 enable_thinking）</span>
+<span class="c">#   anthropic  -> ChatAnthropic（火山方舟 GLM 走这）  ← Q6 Bug1 的 content 列表来自这</span>
+<span class="c">#   doubao/qwen/deepseek/deepseekv4 -> 各自的 extra_body</span></code></pre>
+  <div class="card tip"><div class="t">回扣 Q6 Bug 1</div><p>指南 Q6 说"ChatAnthropic 返回的 content 是列表"。但<b>为什么用 ChatAnthropic</b>？因为 <code>LLM_VENDOR=anthropic</code> 时这层选了它。指南修了症状（<code>_content_to_text</code>），根因在这层的 vendor 分发。读懂这层，你就懂"换模型只改 env 不改代码"是怎么做到的。</p></div>
+
+  <h4>L1-2 · ReAct + 中间件：<code>create_agent</code></h4>
+  <p>指南 Q3/Q4 说"researcher 是 ReAct agent"，但<b>怎么造的从没讲</b>。答案在 <code>create_agent</code>（<code>src/agents/agents.py</code>）：底层调 <code>langchain.agents.create_react_agent</code>，关键是挂了 3 个<b>中间件</b>：</p>
+  <pre><code><span class="c"># agent_service/src/agents/agents.py · create_agent</span>
+middleware = [
+    SummarizationMiddleware(model=..., trigger=(<span class="s">"tokens"</span>, 20000), keep=(<span class="s">"tokens"</span>, 10000), ...),  <span class="c"># 超 2 万 token 自动摘要历史</span>
+    ToolCallLimitMiddleware(run_limit=5),   <span class="c"># 一个 agent 单次最多调 5 次工具</span>
+    CaptureToolCallIdMiddleware(),          <span class="c"># 抓 tool_call id，给 SSE 事件匹配用</span>
+]
+agent = create_react_agent(name=graph_name, model=get_llm_by_type(llm_type),
+                           tools=tools, middleware=middleware,
+                           system_prompt=render_system_prompt(...))</code></pre>
+  <div class="card key"><div class="t">中间件 = agent 的"行为政策"</div><p>ReAct 循环本身（想→调工具→看结果→再想）是 <code>create_react_agent</code> 内置的；中间件决定它<b>什么时候停、什么时候压缩</b>。<code>ToolCallLimitMiddleware(5)</code> 就是为什么 researcher 调几个工具后就收手——不是 LLM 自己决定的，是中间件拦的。<code>SummarizationMiddleware</code> 是第二套上下文压缩（见 L1-3）。</p></div>
+
+  <h4>L1-3 · 上下文压缩：<code>ContextManager</code> + <code>SummarizationMiddleware</code></h4>
+  <p>指南 Q2 的 planner 代码里有个 <code>compressed_state</code> 从没解释——就是它。项目有<b>两套</b>压缩：</p>
+  <div class="compare">
+    <div class="col good"><h4>① ContextManager（节点入口，手写）</h4>
+      <p>每个节点开头调：<code>compressed_state = ContextManager(token_limit, 保留前N条).compress_messages(state)</code>。逻辑：估算 token（中文1字≈1 token，英文4字≈1 token）→ 超限就保留前 N 条 + 从尾部往回留 → 实在放不下就截断单条。</p>
+      <p><code>nodes.py</code> 里 planner(449)、coordinator(725)、reporter(1147)、researcher(1286)、tool_executor(1641) 全调它。</p></div>
+    <div class="col good"><h4>② SummarizationMiddleware（ReAct 内部，自动）</h4>
+      <p>只在 researcher 这类 ReAct agent 的<b>多轮工具循环</b>里生效：对话攒到 20000 token 触发，用 LLM 把旧消息摘要成一段、保留最近 10000 token。</p>
+      <p>一个管"节点入口的 state 太长"，一个管"agent 内部循环越滚越长"。</p></div>
+  </div>
+
+  <div class="exp">
+    <div class="et">动手实验 L1 · 摸中间件的边界</div>
+    <ol>
+      <li>打开 <code>.env.dev</code>，加一行 <code>AGENT_REACT_TOOLS_LIMIT=2</code>。</li>
+      <li>重启 agent_service（终端 2），终端 3 重跑报告。</li>
+      <li>盯日志：researcher 调 2 次工具后会被强制停下，出现"超出工具调用限制"。</li>
+      <li>改回 5（或删掉这行），重启确认恢复。</li>
+    </ol>
+    <div class="look"><b>你会观察到</b>：agent 调几次工具不是 LLM 说了算，是 <code>ToolCallLimitMiddleware</code> 拦的。这就是"中间件=行为政策"。</div>
+  </div>
+
+  <div class="quiz">
+    <div class="qt">3 题自测</div>
+    <div class="qi"><div class="q">为什么换模型只改 <code>.env.dev</code> 不改代码？</div>
+      <details><summary>看答案</summary><div class="a">因为 <code>get_llm_by_type</code> 按 <code>LLM_VENDOR</code> 分发到不同客户端类，所有节点都走这个统一入口。env 改 vendor/模型名/base_url，代码无感。</div></details></div>
+    <div class="qi"><div class="q">researcher 为什么调几个工具就停？是 LLM 自己想停的吗？</div>
+      <details><summary>看答案</summary><div class="a">不是。<code>ToolCallLimitMiddleware(run_limit=5)</code> 中间件在拦截。中间件是 agent 的"行为政策"，决定何时停、何时压缩，独立于 LLM 意愿。</div></details></div>
+    <div class="qi"><div class="q"><code>ContextManager</code> 和 <code>SummarizationMiddleware</code> 各管哪段？</div>
+      <details><summary>看答案</summary><div class="a">ContextManager 管节点入口的 state（手写、保留前N条+尾部压缩）；SummarizationMiddleware 管 ReAct agent 内部多轮工具循环攒长的对话（自动、LLM 摘要）。两套叠加。</div></details></div>
+  </div>
+
+  <h3 id="l2">L2 · 节点内部（按执行顺序通读 nodes.py）</h3>
+  <div class="qbox"><div class="qt">这一层回答</div><div class="qq">每个节点完整实现长啥样？读 state 什么、调什么、写 state 什么？</div></div>
+  <div class="ans"><div class="at">💡 一句话答案</div><div class="aa">每个节点套路一致：<b>读 state →（经 L1 压缩）调 LLM → 可能调工具（经 ReAct）→ 写 state</b>。按执行顺序通读，每个节点盯"读什么/调什么/写什么"三列即可。</div></div>
+  <p>文件：<code>agent_service/src/graph/deepresearch/nodes.py</code>（约 2200 行，别怕，按节点读）。下面是阅读清单（行号是当前源码，漂移了就 grep 函数名）：</p>
+  <table>
+    <tr><th>节点 / 函数</th><th>行号</th><th>读 state</th><th>调什么</th><th>写 state</th><th>关键细节</th></tr>
+    <tr><td><code>coordinator_node</code></td><td>648</td><td>messages</td><td>LLM + handoff 工具</td><td><code>goto</code>/<code>next_agent</code></td><td>handoff 是"空工具"只发信号（Q1）；入口先 <code>compressed_state</code>(725)</td></tr>
+    <tr><td><code>planner_node</code></td><td>318</td><td>messages</td><td><code>llm.astream</code> 拼 JSON</td><td><code>current_plan</code></td><td><code>compressed_state</code>(449)、<code>repair_json_output</code>(471) 修 JSON、<code>has_enough_context</code>(495) 分支</td></tr>
+    <tr><td><code>human_feedback_node</code></td><td>561</td><td>current_plan</td><td>（条件）</td><td>current_plan</td><td><code>auto_accepted_plan</code> 时直接放行（Q2）；否则 interrupt 等审</td></tr>
+    <tr><td><code>research_team_node</code></td><td>1169</td><td>current_plan.steps</td><td>路由函数</td><td><code>goto</code></td><td>配条件边决定串行/并行/收尾（Q4）</td></tr>
+    <tr><td><code>_setup_and_execute_agent_step</code></td><td>1415</td><td>step</td><td><code>merge_mcp_tools</code>+<code>create_agent</code>+ReAct</td><td><code>execution_res</code></td><td><b>Q3 的关键链在这</b>：连 MCP→注入工具→造 ReAct agent→跑</td></tr>
+    <tr><td><code>researcher_node</code> / <code>parallel_researcher_node</code></td><td>1476 / 2142</td><td>step(s)</td><td>ReAct agent</td><td>execution_res</td><td>parallel 一次喂多个就绪步骤并行（Q4）</td></tr>
+    <tr><td><code>reporter_node</code></td><td>1108</td><td>所有 execution_res</td><td><code>llm.astream</code></td><td><code>final_report</code></td><td><code>compressed_state</code>(1147)；它的字才是 SSE 里要收的（Q5）</td></tr>
+  </table>
+  <div class="card warn"><div class="t">两个容易漏的关键细节</div>
+    <p>① <b>JSON 修复</b>：<code>repair_json_output</code>（在 <code>utils/json_utils.py:101</code>）——LLM 吐的 JSON 常带多余文字/尾逗号/截断，这函数兜底修。planner(471) 和 human_feedback(608) 都靠它。读源码时重点看它怎么容错。</p>
+    <p>② <b><code>has_enough_context</code> 分支</b>（planner 495 行）：planner 不是"拆一次计划就完"，它会判断"现有上下文够不够写报告"——够就跳过研究直接 report，不够才拆步骤研究。这是为什么有时报告生成得特别快。</p></div>
+
+  <div class="exp">
+    <div class="et">动手实验 L2 · 给 planner 加一行观察</div>
+    <ol>
+      <li>打开 <code>nodes.py</code>，在 <code>planner_node</code> 的 <code>has_enough_context</code> 判断处（约 495 行）加：<code>logger.info(f"[planner] has_enough_context={curr_plan.has_enough_context}, steps={len(curr_plan.steps)}")</code>。</li>
+      <li>重启 agent_service，终端 3 重跑。</li>
+      <li>看日志：有时 <code>has_enough_context=True</code>（跳过研究），有时 <code>False</code>（正常拆步）。换个提问再跑，对比差异。</li>
+    </ol>
+    <div class="look"><b>你会观察到</b>：planner 内部不止"拆计划"，还有"够不够上下文"的判断分支。这就是通读节点内部才能看到的细节。</div>
+  </div>
+
+  <div class="quiz">
+    <div class="qt">2 题自测</div>
+    <div class="qi"><div class="q"><code>_setup_and_execute_agent_step</code>（1415）把第一阶段哪几件事串起来了？</div>
+      <details><summary>看答案</summary><div class="a">把 Q3 的整条链串起来：<code>merge_mcp_tools</code> 连 MCP server 加载工具 → <code>create_agent</code> 造 ReAct agent（带 L1 的中间件）→ 跑 agent → 把结论写进 <code>execution_res</code>。Q3 讲的"工具怎么来"在这一个函数里闭环。</div></details></div>
+    <div class="qi"><div class="q">LLM 输出的 JSON 不合法时，planner 怎么办？</div>
+      <details><summary>看答案</summary><div class="a">先过 <code>repair_json_output</code> 兜底修复（去多余文本、补括号、截断处理），再 <code>json.loads</code> + <code>Plan.model_validate</code> 校验。还失败则走降级逻辑。这是 LLM 输出不可信的工程兜底。</div></details></div>
+  </div>
+
+  <h3 id="l3">L3 · 被指南略过的子系统（拓宽视野）</h3>
+  <div class="qbox"><div class="qt">这一层回答</div><div class="qq">指南为了入门做了哪些简化？真实项目还藏了什么？</div></div>
+  <div class="ans"><div class="at">💡 一句话答案</div><div class="aa">指南只讲了"default 铁矿石"这一条线 + SSE 客户端。真实项目还有：① state 的 ~20 个字段和 clarification 子系统 ② SSE 服务端那座桥 ③ 6 套场景 prompt + 第二张图 ④ checkpoint 恢复机制。</div></div>
+
+  <h4>L3-1 · state 真身：<code>types.py</code></h4>
+  <p>指南 Q4 说"state 是白板"，从没展示字段。真实 <code>State</code>（<code>graph/deepresearch/types.py</code>）继承 <code>MessagesState</code>，有 ~20 个字段：<code>locale</code>、<code>research_topic</code>、<code>clarified_research_topic</code>、<code>observations</code>、<code>plan_iterations</code>、<code>current_plan</code>、<code>final_report</code>、<code>auto_accepted_plan</code>、<code>enable_background_investigation</code>、<code>enable_clarification</code>、<code>clarification_rounds</code>、<code>clarification_history</code>、<code>goto</code>、<code>next_agent</code>、<code>conversation_history</code>……</p>
+  <div class="card tip"><div class="t">被藏的 clarification 子系统</div><p>有一整套"多轮澄清"状态（<code>enable_clarification</code>/<code>clarification_rounds</code>/<code>clarification_history</code>/<code>is_clarification_complete</code>）。指南 Q2 说"关掉了澄清"，但代码里这套机制完整存在——开了就能让 agent 先追问再研究。读 <code>types.py</code> + <code>nodes.py</code> 的 <code>needs_clarification</code>(127)、<code>human_feedback_node</code>(561) 就能看懂。</p></div>
+
+  <h4>L3-2 · SSE 服务端那座桥：<code>server/utils.py</code></h4>
+  <p>指南 Q5 <b>只讲了客户端怎么解析 SSE</b>。服务端怎么把图执行变成 SSE 事件？在 <code>server/utils.py</code> 的 <code>_stream_graph_events</code> + <code>_process_message_chunk</code>：</p>
+  <pre><code><span class="c"># agent_service/src/server/utils.py · _stream_graph_events</span>
+<span class="k">async for</span> agent, _, event_data <span class="k">in</span> graph.astream(
+    workflow_input, config=workflow_config,
+    stream_mode=[<span class="s">"messages"</span>, <span class="s">"updates"</span>, <span class="s">"custom"</span>], subgraphs=<span class="k">True</span>):
+    <span class="c"># event_data 是 dict -> __interrupt__（等审）/ __tools_injection__</span>
+    <span class="c"># 否则是 (message_chunk, metadata) -> _process_message_chunk 分发：</span>
+    <span class="c">#   ToolMessage     -> tool_call_result  事件</span>
+    <span class="c">#   AIMessageChunk   -> tool_calls / tool_call_chunks / message_chunk 事件</span></code></pre>
+  <p>Q5 客户端收到的那 4 种事件，就是这里发出去的。还有个 <code>ToolsInjectionInfo</code> 专门解决"流式模式下 tool_call 的 id 跨帧匹配"——这块复杂度指南完全没碰，是 SSE 能对上号的幕后功臣。</p>
+
+  <h4>L3-3 · 多场景平台：6 套 prompt + <code>AgentType</code> + 第二张图</h4>
+  <p>指南全程只讲 <code>default</code>。但 <code>prompts/deepresearch/</code> 下有 <b>6 套</b>：<code>default</code>、<code>demand</code>（需求）、<code>price</code>（价格）、<code>supply</code>（供给）、<code>sd_balance</code>（供需平衡）、<code>report</code>——每套都有自己的 coordinator/planner/researcher/reporter。配合 <code>server/schemas.py</code> 的 <code>AgentType</code> 枚举，<code>server/deepresearch.py</code> 按类型加载不同 <code>MCP_*_SETTINGS</code>。<b>这是个多场景铁矿石研究平台，不只一条线。</b></p>
+  <div class="card cute"><div class="t">还有第二张图</div><p><code>graph/scenarios/</code> 是另一张图：<code>predict_reasoning -> predict_report</code>，只 2 个节点。和 deepresearch 的"研究闭环"不同，更像"直接预测+出报告"的轻量流程。读 <code>scenarios/builder.py</code> + <code>scenarios/nodes.py</code> 对比两张图的设计差异，能加深你对"为什么 deepresearch 要搞这么复杂"的理解。</p></div>
+
+  <h4>L3-4 · checkpoint 恢复：regenerate + <code>analysis_thread_id</code></h4>
+  <p>指南 Q7 说"用 MemorySaver 简化了，关掉了恢复"。但 <code>server/deepresearch.py</code> 里恢复机制其实很丰富：① <b>regenerate 模式</b>——传 <code>checkpoint_id</code> 从某个检查点重跑；② <b>analysis_thread_id</b>——从另一个会话的 checkpoint 拉 <code>messages</code> 当上下文继续聊；③ <code>Command(resume=...)</code> 处理人工审计划的反馈。配 <code>checkpointer_pool</code>，接上 Postgres 就能跨进程持久化。读 <code>_astream_workflow_generator</code> 开头那大段就是这套。</p>
+
+  <div class="quiz">
+    <div class="qt">2 题自测</div>
+    <div class="qi"><div class="q">指南 Q5 讲的 SSE 和 L3-2 讲的有什么关系？</div>
+      <details><summary>看答案</summary><div class="a">Q5 讲客户端解析（按 event:/data: 拆行、按 agent 字段挑 reporter 的字）。L3-2 讲服务端生成（<code>_stream_graph_events</code> 把 graph.astream 的事件流转成那 4 种 SSE 事件）。一收一发，中间是 HTTP 长连接。</div></details></div>
+    <div class="qi"><div class="q">项目只有"default 铁矿石"一条流程吗？</div>
+      <details><summary>看答案</summary><div class="a">不是。有 6 套场景 prompt（default/demand/price/supply/sd_balance/report）+ AgentType 枚举 + 按类型加载不同 MCP 设置；另外还有第二张图 graph/scenarios/（predict_reasoning->predict_report）。是个多场景平台。</div></details></div>
+  </div>
+
+  <h3 id="l4">L4 · 动手改造（验证你真懂了）</h3>
+  <div class="qbox"><div class="qt">这一层回答</div><div class="qq">读完源码怎么确认自己懂了？——改一个能跑通的东西出来。</div></div>
+  <div class="pathbox">
+    <div class="p"><div class="e">🔧</div><b>任务 A · 加 MCP 工具</b>在 <code>mcp_server/server.py</code> 加个 <code>fetch_multi_target</code> 读 <code>multi_target/outputs</code>，改 <code>.env.dev</code> 工具表让 researcher 能用，跑通看报告出现新数据。</div>
+    <div class="p"><div class="e">🧩</div><b>任务 B · 加场景类型</b>复制 <code>prompts/deepresearch/price/</code> 一套改成自己的场景，加 <code>AgentType</code> 枚举值 + <code>MCP_*_SETTINGS</code>，跑通。</div>
+    <div class="p"><div class="e">⚙️</div><b>任务 C · 改节点行为</b>把 <code>has_enough_context</code> 判断改严/改松，观察报告详略变化；或调 <code>ToolCallLimitMiddleware</code> 的 limit 看研究深度变化。</div>
+  </div>
+  <div class="card warn"><div class="t">改造心法</div><p>每改一处，先<b>预言</b>会发生什么，再跑验证。预言对了=懂了；错了=回去读对应源码。这比单纯"读懂"扎实十倍。</p></div>
+
+  <div class="card tip"><div class="t">一句话送你（第二阶段）</div><p>第一阶段让你看到"流程怎么走"，第二阶段让你看到"每个零件怎么转"。读完 L1+L2 你能改任何节点；读完 L3 你知道这项目全貌还能往哪扩；做完 L4 你就真的拿下了。</p></div>
 </section>
 
 </main>

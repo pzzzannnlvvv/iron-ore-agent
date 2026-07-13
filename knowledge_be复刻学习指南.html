@@ -1,0 +1,1050 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>knowledge_be 复刻学习指南 · 8 个问题搞懂 RAG 知识库</title>
+<style>
+  :root{
+    --bg:#fbfcfe; --panel:#ffffff; --panel2:#f4f7fb; --border:#e3e9f2;
+    --text:#2b3543; --muted:#6b7888; --accent:#3b82f6; --accent2:#10a37f;
+    --warn:#d97706; --pink:#ec4899; --purple:#8b5cf6; --code-bg:#1e2937;
+    --soft-blue:#eff6ff; --soft-green:#ecfdf5; --soft-yellow:#fefce8; --soft-pink:#fdf2f8;
+    --soft-purple:#f5f3ff;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+    background:var(--bg);color:var(--text);line-height:1.85;font-size:16px}
+  a{color:var(--accent)}
+  .layout{display:flex;min-height:100vh}
+  nav{width:260px;position:fixed;top:0;left:0;bottom:0;background:var(--panel);
+    border-right:1px solid var(--border);padding:20px 0;overflow-y:auto;z-index:10}
+  nav .brand{padding:0 20px 16px;font-size:16px;font-weight:700;color:var(--accent2)}
+  nav a{display:block;padding:9px 20px;color:var(--muted);font-size:14px;border-left:3px solid transparent}
+  nav a:hover{background:var(--panel2);color:var(--text)}
+  nav a.active{color:var(--accent);border-left-color:var(--accent);background:var(--soft-blue)}
+  nav .group{padding:14px 20px 4px;font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#9aa6b6;font-weight:700}
+  main{margin-left:260px;flex:1;padding:36px 50px;max-width:940px}
+  section{margin-bottom:54px;scroll-margin-top:20px}
+  h1{font-size:30px;margin:0 0 8px;color:var(--text)}
+  h2{font-size:23px;margin:0 0 14px;color:var(--accent);padding-bottom:8px;border-bottom:2px solid var(--soft-blue)}
+  h3{font-size:18px;margin:22px 0 8px;color:var(--purple)}
+  h4{font-size:15px;margin:14px 0 6px;color:var(--text)}
+  .sub{color:var(--muted);font-size:14px;margin-bottom:22px}
+  p{margin:12px 0}
+  code{background:var(--panel2);border:1px solid var(--border);padding:2px 7px;border-radius:5px;
+    font-family:"JetBrains Mono","Consolas",monospace;font-size:13.5px;color:var(--pink)}
+  pre{background:var(--code-bg);border-radius:10px;padding:16px 18px;overflow-x:auto;margin:14px 0}
+  pre code{background:none;border:none;color:#cbd5e1;padding:0;font-size:13px}
+  pre .c{color:#64748b}  /* 注释色 */
+  pre .k{color:#c084fc}  /* 关键字 */
+  pre .s{color:#86efac}  /* 字符串 */
+  .card{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:18px 22px;margin:16px 0;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+  .card.tip{border-left:4px solid var(--accent2);background:var(--soft-green)}
+  .card.warn{border-left:4px solid var(--warn);background:var(--soft-yellow)}
+  .card.key{border-left:4px solid var(--accent);background:var(--soft-blue)}
+  .card.cute{border-left:4px solid var(--pink);background:var(--soft-pink)}
+  .card .t{font-weight:700;margin-bottom:4px}
+  /* 驱动问题框 */
+  .qbox{background:linear-gradient(135deg,#3b82f6,#6366f1);color:#fff;border-radius:12px;padding:18px 24px;margin:18px 0}
+  .qbox .qt{font-size:13px;opacity:.85;font-weight:700;letter-spacing:.05em}
+  .qbox .qq{font-size:19px;font-weight:700;margin-top:4px}
+  /* 一句话答案 */
+  .ans{background:var(--soft-green);border:2px solid #a7e9d0;border-radius:10px;padding:14px 20px;margin:16px 0}
+  .ans .at{font-weight:700;color:var(--accent2);font-size:13px;letter-spacing:.03em}
+  .ans .aa{font-size:16px;margin-top:2px}
+  /* 动手实验框 */
+  .exp{background:var(--soft-purple);border:2px dashed var(--purple);border-radius:12px;padding:16px 22px;margin:18px 0}
+  .exp .et{font-weight:700;color:var(--purple);font-size:16px;margin-bottom:6px}
+  .exp .et::before{content:"🖐 "}
+  .exp ol{margin:8px 0 4px;padding-left:24px}
+  .exp li{margin:6px 0}
+  .exp .look{background:#fff;border:1px solid var(--border);border-radius:8px;padding:10px 14px;margin-top:10px;font-size:14px}
+  .exp .look b{color:var(--purple)}
+  /* 自测框 */
+  .quiz{background:var(--panel);border:1px solid var(--border);border-top:4px solid var(--accent);border-radius:10px;padding:14px 22px;margin:18px 0}
+  .quiz .qt{font-weight:700;color:var(--accent);margin-bottom:6px}
+  .quiz .qt::before{content:"✅ "}
+  .quiz .qi{margin:10px 0;padding-left:26px;position:relative}
+  .quiz .qi .q{font-weight:600;margin-bottom:2px}
+  .quiz .qi .q::before{content:"Q";position:absolute;left:0;top:0;background:var(--accent);color:#fff;width:20px;height:20px;border-radius:50%;font-size:12px;text-align:center;line-height:20px;font-weight:700}
+  .quiz details{margin-top:6px}
+  .quiz summary{cursor:pointer;color:var(--muted);font-size:14px;font-weight:600}
+  .quiz summary:hover{color:var(--accent)}
+  .quiz .a{background:var(--soft-green);border-radius:6px;padding:8px 12px;margin-top:6px;font-size:14px}
+  .qa{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:8px 22px;margin:14px 0}
+  .qa .q{font-weight:700;color:var(--accent);margin:8px 0 4px}
+  .qa .q::before{content:"❓ "}
+  .qa .a{margin:4px 0 8px}
+  .remember{background:var(--soft-yellow);border:2px dashed var(--warn);border-radius:10px;padding:12px 18px;margin:16px 0}
+  .remember b{color:var(--warn)}
+  .pill{display:inline-block;background:var(--soft-blue);border:1px solid #cfe0fb;border-radius:20px;padding:3px 12px;font-size:13px;margin:3px;color:var(--accent)}
+  .pill.g{background:var(--soft-green);border-color:#a7e9d0;color:var(--accent2)}
+  .pill.p{background:var(--soft-pink);border-color:#f5c6dd;color:var(--pink)}
+  .pill.u{background:var(--soft-purple);border-color:#ddd0fb;color:var(--purple)}
+  table{width:100%;border-collapse:collapse;margin:14px 0;font-size:14px;background:var(--panel);border-radius:10px;overflow:hidden}
+  th,td{border:1px solid var(--border);padding:10px 14px;text-align:left;vertical-align:top}
+  th{background:var(--panel2);color:var(--accent);font-weight:700}
+  ul{padding-left:22px} li{margin:5px 0}
+  .flow{display:flex;flex-wrap:wrap;align-items:stretch;margin:18px 0;gap:0}
+  .flow .node{flex:1;min-width:90px;background:var(--panel);border:2px solid var(--accent);border-radius:10px;padding:12px 8px;text-align:center;font-size:13px}
+  .flow .node b{display:block;color:var(--accent);margin-bottom:3px;font-size:13.5px}
+  .flow .node.green{border-color:var(--accent2)}
+  .flow .node.green b{color:var(--accent2)}
+  .flow .node.purple{border-color:var(--purple)}
+  .flow .node.purple b{color:var(--purple)}
+  .flow .node.pink{border-color:var(--pink)}
+  .flow .node.pink b{color:var(--pink)}
+  .flow .arr{display:flex;align-items:center;color:var(--muted);padding:0 4px;font-size:20px}
+  .timeline{position:relative;padding-left:28px;margin:18px 0}
+  .timeline::before{content:"";position:absolute;left:8px;top:6px;bottom:6px;width:2px;background:var(--border)}
+  .timeline .step{position:relative;margin-bottom:18px}
+  .timeline .step::before{content:"";position:absolute;left:-24px;top:4px;width:14px;height:14px;border-radius:50%;background:var(--accent);border:3px solid var(--soft-blue)}
+  .timeline .step .h{font-weight:700;color:var(--accent)}
+  .compare{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:16px 0}
+  .compare .col{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:16px}
+  .compare .col h4{margin:0 0 8px;font-size:15px}
+  .compare .bad{border-top:4px solid var(--pink)}
+  .compare .bad h4{color:var(--pink)}
+  .compare .good{border-top:4px solid var(--accent2)}
+  .compare .good h4{color:var(--accent2)}
+  .hero{background:linear-gradient(135deg,#3b82f6,#8b5cf6);color:#fff;border-radius:16px;padding:28px 32px;margin-bottom:30px}
+  .hero h1{color:#fff;margin:0}
+  .hero p{margin:8px 0 0;opacity:.95}
+  .glossary dt{font-weight:700;color:var(--purple);margin-top:12px}
+  dd{margin:2px 0 0 0;color:var(--muted)}
+  .rolemap{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:14px 0}
+  .rolemap .r{background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:14px}
+  .rolemap .r b{color:var(--accent)}
+  .pathbox{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin:14px 0}
+  .pathbox .p{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;font-size:14px}
+  .pathbox .p .e{font-size:24px}
+  .pathbox .p b{display:block;color:var(--accent);margin:4px 0}
+  details.fold{margin:12px 0;border:1px solid var(--border);border-radius:8px;background:var(--panel);padding:6px 16px}
+  details.fold summary{cursor:pointer;font-weight:700;color:var(--purple);padding:6px 0}
+  details.fold summary::before{content:"📎 "}
+  @media(max-width:860px){nav{display:none}main{margin-left:0;padding:24px}
+    .compare,.rolemap,.pathbox{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="layout">
+<nav>
+  <div class="brand">📚 knowledge_be 复刻</div>
+  <div class="group">先跑起来</div>
+  <a href="#start" class="nav">5 分钟跑通检索</a>
+  <a href="#map" class="nav">一张图看懂 RAG</a>
+  <div class="group">跟着 8 个问题学</div>
+  <a href="#q1" class="nav">Q1 文档怎么变可搜索</a>
+  <a href="#q2" class="nav">Q2 bge-m3 是什么</a>
+  <a href="#q3" class="nav">Q3 为何还要 BM25</a>
+  <a href="#q4" class="nav">Q4 为何还要重排</a>
+  <a href="#q5" class="nav">Q5 崩了怎么降级</a>
+  <a href="#q6" class="nav">Q6 reranker 报错怎么修</a>
+  <a href="#q7" class="nav">Q7 为啥不直接用托管库</a>
+  <a href="#q8" class="nav">Q8 vs 原版 Java</a>
+  <div class="group">收尾</div>
+  <a href="#glossary" class="nav">术语表</a>
+  <a href="#next" class="nav">第一阶段回顾</a>
+  <div class="group">第二阶段 · 深入源码</div>
+  <a href="#phase2" class="nav">第二阶段总览</a>
+  <a href="#l1" class="nav">L1 共享引擎</a>
+  <a href="#l2" class="nav">L2 管道内部</a>
+  <a href="#l3" class="nav">L3 被略过的子系统</a>
+  <a href="#l4" class="nav">L4 动手改造</a>
+</nav>
+
+<main>
+
+<div class="hero">
+  <h1><span class="emoji">🧠</span> 项目复现2 · knowledge_be 复刻学习指南</h1>
+  <p>8 个问题 + 动手实验，把 RAG 知识库从「能跑起来」到「懂原理」再到「想通为什么」。把 bge + Chroma + BM25 + RRF + reranker 拆成你能摸到的零件。</p>
+</div>
+
+<section id="start">
+  <h2>🚀 先跑起来，再说原理</h2>
+  <div class="card key">
+    <div class="t">学习心法（先记住）</div>
+    <p>别一上来啃「向量化」「双编码器」「RRF 融合」这些词。先让它<b>真检索出一段铁矿石分析文字</b>，你眼睛看到「输入一句话 -> 几秒后拿到带相关度分数的文档片段」，后面的原理就会变得具体。这份指南每个概念都锚定到你马上能动手验证的东西。</p>
+  </div>
+  <p>这套知识库复刻<b>核心就一个程序</b> <code>knowledge_service</code>（端口 8092）。模型已在本地（桌面 <code>Embedding和重排模型/</code>），237 个 chunk 已入库，开箱即用。</p>
+
+  <h4>终端 1 · 知识库服务（常驻别关）</h4>
+  <pre><code>cd C:\Users\admin\Desktop\项目复现2\knowledge_service
+.venv\Scripts\python.exe -m uvicorn main:app --port 8092 --host 127.0.0.1</code></pre>
+  <p>看到 <code>Uvicorn running on http://127.0.0.1:8092</code> 和 <code>已入库 chunks=237</code> 就成了。</p>
+
+  <h4>终端 2 · 你检索（跑完自动退出）</h4>
+  <pre><code>cd C:\Users\admin\Desktop\项目复现2\knowledge_service
+.venv\Scripts\python.exe scripts\test_search.py</code></pre>
+
+  <div class="exp">
+    <div class="et">动手实验 0 · 拿到第一份检索结果</div>
+    <ol>
+      <li>按顺序开 2 个终端，跑上面 2 条命令。</li>
+      <li>终端 2 会边跑边打印每个 query 的三段耗时：<code>timings={'embeddingTimeCost':..., 'searchTime':..., 'reRankTimeCost':..., 'totalHits':...}</code>。</li>
+      <li>每个 query 下面是若干行命中：<code>0.8742 [report_20260709.md] 铁矿石港口库存本周下降...</code>--前面是相关度分，方括号是来源文件，后面是片段。</li>
+      <li>注意最后那段「对比 reRank=0 vs reRank=1」--同一句话，开关重排，命中排序会变。这就是 Q4 要讲的事。</li>
+    </ol>
+    <div class="look"><b>你会观察到</b>：你只是输入一句中文，系统自己算向量、双路召回、融合、重排，几秒内吐出最相关的文档片段。这份指南就是拆解「它怎么做到的」。</div>
+  </div>
+
+  <div class="remember"><b>🎯 跑通再往下学</b>。后面每个概念我都标出「去哪里亲眼看到它」。没跑通的话，原理会很飘。</div>
+
+  <div class="card tip"><div class="t">3 个程序的分工（和 agent 复刻共用档案室）</div>
+  <p>① <code>knowledge_service</code>（:8092）= 本指南的主角，RAG 检索引擎。② <code>mcp_server</code>（:17000）= 档案室，它的 <code>fetch_knowledge</code> 工具转调 :8092，给 agent 用。③ <code>agent_service</code>（:5000）= 研究团队，researcher 调 <code>fetch_knowledge</code> 把知识库内容塞进报告。本指南聚焦 ①，②③ 是集成层（见 L3-4）。</p></div>
+</section>
+
+<section id="map">
+  <h2>🗺️ 一张图看懂 RAG</h2>
+  <p>把知识库复刻想象成一家 <b>带检索台的图书馆</b>。两条流水线：一条「入库」（把书加工成能秒查的形态），一条「检索」（你提问，馆员秒回最相关的几页）。</p>
+
+  <h3>入库流水线（离线跑一次，跑完存盘）</h3>
+  <div class="flow">
+    <div class="node pink"><b>文档</b>15 篇<br>md/html/txt</div>
+    <div class="arr">-></div>
+    <div class="node"><b>load</b>抽纯文本</div>
+    <div class="arr">-></div>
+    <div class="node"><b>split</b>切 237 块</div>
+    <div class="arr">-></div>
+    <div class="node green"><b>embed</b>bge-m3<br>1024 维向量</div>
+    <div class="arr">-></div>
+    <div class="node purple"><b>store</b>Chroma<br>+ BM25 索引</div>
+  </div>
+
+  <h3>检索流水线（每次提问实时跑）</h3>
+  <div class="flow">
+    <div class="node pink"><b>你</b>一句话<br>查询</div>
+    <div class="arr">-></div>
+    <div class="node green"><b>embed</b>查询<br>也变向量</div>
+    <div class="arr">-></div>
+    <div class="node"><b>双路召回</b>KNN向量<br>BM25关键词</div>
+    <div class="arr">-></div>
+    <div class="node purple"><b>RRF 融合</b>按排名合并</div>
+    <div class="arr">-></div>
+    <div class="node purple"><b>rerank</b>精排<br>bge-reranker</div>
+    <div class="arr">-></div>
+    <div class="node green"><b>返回</b>topK<br>带分数</div>
+  </div>
+
+  <div class="rolemap">
+    <div class="r"><b>load / split</b> · 把文档读进来、切成小块（chunk）</div>
+    <div class="r"><b>embed</b> · bge-m3 把文本压成 1024 维「语义指纹」向量</div>
+    <div class="r"><b>store</b> · Chroma 存向量，cosine 算相似度</div>
+    <div class="r"><b>bm25</b> · 关键词匹配，jieba 分词后跑 BM25</div>
+    <div class="r"><b>rrf</b> · 把 KNN 和 BM25 两份排名融合成一份</div>
+    <div class="r"><b>rerank</b> · bge-reranker 对候选精排，cross-encoder 打分</div>
+    <div class="r"><b>降级</b> · embed 挂了退纯 BM25，rerank 挂了用融合分</div>
+    <div class="r"><b>search</b> · 主链路，把上面这些串起来</div>
+  </div>
+
+  <div class="card key">
+    <div class="t">这就是 RAG 的「R」（Retrieval，检索）</div>
+    <p>RAG = Retrieval-Augmented Generation（检索增强生成）。本指南做的是<b>检索那半</b>：从知识库捞出最相关的片段。生成那半（把片段喂给 LLM 写答案）是 agent_service 的事。先搞懂检索，生成只是把检索结果拼进 prompt。</p>
+  </div>
+  <p>接下来 8 个问题，挨个走进每个零件。每个问题都带一个动手实验。</p>
+</section>
+
+<section id="q1">
+  <h2>Q1 · 一篇文档怎么变成能被「搜索」的东西?</h2>
+  <div class="qbox"><div class="qt">驱动问题</div><div class="qq">我往 data/corpus 丢一堆 md/html，系统怎么把它变成可秒查的形态？为什么要先「切」再「编码」？</div></div>
+  <div class="ans"><div class="at">💡 一句话答案</div><div class="aa">入库管道四步：<b>load（抽纯文本）-> split（切成 chunk）-> embed（每个 chunk 编成 1024 维向量）-> store（存进 Chroma）</b>。15 篇文档最终变成 237 个带向量的 chunk，这就是「可搜索」的形态。</div></div>
+
+  <h3>为什么不直接存整篇文档？要先切</h3>
+  <p>一篇报告可能几千字，但你要找的可能只是其中「MDA 84.91%」那一句。如果整篇当一个单位编码、检索，返回的是整篇文档，<b>精度差、上下文太长喂不进 LLM</b>。所以切成几百字一块（chunk），检索时返回的就是精准的小片段。</p>
+  <pre><code><span class="c"># knowledge_service/src/pipeline/ingest.py · ingest()</span>
+store.reset()                              <span class="c"># 清空旧库</span>
+docs = load_corpus(corpus_dir)             <span class="c"># ① 读 15 篇文档</span>
+<span class="k">for</span> doc <span class="k">in</span> docs:
+    chunks = split_text(doc[<span class="s">"content"</span>], CHUNK_SIZE, CHUNK_OVERLAP)  <span class="c"># ② 切块</span>
+    embs = embed_batch(chunks)             <span class="c"># ③ 每块编码成向量</span>
+    <span class="k">for</span> i, (chunk, emb) <span class="k">in</span> <span class="k">enumerate</span>(zip(chunks, embs)):
+        batch.append({
+            <span class="s">"id"</span>: f<span class="s">"{doc['doc_id']}_{i:04d}"</span>,      <span class="c"># doc_003_0017 这种 id</span>
+            <span class="s">"content"</span>: chunk,
+            <span class="s">"embedding"</span>: emb,
+            <span class="s">"metadata"</span>: {<span class="s">"fileName"</span>: doc[<span class="s">"file_name"</span>], <span class="s">"sourceType"</span>: 1, ...},
+        })
+    store.add_chunks(batch)                <span class="c"># ④ 存进 Chroma</span>
+bm25.reset_index()                         <span class="c"># 顺带重建 BM25 索引</span></code></pre>
+
+  <h3>split 怎么切：递归 + 中文友好</h3>
+  <p>不是无脑按 500 字硬切（会把句子拦腰斩断）。它按 <b>段落 -> 换行 -> 句号 -> 分号 -> 逗号</b> 逐级切，先大后小，切到 <= 500 字就停，再贪心合并相邻片段成 chunk，还带 50 字 overlap（重叠，保证上下文不断裂）：</p>
+  <pre><code><span class="c"># knowledge_service/src/pipeline/splitter.py</span>
+SEPARATORS = [<span class="s">"\n\n"</span>, <span class="s">"\n"</span>, <span class="s">"。"</span>, <span class="s">"!"</span>, <span class="s">"?"</span>, <span class="s">";"</span>, ..., <span class="s">"，"</span>, <span class="s">" "</span>, <span class="s">""</span>]
+<span class="c"># 先按段落切，某段太长就按句号切，还太长按分号... 最后兜底硬切</span>
+
+cur += p
+<span class="k">if</span> len(cur) &gt; chunk_size:
+    chunks.append(cur)
+    tail = cur[-chunk_overlap:]   <span class="c"># 留 50 字尾巴</span>
+    cur = tail + p                <span class="c"># 下一段开头接上尾巴，防断裂</span></code></pre>
+  <div class="card tip"><div class="t">为什么留 overlap</div><p>假设一个结论正好被切在两块边界：「...MDA 方向准确率达到」|「84.91%，优于基线...」。没 overlap 的话，检索「MDA 多少」可能两块都半截。留 50 字重叠，前一块带「84.91%」，命中后上下文更完整。</p></div>
+
+  <div class="exp">
+    <div class="et">动手实验 1 · 切片参数怎么影响 chunk 数</div>
+    <ol>
+      <li>看当前入库结果：终端 1 日志里有 <code>入库完成: 15 文档, 237 chunks</code>。</li>
+      <li>编辑 <code>knowledge_service/.env</code>（没有就建），加 <code>CHUNK_SIZE=300</code> <code>CHUNK_OVERLAP=30</code>。</li>
+      <li>重跑入库：<code>.venv\Scripts\python.exe scripts\ingest.py</code>（不用重启服务，ingest 直接写盘）。</li>
+      <li>看新日志的 chunk 数——会比 237 多（块更小，数量更多）。</li>
+      <li>跑 <code>scripts\eval.py</code> 看 hit@5 有没有变化（块更碎可能更准也可能更散）。</li>
+      <li>实验完改回 <code>CHUNK_SIZE=500</code> 重新 ingest 恢复。</li>
+    </ol>
+    <div class="look"><b>你会观察到</b>：chunk_size 直接决定检索粒度。太小->碎、丢上下文；太大->粗、混入无关内容。500 是这个语料的折中。</div>
+  </div>
+
+  <div class="quiz">
+    <div class="qt">3 题自测（点开看答案）</div>
+    <div class="qi"><div class="q">为什么不把整篇文档当检索单位，非要切片？</div>
+      <details><summary>看答案</summary><div class="a">两个原因：① 精度——你要的是「MDA 84.91%」那一句，返回整篇几千字没法用；② 长度——检索结果要喂给 LLM，整篇塞不下 prompt，也太贵。切块让返回的又准又短。</div></details></div>
+    <div class="qi"><div class="q">splitter 的 SEPARATORS 为什么要排这么多、有先后顺序？</div>
+      <details><summary>看答案</summary><div class="a">按「语义边界」从大到小切：先段落（最自然边界）-> 换行 -> 句号 -> 分号 -> 逗号。优先在大边界切，切不下才退到小边界，最后才硬切。这样 chunk 尽量不断在句子中间，语义完整。</div></details></div>
+    <div class="qi"><div class="q">chunk_overlap=50 在解决什么问题？</div>
+      <details><summary>看答案</summary><div class="a">解决「结论被切在两块边界」的断裂问题。每块尾部留 50 字重叠到下一块开头，保证横跨边界的信息至少在一块里完整出现。代价是少量冗余存储。</div></details></div>
+  </div>
+</section>
+
+<section id="q2">
+  <h2>Q2 · bge-m3 到底是什么？它和 LLM（glm）是一回事吗？</h2>
+  <div class="qbox"><div class="qt">驱动问题</div><div class="qq">我桌面上那个 bge-m3（2.27GB）是大模型吗？能不能像 glm 那样对话生成文字？为什么要专门下它，不能用我已有的 glm 配置替换？</div></div>
+  <div class="ans"><div class="at">💡 一句话答案</div><div class="aa"><b>不是 LLM，不能对话。</b>bge-m3 是 <b>embedding 双编码器</b>，只干一件事：把一段文本压成一个 1024 维向量（语义指纹）。它不生成文字。glm 是<b>生成式 LLM</b>。两者是完全不同物种的模型，glm 替代不了它。</div></div>
+
+  <h3>两种模型，两种用途</h3>
+  <div class="compare">
+    <div class="col bad"><h4>glm（生成式 LLM）</h4>
+      <p><b>输入</b>一段文本，<b>输出</b>一段新生成的文本。</p>
+      <p>会推理、会写、会对话。</p>
+      <p>慢、贵、不可预测输出。</p>
+      <p>用在 agent 里做规划/研究/写报告。</p>
+      <p><span class="pill p">生成式</span></p></div>
+    <div class="col good"><h4>bge-m3（embedding 模型）</h4>
+      <p><b>输入</b>一段文本，<b>输出</b>一个固定 1024 维向量。</p>
+      <p>不会生成任何文字，只「编码」。</p>
+      <p>快、便宜、输出确定。</p>
+      <p>用在知识库里把文本变成可比较的向量。</p>
+      <p><span class="pill g">编码式</span></p></div>
+  </div>
+  <p>为什么不能用 glm 替代 bge-m3？因为<b>算向量相似度需要一个确定、可比的数值表示</b>。bge-m3 把「铁矿石库存下降」和「港口铁矿库存减少」编成<b>两个非常接近</b>的向量（语义近），把「今天天气不错」编成<b>很远</b>的向量。glm 做不到这件事——它只会接话，不会把句子变成坐标。</p>
+
+  <h3>embed 怎么用 bge-m3</h3>
+  <pre><code><span class="c"># knowledge_service/src/pipeline/embedder.py</span>
+<span class="k">from</span> FlagEmbedding <span class="k">import</span> BGEM3FlagModel
+
+@lru_cache(maxsize=1)          <span class="c"># 进程内只加载一次（2.27GB，不能每次查都重载）</span>
+<span class="k">def</span> get_model():
+    path = os.getenv(<span class="s">"BGE_M3_PATH"</span>, DEFAULT_BGE_M3_PATH)
+    use_fp16 = os.getenv(<span class="s">"BGE_USE_FP16"</span>, <span class="s">"0"</span>) == <span class="s">"1"</span>  <span class="c"># 无 GPU，fp32</span>
+    <span class="k">return</span> BGEM3FlagModel(path, use_fp16=use_fp16)
+
+<span class="k">def</span> embed(text, normalize=<span class="k">True</span>) -> list[<span class="k">float</span>]:
+    model = get_model()
+    out = model.encode([text], return_dense=<span class="k">True</span>, return_sparse=<span class="k">False</span>, ...)
+    vec = np.asarray(out[<span class="s">"dense_vecs"</span>][0], dtype=np.float32)
+    <span class="k">if</span> normalize:                    <span class="c"># 归一化：让向量长度=1，cosine 就退化成点积</span>
+        vec = vec / np.linalg.norm(vec)
+    <span class="k">return</span> vec.tolist()             <span class="c"># 1024 维 list</span></code></pre>
+  <div class="card key"><div class="t">两个关键设计</div>
+  <p>① <b>lru_cache 懒加载</b>：模型 2.27GB，加载要几秒+占内存。<code>get_model()</code> 第一次调用才加载，之后全程复用同一个实例。这就是为什么服务启动后第一次检索慢、之后飞快。② <b>normalize 归一化</b>：把向量缩成长度 1，这样两个向量的余弦相似度 = 简单的点积，Chroma 算得快。</p></div>
+
+  <div class="exp">
+    <div class="et">动手实验 2 · 亲眼看见「语义距离」</div>
+    <ol>
+      <li>终端进 knowledge_service：<code>cd C:\Users\admin\Desktop\项目复现2\knowledge_service</code></li>
+      <li>跑：<code>.venv\Scripts\python.exe scripts\smoke_test_models.py</code>（已写好的烟测，测 embed + rerank）。</li>
+      <li>想自己感受语义距离，写个临时脚本：</li>
+    </ol>
+    <pre style="margin-top:8px"><code><span class="k">from</span> src.pipeline.embedder <span class="k">import</span> embed
+<span class="k">import</span> numpy <span class="k">as</span> np
+a = embed(<span class="s">"铁矿石港口库存下降"</span>)
+b = embed(<span class="s">"港口铁矿库存减少"</span>)   <span class="c"># 同义不同字</span>
+c = embed(<span class="s">"今天天气真不错"</span>)      <span class="c"># 无关</span>
+<span class="k">print</span>(<span class="s">"同义 cos="</span>, np.dot(a,b))      <span class="c"># 接近 1</span>
+<span class="k">print</span>(<span class="s">"无关 cos="</span>, np.dot(a,c))      <span class="c"># 明显更小</span></code></pre>
+    <div class="look"><b>你会观察到</b>：「铁矿石港口库存下降」和「港口铁矿库存减少」字面几乎不重合，但向量 cos 接近 1——bge-m3 懂语义，不靠字面。这就是向量检索能抓「同义不同字」的根。</div>
+  </div>
+
+  <div class="quiz">
+    <div class="qt">3 题自测</div>
+    <div class="qi"><div class="q">bge-m3 能像 glm 那样回答问题吗？为什么？</div>
+      <details><summary>看答案</summary><div class="a">不能。bge-m3 是编码器，输入文本输出向量，没有「生成下一个 token」的解码头。它只把文本变成坐标，不产生新文字。glm 有解码器能生成。</div></details></div>
+    <div class="qi"><div class="q">为什么 <code>get_model()</code> 要套 <code>lru_cache</code>？</div>
+      <details><summary>看答案</summary><div class="a">bge-m3 2.27GB，加载耗时几秒+占大量内存。每次检索都重载会慢且爆内存。lru_cache 让模型进程内只加载一次、全程复用。所以首次检索慢、之后快。</div></details></div>
+    <div class="qi"><div class="q">为什么要 normalize 归一化向量？</div>
+      <details><summary>看答案</summary><div class="a">归一化后向量长度=1，两向量的余弦相似度就等于点积（一个乘加运算），计算极快。Chroma 用 cosine 空间，归一化让相似度计算又快又准。</div></details></div>
+  </div>
+</section>
+
+<section id="q3">
+  <h2>Q3 · 光靠「向量相似度」搜索够吗？为什么还要 BM25？</h2>
+  <div class="qbox"><div class="qt">驱动问题</div><div class="qq">既然 bge-m3 向量能抓语义，为什么 search.py 不只跑 KNN 向量召回，还要再跑一遍 BM25 关键词召回再融合？多此一举？</div></div>
+  <div class="ans"><div class="at">💡 一句话答案</div><div class="aa">因为向量检索和关键词检索<b>各有盲区</b>。向量抓语义但会漏精确专有名词（如「MDA」「LGBM」）；BM25 抓词面匹配但不懂同义。两路互补 + RRF 融合，比任何单路都准。这就是「混合检索」。</div></div>
+
+  <h3>两路召回各自的盲区</h3>
+  <div class="compare">
+    <div class="col bad"><h4>只有 KNN（向量）</h4>
+      <ul>
+        <li>懂语义：「库存减少」能查到「库存下降」</li>
+        <li><b>盲区</b>：精确术语常被「稀释」。查「LightGBM」可能因为语义接近「模型」被泛泛文档挤掉</li>
+        <li>对罕见专有名词不敏感</li>
+      </ul></div>
+    <div class="col good"><h4>只有 BM25（关键词）</h4>
+      <ul>
+        <li>精确匹配：「LightGBM」三个字母必须出现才命中</li>
+        <li><b>盲区</b>：不懂同义。查「库存下降」查不到只写「库存减少」的文档</li>
+        <li>对拼写/表述变化无能为力</li>
+      </ul></div>
+  </div>
+  <p><b>混合检索</b>：两路都跑，各出一份排名，再用 RRF 融合成一份。向量补 BM25 的「不懂同义」，BM25 补向量的「漏专有名词」。</p>
+
+  <h3>BM25 怎么工作：jieba 分词 + 词频统计</h3>
+  <pre><code><span class="c"># knowledge_service/src/retrieval/bm25.py</span>
+<span class="k">import</span> jieba
+<span class="k">from</span> rank_bm25 <span class="k">import</span> BM25Okapi
+
+<span class="k">def</span> _tokenize(text, for_search=<span class="k">False</span>):
+    tokens = jieba.cut_for_search(text) <span class="k">if</span> for_search <span class="k">else</span> jieba.cut(text)
+    <span class="k">return</span> [w <span class="k">for</span> w <span class="k">in</span> tokens <span class="k">if</span> w.strip()]   <span class="c"># 中文要先分词！</span>
+
+<span class="c"># 建索引：把 237 个 chunk 全分词，统计词频</span>
+self.tokenized = [_tokenize(d) <span class="k">for</span> d <span class="k">in</span> self.docs]
+self.bm25 = BM25Okapi(self.tokenized)
+
+<span class="c"># 查询：query 分词后对每个 chunk 打分</span>
+scores = self.bm25.get_scores(_tokenize(query, for_search=<span class="k">True</span>))</code></pre>
+  <div class="card warn"><div class="t">中文 BM25 必须先分词</div>
+  <p>英文 BM25 按空格切词就行，中文不行——「铁矿石库存」按空格切是整一坨。必须用 jieba 先切成「铁矿石/库存」这种词。查询用 <code>cut_for_search</code>（更细，召回更多），建索引用 <code>cut</code>（标准切分）。这是中文 RAG 的标配。</p></div>
+
+  <h3>RRF：怎么把两份排名合成一份</h3>
+  <p>KNN 给一份按向量距离的排名，BM25 给一份按词频的排名，两份排名<b>分数不可比</b>（一个是 0~1 余弦，一个是 BM25 绝对分）。RRF 的聪明之处：<b>不看分数，只看排名</b>。</p>
+  <pre><code><span class="c"># knowledge_service/src/retrieval/hybrid.py</span>
+<span class="k">def</span> rrf(rankings, k=60):
+    scores = {}
+    <span class="k">for</span> ranking <span class="k">in</span> rankings:            <span class="c"># [vec_hits, bm_hits] 两路</span>
+        <span class="k">for</span> rank, hit <span class="k">in</span> <span class="k">enumerate</span>(ranking):   <span class="c"># rank 从 0 开始</span>
+            hid = hit[<span class="s">"id"</span>]
+            scores[hid] = scores.get(hid, 0) + 1.0 / (k + rank + 1)   <span class="c"># 排名越靠前分越高</span>
+    <span class="c"># 一个 chunk 两路都命中 -> 分数叠加，自然排到前面</span>
+    <span class="k">return</span> sorted(scores.items(), key=<span class="k">lambda</span> x: -x[1])</code></pre>
+  <p>公式 <code>1/(k+rank+1)</code>，k=60 是个平滑常数。关键效果：<b>两路都召回的 chunk 双倍加分</b>，自然冒泡到最前面——这种「共识」chunk 往往就是最相关的。</p>
+
+  <h3>search.py 怎么串这三模式</h3>
+  <pre><code><span class="c"># knowledge_service/src/retrieval/search.py · search()</span>
+pool_k = max(topK * 3, 30)            <span class="c"># 召回池取多一些，给 rerank 留候选</span>
+bm_hits = bm25.get_index().search(content, top_k=pool_k)
+<span class="k">if</span> mode == <span class="s">"bm25"</span>:   merged = bm_hits
+<span class="k">elif</span> mode == <span class="s">"knn"</span>:   merged = vector.search_vec(qvec, top_k=pool_k)
+<span class="k">else</span>:  <span class="c"># mix</span>
+    vec_hits = vector.search_vec(qvec, top_k=pool_k)
+    merged = hybrid.rrf([vec_hits, bm_hits])   <span class="c"># 两路融合</span></code></pre>
+
+  <div class="exp">
+    <div class="et">动手实验 3 · 三模式对比看盲区</div>
+    <ol>
+      <li>临时改 <code>scripts\test_search.py</code>，对同一句 <code>"LightGBM 超参优化"</code> 跑三遍：<code>show(q, mode="knn")</code> <code>show(q, mode="bm25")</code> <code>show(q, mode="mix")</code>。</li>
+      <li>跑 <code>.venv\Scripts\python.exe scripts\test_search.py</code>。</li>
+      <li>对比 top1 命中：bm25 模式下「LightGBM超参优化.md」必排前（精确词面）；knn 模式可能被「模型选择」类泛文档挤掉；mix 模式两路共识把它捞回来。</li>
+    </ol>
+    <div class="look"><b>你会观察到</b>：单路各有漏，mix 最稳。专有名词靠 BM25 兜，同义表述靠 KNN 兜，RRF 把共识项顶到最前。</div>
+  </div>
+
+  <div class="quiz">
+    <div class="qt">3 题自测</div>
+    <div class="qi"><div class="q">为什么 KNN 和 BM25 的分数不能直接相加，要用 RRF？</div>
+      <details><summary>看答案</summary><div class="a">两路分数不在一个量纲：KNN 是 0~1 的余弦相似度，BM25 是无上界的词频分。直接加会被 BM25 大数主导。RRF 只用排名（1/(k+rank)），抛弃分数量纲，让两路公平贡献。</div></details></div>
+    <div class="qi"><div class="q">中文做 BM25 为什么必须先 jieba 分词？</div>
+      <details><summary>看答案</summary><div class="a">中文没有空格，「铁矿石库存」是一整串不分词就是一个 token，匹配不到只含「库存」的文档。jieba 切成「铁矿石/库存」后才能按词统计词频、做匹配。英文按空格切即可，中文必须分词。</div></details></div>
+    <div class="qi"><div class="q">一个 chunk 被 KNN 和 BM25 两路都召回，RRF 会怎么对它？</div>
+      <details><summary>看答案</summary><div class="a">两路的排名分都加到它头上，分数叠加，自然排到融合结果最前面。这种「双路共识」chunk 通常就是最相关的，这正是 RRF 的核心效果。</div></details></div>
+  </div>
+</section>
+
+<section id="q4">
+  <h2>Q4 · 召回一堆候选了，为什么还要再「重排」一遍？</h2>
+  <div class="qbox"><div class="qt">驱动问题</div><div class="qq">BM25+KNN+RRF 已经排好序了，search.py 最后又调 bge-reranker 重新打分重排。这不是重复劳动吗？</div></div>
+  <div class="ans"><div class="at">💡 一句话答案</div><div class="aa">不是重复，是<b>精度升级</b>。第一路召回用的是<b>双编码器</b>（bi-encoder，query 和 doc 各自独立编码再算距离，快但浅）；reranker 是<b>交叉编码器</b>（cross-encoder，query+doc 拼一起喂进模型，理解深但慢）。两段式：粗筛（快）-> 精排（准）。</div></div>
+
+  <h3>bi-encoder vs cross-encoder：召回 vs 重排的本质区别</h3>
+  <div class="compare">
+    <div class="col bad"><h4>bi-encoder（bge-m3，用于召回）</h4>
+      <ul>
+        <li>query 和 doc <b>各自</b>编码成向量，再算距离</li>
+        <li>doc 可预编码存库，查询只编 query -> <b>超快</b></li>
+        <li>query 和 doc <b>没互相看到</b>，理解浅</li>
+        <li>适合从 237 个 chunk 里粗筛几十个</li>
+      </ul></div>
+    <div class="col good"><h4>cross-encoder（bge-reranker，用于重排）</h4>
+      <ul>
+        <li>query 和 doc <b>拼一起</b>喂进模型，一起编码</li>
+        <li>每对 (query,doc) 都要跑一次模型 -> <b>慢</b></li>
+        <li>模型能看 query 和 doc 的<b>交互关系</b>，理解深</li>
+        <li>适合对几十个候选精排</li>
+      </ul></div>
+  </div>
+  <p>为什么不能直接用 cross-encoder 检索全部？因为 237 个 chunk × 每次 query 都要跑一遍 cross-encoder = 太慢。所以<b>先用快的 bi-encoder 粗筛出 top30，再用慢但准的 cross-encoder 精排 top30</b>。这就是「两段式检索」，RAG 的标准操作。</p>
+
+  <h3>rerank 怎么用 bge-reranker</h3>
+  <pre><code><span class="c"># knowledge_service/src/pipeline/reranker.py</span>
+<span class="k">from</span> transformers <span class="k">import</span> AutoModelForSequenceClassification, AutoTokenizer
+
+@lru_cache(maxsize=1)
+<span class="k">def</span> get_model():
+    tokenizer = AutoTokenizer.from_pretrained(path)
+    model = AutoModelForSequenceClassification.from_pretrained(path)  <span class="c"># XLMRoberta 分类头</span>
+    model.eval()
+    <span class="k">return</span> tokenizer, model
+
+<span class="k">def</span> rerank(query, documents, normalize=<span class="k">True</span>, max_length=512):
+    pairs = [[query, doc] <span class="k">for</span> doc <span class="k">in</span> documents]   <span class="c"># 关键：query+doc 拼成 pair</span>
+    inputs = tokenizer(pairs, padding=<span class="k">True</span>, truncation=<span class="k">True</span>, ...)
+    <span class="k">with</span> torch.no_grad():
+        logits = model(**inputs).logits.squeeze(-1)        <span class="c"># 每对一个分</span>
+    scores = torch.sigmoid(logits) <span class="k">if</span> normalize <span class="k">else</span> logits   <span class="c"># sigmoid -> 0~1</span>
+    <span class="k">return</span> scores.tolist()</code></pre>
+  <div class="card key"><div class="t">cross-encoder 的关键在「pair」</div>
+  <p>看那行 <code>pairs = [[query, doc] ...]</code>——query 和 doc 被拼成一对一起进模型。模型内部 attention 让 query 的每个词都能「看到」doc 的每个词，捕捉「这半句到底在回答 query 的哪个点」。bi-encoder 做不到这种交互，因为 query 和 doc 是分开编码的。这就是精排更准的根本原因。</p></div>
+
+  <h3>search.py 怎么接 rerank</h3>
+  <pre><code><span class="c"># search.py</span>
+candidates = merged[: max(topK * 2, 20)]     <span class="c"># 融合后取前 20 个候选</span>
+<span class="k">if</span> reRank == 1 <span class="k">and</span> candidates:
+    docs = [c[<span class="s">"content"</span>] <span class="k">for</span> c <span class="k">in</span> candidates]
+    scores = rerank_fn(content, docs)         <span class="c"># cross-encoder 重打分</span>
+    <span class="k">for</span> c, s <span class="k">in</span> zip(candidates, scores):
+        c[<span class="s">"score"</span>] = <span class="k">float</span>(s)
+    candidates.sort(key=<span class="k">lambda</span> x: -x[<span class="s">"score"</span>])   <span class="c"># 按新分重排</span>
+candidates = candidates[:topK]               <span class="c"># 裁到 topK</span></code></pre>
+
+  <div class="exp">
+    <div class="et">动手实验 4 · reRank=0 vs reRank=1 看精度差异</div>
+    <ol>
+      <li>跑 <code>scripts\test_search.py</code>，它末尾已写好对比：同一句「铁矿石库存」分别 <code>reRank=0</code> 和 <code>reRank=1</code>。</li>
+      <li>看 <code>reRank=0</code>：top 命中是泛泛的「项目完整流程总结」（RRF 融合分，靠共识冒上来，但内容泛）。</li>
+      <li>看 <code>reRank=1</code>：top 命中变成「report_20260709」里的核心结论片段（reranker 看懂「铁矿石库存」具体指预测结果，把真正讲结论的片段顶上来）。</li>
+      <li>对比两者的 <code>reRankTimeCost</code>：reRank=1 多花几秒（cross-encoder 跑 20 对），reRank=0 几乎为 0。</li>
+    </ol>
+    <div class="look"><b>你会观察到</b>：rerank 用几秒换来了「top1 从泛流程总结变成精准结论片段」。这就是 cross-encoder 精排的价值。要不要开 rerank = 精度 vs 速度的权衡。</div>
+  </div>
+
+  <div class="quiz">
+    <div class="qt">3 题自测</div>
+    <div class="qi"><div class="q">为什么不能一开始就用 cross-encoder 检索全部 237 个 chunk？</div>
+      <details><summary>看答案</summary><div class="a">太慢。cross-encoder 要对每个 (query, chunk) 都跑一次完整模型（237 次），且无法预编码。bi-encoder 能预编码存库、查询只编 query，秒级出结果。所以先用 bi 粗筛再用 cross 精排。</div></details></div>
+    <div class="qi"><div class="q">bi-encoder 和 cross-encoder 在「query 和 doc 怎么进模型」上的根本区别？</div>
+      <details><summary>看答案</summary><div class="a">bi-encoder 把 query 和 doc 各自独立编码成向量再算距离，两者没交互；cross-encoder 把 query 和 doc 拼成 pair 一起进模型，attention 让两者词词交互，能捕捉「doc 哪部分在回答 query」。后者理解深但慢。</div></details></div>
+    <div class="qi"><div class="q">reranker 输出的分数为什么过 sigmoid？</div>
+      <details><summary>看答案</summary><div class="a">模型输出的是 logit（无界实数），sigmoid 压到 (0,1) 区间，变成可解释的「相关概率」。越大越相关，且跨 query 可比。也方便排序和过滤。</div></details></div>
+  </div>
+</section>
+
+<section id="q5">
+  <h2>Q5 · 检索中途崩了怎么办？系统怎么不挂？</h2>
+  <div class="qbox"><div class="qt">驱动问题</div><div class="qq">如果 bge-m3 模型加载失败、内存爆了，或者 reranker 抽风，整个 search 是不是就废了、用户拿不到任何结果？</div></div>
+  <div class="ans"><div class="at">💡 一句话答案</div><div class="aa">不会。search.py 设计了<b>两层降级</b>：① embedding 失败 -> 自动退化为纯 BM25（还能出结果）② rerank 失败 -> 用 RRF 融合分排序（结果还在，只是没那么准）。服务永远尽量不空手而归。</div></div>
+
+  <h3>降级 1：embedding 失败 -> 纯 BM25</h3>
+  <pre><code><span class="c"># search.py</span>
+t0 = time.time()
+emb_ok = <span class="k">True</span>
+qvec = <span class="k">None</span>
+<span class="k">try</span>:
+    qvec = embed(content)              <span class="c"># bge-m3 编码 query</span>
+<span class="k">except</span> Exception <span class="k">as</span> e:
+    log.warning(<span class="s">"embedding 失败,降级纯 BM25: %s"</span>, e)
+    emb_ok = <span class="k">False</span>                       <span class="c"># 标记降级</span>
+
+<span class="c"># 召回阶段：</span>
+bm_hits = bm25.get_index().search(content, top_k=pool_k)
+<span class="k">if</span> <span class="k">not</span> emb_ok <span class="k">or</span> mode == <span class="s">"bm25"</span>:
+    merged = bm_hits                   <span class="c"># 降级：只用 BM25，跳过向量</span>
+<span class="k">elif</span> mode == <span class="s">"knn"</span>:
+    merged = vector.search_vec(qvec, top_k=pool_k)
+<span class="k">else</span>:  <span class="c"># mix</span>
+    vec_hits = vector.search_vec(qvec, top_k=pool_k)
+    merged = hybrid.rrf([vec_hits, bm_hits])</code></pre>
+  <p>即使 bge-m3 完全挂掉，BM25 不依赖模型（只靠 jieba+词频），照样能按关键词召回。用户还能拿到结果，只是丢了语义检索能力。</p>
+
+  <h3>降级 2：rerank 失败 -> 用融合分</h3>
+  <pre><code><span class="c"># search.py</span>
+<span class="k">if</span> reRank == 1 <span class="k">and</span> candidates:
+    <span class="k">try</span>:
+        scores = rerank_fn(content, docs)
+        <span class="k">for</span> c, s <span class="k">in</span> zip(candidates, scores): c[<span class="s">"score"</span>] = <span class="k">float</span>(s)
+        candidates.sort(key=<span class="k">lambda</span> x: -x[<span class="s">"score"</span>])
+    <span class="k">except</span> Exception <span class="k">as</span> e:
+        log.warning(<span class="s">"rerank 失败,用融合分排序: %s"</span>, e)   <span class="c"># 不重排，保留 RRF 分</span>
+candidates = candidates[:topK]</code></pre>
+  <p>reranker 挂了也不致命：候选还在，只是按 RRF 融合分排（粗一点），不按精排分。用户拿到的还是 topK 结果。</p>
+
+  <div class="card key"><div class="t">这是工程上的「优雅降级」（graceful degradation）</div>
+  <p>核心思想：<b>核心功能挂了，用次优方案顶上，而不是整体崩</b>。向量挂了->关键词顶；重排挂了->融合分顶。每层都有 fallback。这和原版 knowledge_be 的降级逻辑一致（复刻时专门对齐的）。真实生产 RAG 必须这样——模型总会抽风，不能让一次抽风让整个服务返回 500。</p></div>
+
+  <div class="exp">
+    <div class="et">动手实验 5 · 亲手触发降级</div>
+    <ol>
+      <li>编辑 <code>knowledge_service\.env</code>，把 <code>BGE_M3_PATH</code> 改成一个不存在的路径（如 <code>C:/xxx/notexist</code>）。</li>
+      <li>重启 knowledge_service（终端 1 Ctrl+C 再起）。注意：第一次检索时才加载模型，所以启动不会报错。</li>
+      <li>跑 <code>scripts\test_search.py</code>。</li>
+      <li>盯终端 1 日志：会出现 <code>embedding 失败,降级纯 BM25: ...</code> 警告。</li>
+      <li>但终端 2 <b>照样有结果</b>——纯 BM25 召回的，只是少了语义检索。</li>
+      <li>实验完把 BGE_M3_PATH 改回正确路径，重启恢复。</li>
+    </ol>
+    <div class="look"><b>你会观察到</b>：模型路径坏了，服务不崩、不返回 500，而是降级纯 BM25 继续出结果。这就是优雅降级。生产环境靠它保命。</div>
+  </div>
+
+  <div class="quiz">
+    <div class="qt">3 题自测</div>
+    <div class="qi"><div class="q">为什么 embedding 失败后还能用 BM25 出结果？</div>
+      <details><summary>看答案</summary><div class="a">因为 BM25 完全不依赖 embedding 模型——它只靠 jieba 分词 + 词频统计，是纯算法。bge-m3 挂了不影响 BM25。降级就是把向量路跳过、只走 BM25 路。</div></details></div>
+    <div class="qi"><div class="q">rerank 失败时，候选的排序依据是什么？</div>
+      <details><summary>看答案</summary><div class="a">用 RRF 融合分（mix 模式下 KNN+BM25 融合的排名分）。candidates 已经按融合分排好了，rerank 失败就不覆盖这个分、不重排，直接裁 topK。结果还在，只是精度降一档。</div></details></div>
+    <div class="qi"><div class="q">「优雅降级」对生产 RAG 为什么重要？</div>
+      <details><summary>看答案</summary><div class="a">模型推理总会偶发失败（OOM、加载慢、权重损坏）。如果没有降级，一次抽风就让整个 search 返回 500、用户拿不到任何东西。优雅降级让核心挂了用次优顶上，服务可用性大幅提升。每层都设 fallback 是工程标配。</div></details></div>
+  </div>
+</section>
+
+<section id="q6">
+  <h2>Q6 · 联调时 reranker 直接报错，怎么像侦探一样定位修复？</h2>
+  <div class="qbox"><div class="qt">驱动问题</div><div class="qq">第一次跑 reranker 烟测直接 AttributeError 崩了。真实项目里这种「库能用但跑起来报错」的 bug 怎么找、怎么修？</div></div>
+  <div class="ans"><div class="at">💡 一句话答案</div><div class="aa">报错栈指到 FlagReranker 调用了 <code>tokenizer.prepare_for_model</code>，而 transformers 5.x 删了这个方法。根因=库版本不兼容。修复=绕开 FlagReranker，直接用 <code>AutoModelForSequenceClassification + AutoTokenizer</code> 标准 cross-encoder 写法（跨版本稳定）。</div></div>
+
+  <h3>Bug 现场</h3>
+  <div class="card warn"><div class="t">报错栈</div>
+  <pre style="background:#7f1d1d;margin:0"><code style="color:#fecaca">AttributeError: 'XLMRobertaTokenizer' object has no attribute 'prepare_for_model'
+  File ".../FlagEmbedding/flag_reranker.py", line XX, in compute_score
+    inputs = self.tokenizer.prepare_for_model(...)
+                 ↑
+            transformers 5.x 已删除这个方法</code></pre></div>
+  <p><b>侦探步骤 1 · 读栈定位</b>：报错不是出现在我们的代码，而是 <code>FlagEmbedding/flag_reranker.py</code> 内部。说明我们的调用方式没错，是 FlagEmbedding 这个库自己崩了。</p>
+  <p><b>侦探步骤 2 · 抠关键词</b>：<code>has no attribute 'prepare_for_model'</code>——FlagReranker 想调 <code>tokenizer.prepare_for_model</code>，但这个 tokenizer 对象没有这方法。</p>
+  <p><b>侦探步骤 3 · 查根因</b>：为什么没有？因为我们装的 <code>transformers 5.x</code> 把 <code>prepare_for_model</code> 这个老方法<b>删了</b>（5.x 大版本清理了一批废弃 API）。而 FlagEmbedding 1.4.0 的 FlagReranker 还在用它。于是 <b>库版本不兼容</b>。</p>
+  <div class="card key"><div class="t">根因</div>
+  <p>FlagEmbedding 的 FlagReranker 依赖 <code>tokenizer.prepare_for_model</code>，但 transformers 5.x 删了这方法。两个库的版本对不上。这是 Python 生态最常见的「依赖地雷」——A 库能用，B 库能用，但 A+B 的特定版本组合会炸。</p></div>
+
+  <h3>为什么 embedder 没崩、只有 reranker 崩？</h3>
+  <p>有趣的细节：embedder 用的 <code>BGEM3FlagModel</code>（同一个 FlagEmbedding 库）<b>没崩</b>，只有 <code>FlagReranker</code> 崩。因为两者走不同的 tokenizer 代码路径——BGEM3FlagModel 没碰 <code>prepare_for_model</code>，FlagReranker 碰了。同一个库里，不同模块对底层 API 的依赖不同，兼容性也不同。</p>
+
+  <h3>修复：绕开 FlagReranker，用标准写法</h3>
+  <div class="compare">
+    <div class="col bad"><h4>修复前（用 FlagReranker）</h4>
+      <pre style="margin:0;background:#1e2937"><code><span class="k">from</span> FlagEmbedding <span class="k">import</span> FlagReranker
+reranker = FlagReranker(path)
+scores = reranker.compute_score(pairs)
+<span class="c"># 内部调 prepare_for_model -> 崩</span></code></pre></div>
+    <div class="col good"><h4>修复后（直接用 transformers）</h4>
+      <pre style="margin:0;background:#1e2937"><code>tokenizer = AutoTokenizer.from_pretrained(path)
+model = AutoModelForSequenceClassification.from_pretrained(path)
+inputs = tokenizer(pairs, padding=True, ...)
+logits = model(**inputs).logits
+<span class="c"># 不碰 prepare_for_model,跨版本稳</span></code></pre></div>
+  </div>
+  <p>这是标准的 cross-encoder 写法，<b>不经过 FlagEmbedding 的封装</b>，直接用 transformers 原生 API。FlagReranker 本质也就是这么做的，只是它额外包了一层恰好踩了雷的 <code>prepare_for_model</code>。我们绕开那层，自己写等价逻辑，跨版本稳定。</p>
+  <div class="card tip"><div class="t">学到什么</div>
+  <p>① <b>报错栈要顺藤摸到根因</b>，别只看「报错了」就慌。这次根因不在我们代码、在第三方库内部。② <b>「库能用但报错」常是版本不兼容</b>，抠出缺失的 attribute 名去搜，基本能定位。③ <b>能绕开就绕开</b>：库的封装崩了，不一定非要降级库版本（可能引发别的依赖问题），用底层 API 自己写等价逻辑往往更稳。④ <b>同一个库不同模块兼容性不同</b>，embedder 没崩不代表 reranker 不会崩。</p></div>
+
+  <div class="exp">
+    <div class="et">动手实验 6 · 安全复现这个 bug</div>
+    <ol>
+      <li>终端进 knowledge_service：<code>.venv\Scripts\python.exe</code> 进交互，或写个临时脚本：</li>
+    </ol>
+    <pre style="margin-top:8px"><code><span class="k">from</span> FlagEmbedding <span class="k">import</span> FlagReranker
+r = FlagReranker(<span class="s">"C:/Users/admin/Desktop/Embedding和重排模型/bge-reranker-v2-m3"</span>)
+<span class="k">print</span>(r.compute_score([[<span class="s">"铁矿石库存"</span>, <span class="s">"港口铁矿库存下降"</span>]]))</code></pre>
+    <ol start="2">
+      <li>跑它，你会看到那个 <code>AttributeError: ... has no attribute 'prepare_for_model'</code>。</li>
+      <li>对照看 <code>src/pipeline/reranker.py</code>——我们的修复版用的是 <code>AutoModelForSequenceClassification</code>，不碰那个方法。</li>
+      <li>确认修复版能跑：<code>.venv\Scripts\python.exe scripts\smoke_test_models.py</code>，rerank 部分应正常输出分数。</li>
+    </ol>
+    <div class="look"><b>你会观察到</b>：FlagReranker 一调就崩，而我们绕开它直接用 transformers 的写法稳稳出分。同一件事两种写法，一种踩雷一种不踩。这就是「绕开问题」的工程智慧。</div>
+  </div>
+
+  <div class="quiz">
+    <div class="qt">3 题自测</div>
+    <div class="qi"><div class="q">这个报错的根因是什么？是我们的代码错了吗？</div>
+      <details><summary>看答案</summary><div class="a">不是我们代码错，是库版本不兼容。FlagEmbedding 的 FlagReranker 依赖 <code>tokenizer.prepare_for_model</code>，但装的 transformers 5.x 删了这个方法。两个库版本对不上导致崩。报错栈在 FlagEmbedding 内部就能看出。</div></details></div>
+    <div class="qi"><div class="q">为什么 embedder 没崩、只有 reranker 崩？</div>
+      <details><summary>看答案</summary><div class="a">同一个 FlagEmbedding 库里，BGEM3FlagModel 和 FlagReranker 走不同 tokenizer 代码路径。BGEM3FlagModel 没碰 <code>prepare_for_model</code>，FlagReranker 碰了。同库不同模块对底层 API 依赖不同，兼容性也不同。</div></details></div>
+    <div class="qi"><div class="q">修复时为什么不直接降级 transformers 版本，而是绕开 FlagReranker？</div>
+      <details><summary>看答案</summary><div class="a">降级 transformers 可能引发别的依赖冲突（其他库可能依赖 5.x）。绕开 FlagReranker、直接用 transformers 原生 API 写等价 cross-encoder 逻辑，只改一个文件、不动依赖树，副作用最小、跨版本稳定。</div></details></div>
+  </div>
+</section>
+
+<section id="q7">
+  <h2>Q7 · 为什么要自己搭这套？直接用火山方舟「知识库」不就行了？</h2>
+  <div class="qbox"><div class="qt">驱动问题</div><div class="qq">火山方舟本来就有托管知识库 + 自带 rerank 模型，上传文档就能用、有现成 API。我干嘛费劲本地搭 bge + Chroma + BM25 这一堆？</div></div>
+  <div class="ans"><div class="at">💡 一句话答案</div><div class="aa">因为目标不同。<b>托管 KB 把整条 RAG 链路当黑盒</b>——你只会上传文档和调 API，学不到任何一环。本地搭=把每个零件拆开看：chunk 怎么切、向量怎么算、BM25 怎么排、RRF 怎么融、rerank 怎么精排、怎么降级。学习要的是<b>透明</b>，不是省事。</div></div>
+
+  <h3>本质：要「能用」还是要「懂」</h3>
+  <div class="compare">
+    <div class="col bad"><h4>火山方舟托管知识库</h4>
+      <p>上传文档 -> 调 API -> 拿结果。中间全是黑盒。</p>
+      <p>你不知道它怎么切片、用什么 embedding、有没有 BM25、怎么 rerank。</p>
+      <p><b>会出结果，但出问题不会调，也不知道为什么准/不准。</b></p>
+      <p><span class="pill p">省事</span> <span class="pill p">黑盒</span> <span class="pill p">不可控</span></p></div>
+    <div class="col good"><h4>本地自搭 knowledge_service</h4>
+      <p>每个环节代码都在你眼前，能改、能调、能验证。</p>
+      <p>chunk_size 改大改小看效果、reRank 开关对比、降级亲手触发。</p>
+      <p><b>不仅会出结果，还懂每个结果怎么来的。</b></p>
+      <p><span class="pill g">透明</span> <span class="pill g">可控</span> <span class="pill g">能学</span></p></div>
+  </div>
+
+  <h3>托管 KB 把你挡在哪些知识门外</h3>
+  <table>
+    <tr><th>RAG 环节</th><th>托管 KB 你能学到？</th><th>本地搭你能学到？</th></tr>
+    <tr><td>文档切片策略</td><td>❌ 黑盒，不知怎么切</td><td>✅ splitter 代码可改可对比</td></tr>
+    <tr><td>embedding 模型</td><td>❌ 只能选不能看</td><td>✅ bge-m3 怎么编码、维度、归一化</td></tr>
+    <tr><td>向量检索 vs 关键词检索</td><td>❌ 不知有没有混合</td><td>✅ KNN+BM25+RRF 三件套都自己跑</td></tr>
+    <tr><td>重排</td><td>❌ 黑盒开关</td><td>✅ cross-encoder 怎么打分、sigmoid</td></tr>
+    <tr><td>降级容错</td><td>❌ 完全不可见</td><td>✅ 两层降级亲手触发验证</td></tr>
+    <tr><td>调参优化</td><td>❌ 只能换模型</td><td>✅ chunk_size/pool_k/RRF k 都能调</td></tr>
+  </table>
+
+  <div class="card cute"><div class="t">诚实提示</div><p>如果你的目标是<b>做一个能用的产品</b>，托管 KB 完全合理——省运维、省开发。但如果你的目标是<b>学会 RAG 怎么工作</b>（这正是「项目复现」的初衷），托管 KB 是反学习的：它把你最该亲手摸的零件全藏起来了。本地搭的「笨功夫」才是学习的正道。</p></div>
+
+  <h3>托管 rerank 是 cross-encoder 吗？（你之前问过）</h3>
+  <p>你之前问「火山方舟知识库提供的重排模型是不是 cross-encoder」。答案是：<b>托管 rerank 本质就是 cross-encoder</b>（和我们的 bge-reranker 同类），它也要 query+doc 一起进模型打分。所以「用托管的」≠「学到了」，你只是换了个黑盒 cross-encoder 而已。本地用 bge-reranker，你能看见它每一步在干什么。</p>
+
+  <div class="exp">
+    <div class="et">思考实验 · 你会怎么选？</div>
+    <ol>
+      <li>场景 A：公司要一周内上线一个客服问答，文档几百篇，不要求懂原理。-> 托管还是自搭？</li>
+      <li>场景 B：你想搞懂 RAG 每个环节，以后能自己调优、能给别人讲清楚。-> 托管还是自搭？</li>
+      <li>场景 C：你要复刻一个已有 Java RAG 服务，验证自己理解对不对。-> 托管还是自搭？</li>
+    </ol>
+    <div class="look"><b>参考思路</b>：A 选托管（求快、产品导向）；B/C 选自搭（求懂、学习/复刻导向）。关键看你要的是「结果」还是「理解」。本指南面向 B/C。</div>
+  </div>
+
+  <div class="quiz">
+    <div class="qt">2 题自测</div>
+    <div class="qi"><div class="q">托管知识库和本地自搭，最根本的区别在哪？</div>
+      <details><summary>看答案</summary><div class="a">透明度。托管把 RAG 全链路当黑盒，你只会上传+调 API；自搭每个环节代码可见、可改、可验证。前者求「能用」，后者求「懂」。学习场景必须自搭。</div></details></div>
+    <div class="qi"><div class="q">火山方舟的托管 rerank 和本地 bge-reranker 是同类东西吗？</div>
+      <details><summary>看答案</summary><div class="a">是同类，都是 cross-encoder（query+doc 一起进模型打分）。区别不是原理，是透明度：托管的你看不见它怎么打分，本地 bge-reranker 你能看见每一步。用托管不等于学到了 cross-encoder。</div></details></div>
+  </div>
+</section>
+
+<section id="q8">
+  <h2>Q8 · 这套和原版 knowledge_be（Java）比，复刻了什么、简化了什么？凭什么算「复刻」？</h2>
+  <div class="qbox"><div class="qt">驱动问题</div><div class="qq">原版是 Java + ES + MyBatis + RocketMQ + JanusGraph 的大服务（845 行主链路）。我这个 Python 小服务凭啥叫「复刻」？复刻的标准是什么？</div></div>
+  <div class="ans"><div class="at">💡 一句话答案</div><div class="aa">复刻的不是技术栈，是 <b>RAG 语义链路和接口契约</b>。复刻：三模式召回+降级+rerank+三段耗时+KnowledgeSearchVO 字段。简化：ES->Chroma、外部 rerank 服务->本地、表格切片->递归字符、多租户->单库。<b>语义对齐靠 bge 同款模型</b>——这才是复刻成立的根。</div></div>
+
+  <h3>逐项对照表（来自复刻笔记）</h3>
+  <table>
+    <tr><th>原版 knowledge_be（Java）</th><th>复刻 knowledge_service（Python）</th><th>对照</th></tr>
+    <tr><td><code>KnowledgeSearchServiceImpl</code>（845 行主链路）</td><td><code>retrieval/search.py</code></td><td>复刻：三模式召回+降级+rerank+三段耗时</td></tr>
+    <tr><td>ES 向量检索（KNN）</td><td><code>store.py</code> Chroma KNN（cosine）</td><td>简化：Chroma 本地文件替 ES，零运维</td></tr>
+    <tr><td>ES BM25</td><td><code>bm25.py</code> rank_bm25+jieba</td><td>简化：内存 BM25，非 ES</td></tr>
+    <tr><td><code>EmbeddingRerankApi</code>（HTTP 调外部 rerank）</td><td><code>reranker.py</code>（本地 bge-reranker）</td><td>简化：本地推理，少一个服务</td></tr>
+    <tr><td><code>FileContentSplitter</code>（段落/表格/长度多策略）</td><td><code>splitter.py</code>（递归字符切片）</td><td>简化：单一策略，无表格识别</td></tr>
+    <tr><td>三段耗时日志</td><td><code>timings</code> dict + logger</td><td>复刻：对齐</td></tr>
+    <tr><td>降级：embedding 失败->纯 BM25</td><td><code>search.py</code> 同</td><td>复刻：对齐</td></tr>
+    <tr><td>检索结果 <code>KnowledgeSearchVO</code></td><td><code>_to_vo</code> 输出同字段</td><td>复刻：对齐（id/content/fileName/source/score…）</td></tr>
+  </table>
+
+  <h3>凭什么算「复刻」？——语义对齐是关键</h3>
+  <div class="card key"><div class="t">复刻成立的根：用 bge 同款模型</div>
+  <p>embedding 和 rerank 都用 <b>bge 同款模型</b>（bge-m3 / bge-reranker-v2-m3），所以检索语义和原版一致。这是「复刻」能成立的关键——换 doubao-embedding 等其他模型会破坏语义对齐，失去复刻意义。技术栈（Java/Python、ES/Chroma）是表象，<b>语义行为一致</b>才是复刻的实质。</p></div>
+  <div class="compare">
+    <div class="col good"><h4>复刻了什么（要对齐的）</h4>
+      <ul>
+        <li>RAG 链路：召回->融合->重排->降级</li>
+        <li>三模式：knn/bm25/mix</li>
+        <li>三段耗时日志结构</li>
+        <li>降级逻辑（embed 挂->纯 BM25）</li>
+        <li>KnowledgeSearchVO 输出字段</li>
+        <li><b>语义：bge 同款模型</b></li>
+      </ul></div>
+    <div class="col bad"><h4>简化了什么（不必对齐的）</h4>
+      <ul>
+        <li>ES -> Chroma（学习不需 ES 运维）</li>
+        <li>外部 rerank 服务 -> 本地推理</li>
+        <li>表格识别切片 -> 递归字符切片</li>
+        <li>多租户/权限 -> 单库</li>
+        <li>RocketMQ/JanusGraph 等基础设施</li>
+        <li>MyBatis-Plus 持久层</li>
+      </ul></div>
+  </div>
+
+  <h3>验证结果</h3>
+  <div class="card tip"><div class="t">复刻质量实证</div>
+  <p>① <b>hit@5 = 88%</b>（8 个 query 命中 7 个，<code>scripts/eval.py</code>）——检索质量达标。② <b>reRank=1 比 reRank=0 更准</b>：同一 query，reRank=0 顶回泛泛流程总结（RRF 分），reRank=1 顶回报告核心结论片段（reranker sigmoid 分）。③ <b>降级生效</b>：<code>embed()</code> 抛异常时自动退纯 BM25。语义行为和原版对齐，复刻成立。</p></div>
+
+  <div class="exp">
+    <div class="et">动手实验 8 · 跑评估看复刻质量</div>
+    <ol>
+      <li>确保 knowledge_service 在 :8092 运行。</li>
+      <li>跑 <code>.venv\Scripts\python.exe scripts\eval.py</code>。</li>
+      <li>它对 8 个预设 query（如「铁矿石库存预测准确率是多少」「LightGBM 超参优化怎么做的」）检索 top5，看是否命中期望文件。</li>
+      <li>看最后的 <code>hit@5 = 7/8 = 88%</code>。哪个 query 没命中，分析为什么（可能 chunk 太碎/术语稀释）。</li>
+    </ol>
+    <div class="look"><b>你会观察到</b>：8 个 query 大多精准命中目标文件。这就是「语义对齐 bge」+「混合检索」+「rerank」三件套的复刻效果。没命中的那 1 个，正是你下一步优化的靶点。</div>
+  </div>
+
+  <div class="quiz">
+    <div class="qt">3 题自测</div>
+    <div class="qi"><div class="q">复刻 knowledge_be，判断「要对齐」和「可简化」的标准是什么？</div>
+      <details><summary>看答案</summary><div class="a">标准是「是否影响 RAG 语义行为」。链路结构（召回/融合/重排/降级）、输出契约（VO 字段）、耗时日志、语义（bge 同款模型）要对齐；技术栈（ES/Chroma、Java/Python）、基础设施（MQ/图库）、运维细节可简化。语义一致=复刻成立。</div></details></div>
+    <div class="qi"><div class="q">为什么说「用 bge 同款模型」是复刻成立的根？</div>
+      <details><summary>看答案</summary><div class="a">因为检索语义由 embedding/rerank 模型决定。原版用 bge，复刻也用 bge，同样的 query 对同样的文档会得到同样的相关度判断。换其他模型（如 doubao-embedding）语义就偏了，复刻名存实亡。技术栈可换，语义模型不能换。</div></details></div>
+    <div class="qi"><div class="q">ES 换成 Chroma 算不算破坏复刻？为什么？</div>
+      <details><summary>看答案</summary><div class="a">不算。因为向量检索的语义是「cosine 找最近邻」，ES KNN 和 Chroma KNN 都是干这个，只是存储引擎不同。检索行为一致，只是运维方式变了。学习场景用 Chroma 零部署，正合适。这属于「可简化」项。</div></details></div>
+  </div>
+</section>
+
+<section id="glossary">
+  <h2>📖 术语表</h2>
+  <dl>
+    <dt>RAG（检索增强生成）</dt>
+    <dd>Retrieval-Augmented Generation。先从知识库检索相关片段，再喂给 LLM 生成答案。本指南做的是「R」（检索）那半。</dd>
+    <dt>Embedding（向量化/嵌入）</dt>
+    <dd>把文本压成定长向量（bge-m3 是 1024 维）。语义相近的文本向量也相近。是向量检索的基础。</dd>
+    <dt>bi-encoder（双编码器）</dt>
+    <dd>query 和 doc 各自独立编码成向量再算距离。可预编码、快、但理解浅。bge-m3 是这类，用于召回。</dd>
+    <dt>cross-encoder（交叉编码器）</dt>
+    <dd>query 和 doc 拼一起进模型打分。能捕捉两者交互、理解深，但慢。bge-reranker 是这类，用于重排。</dd>
+    <dt>dense / sparse 向量</dt>
+    <dd>dense=稠密向量（每维都有值，bge-m3 产出）；sparse=稀疏向量（多数维为 0，BM25 词频可视为 sparse）。向量检索用 dense，关键词检索本质是 sparse。</dd>
+    <dt>cosine 相似度</dt>
+    <dd>两向量夹角的余弦，范围 -1~1。越大越相似。归一化后=点积。Chroma 用 cosine 空间。</dd>
+    <dt>BM25</dt>
+    <dd>基于词频的经典关键词检索算法。词在文档出现越多、在全局越稀有，分越高。中文要先 jieba 分词。</dd>
+    <dt>jieba</dt>
+    <dd>中文分词库。把「铁矿石库存」切成「铁矿石/库存」。中文 BM25 必备。</dd>
+    <dt>RRF（Reciprocal Rank Fusion）</dt>
+    <dd>多路召回的融合算法。只用排名不算分数：<code>score = Σ 1/(k+rank)</code>。让多路共识的 chunk 冒泡到前面。</dd>
+    <dt>chunk / chunking</dt>
+    <dd>把长文档切成几百字的小块。检索单位是 chunk 不是整篇。chunk_size/overlap 是关键参数。</dd>
+    <dt>Chroma</dt>
+    <dd>轻量向量数据库，本地文件持久化。本复刻用它替代原版的 ES，零运维。</dd>
+    <dt>normalize（归一化）</dt>
+    <dd>把向量缩成长度 1。归一化后 cosine 相似度=点积，计算快。</dd>
+    <dt>FP16</dt>
+    <dd>半精度浮点。GPU 推理用 FP16 省显存加速。本机无 GPU，用 FP32（BGE_USE_FP16=0）。</dd>
+    <dt>sentence-transformers</dt>
+    <dd>加载 sentence embedding 模型的标准格式。bge-m3 兼容此格式。</dd>
+    <dt>KnowledgeSearchVO</dt>
+    <dd>原版 knowledge_be 的检索结果数据结构（id/content/fileName/source/score 等字段）。复刻用 <code>_to_vo</code> 对齐。</dd>
+    <dt>降级（degradation）</dt>
+    <dd>核心功能失败时用次优方案顶上。embed 挂->纯 BM25；rerank 挂->用融合分。保证服务不空手而归。</dd>
+    <dt>pool_k（候选池）</dt>
+    <dd>召回阶段多取一些（max(topK*3,30)）作为 rerank 候选，再裁到 topK。粗筛留余量给精排。</dd>
+    <dt>两段式检索</dt>
+    <dd>先用快的 bi-encoder 粗筛几十个，再用慢的 cross-encoder 精排。兼顾速度和精度，RAG 标准操作。</dd>
+  </dl>
+</section>
+
+<section id="next">
+  <h2>🎓 第一阶段回顾（你已掌握的）</h2>
+  <div class="card key"><div class="t">学完这份，你建立的认知</div>
+  <p>你理解了 RAG 检索不是「一个搜索框」，而是 <b>入库（load->split->embed->store）+ 检索（embed->双路召回->RRF融合->rerank->降级）</b> 两条流水线；理解了 <b>embedding 模型不是 LLM</b>、<b>bi-encoder 召回 vs cross-encoder 重排</b>、<b>向量+BM25 互补</b>、<b>优雅降级保命</b>。这套思想能迁移到任何 RAG 项目。</p></div>
+
+  <div class="pathbox">
+    <div class="p"><div class="e">🔧</div><b>动手改造</b>调 chunk_size/reRank 开关/降级触发，看检索质量变化</div>
+    <div class="p"><div class="e">🧩</div><b>读源码</b>按数据流通读 ingest.py + search.py，看每个零件怎么接</div>
+    <div class="p"><div class="e">📚</div><b>学基础</b>bge 官方文档、Chroma 文档、BM25/RRF 原理</div>
+    <div class="p"><div class="e">💡</div><b>想通透</b>重读 Q7+Q8，建立「复刻=语义对齐」心智</div>
+  </div>
+
+  <h3>推荐学习顺序</h3>
+  <div class="timeline">
+    <div class="step"><div class="h">1. 把本指南的 8 个动手实验全做一遍</div>眼见为实，建立具象感觉。</div>
+    <div class="step"><div class="h">2. 通读 ingest.py + search.py</div>这两条主链路最短，能完整看懂数据怎么流。</div>
+    <div class="step"><div class="h">3. 读 splitter.py + embedder.py + reranker.py</div>看入库和模型封装的细节。</div>
+    <div class="step"><div class="h">4. 读 bm25.py + hybrid.py + store.py</div>理解双路召回 + RRF 融合 + Chroma 存储。</div>
+    <div class="step"><div class="h">5. 自己改一个参数 + 跑 eval.py 验证</div>闭环验证你真的懂了。</div>
+  </div>
+
+  <div class="remember"><b>📌 配套文件</b>：① <code>knowledge_service/README.md</code> - 完整运行说明与架构。② <code>knowledge_service/复刻笔记.md</code> - 对照原版的复刻/简化清单。③ <code>knowledge_service/知识库接入方案.md</code>（或 <code>knowledge_be接入方案.md</code>）- 原始方案。④ <code>knowledge_service/scripts/</code> - smoke_test/ingest/test_search/eval 四个脚本。</div>
+
+  <div class="card tip"><div class="t">一句话送你</div><p>RAG 检索的核心不是「模型多强」，而是「怎么把文档切成可比较的向量、怎么用双路互补召回、怎么用 cross-encoder 精排、怎么在崩的时候优雅降级」。你现在已经有这条链路了。继续动手，会越看越透。</p></div>
+</section>
+
+<section id="phase2">
+  <h2>🔬 第二阶段 · 深入源码（从能跑到能改）</h2>
+  <p class="sub">第一阶段你建立了「地图」：8 个问题搞懂 RAG 链路怎么走。第二阶段下到「发动机舱」：每个模块内部到底怎么跑、指南里一笔带过的机制到底是什么。分 4 层递进，「按数据流通读管道」是第 2 层。</p>
+
+  <div class="card key">
+    <div class="t">第二阶段的主轴</div>
+    <p><b>按数据流方向通读每个管道模块</b>是正确主轴，但单独做会误读——因为有 3 个「共享机制」每个模块都在调、第一阶段却没打开过；而且指南还漏了「过滤/VO 对齐」「FastAPI 层」「MCP 桥接」这几块。所以分 4 层：</p>
+  </div>
+  <div class="flow">
+    <div class="node"><b>L1</b>共享引擎<br>先学语法</div>
+    <div class="arr">-></div>
+    <div class="node green"><b>L2</b>管道内部<br>再读句子</div>
+    <div class="arr">-></div>
+    <div class="node purple"><b>L3</b>被略过的<br>子系统</div>
+    <div class="arr">-></div>
+    <div class="node pink"><b>L4</b>动手改造<br>验证</div>
+  </div>
+  <div class="remember"><b>为什么 L1 在前</b>：管道代码里全是 <code>lru_cache</code>、<code>os.getenv</code>、<code>log</code>、<code>store.count()</code> 这些调用。不懂 config/logger/懒加载，读管道就像读外语。先花半小时过 L1，L2 的管道代码就会「自己读自己」。</div>
+
+  <h3 id="l1">L1 · 共享引擎（先学语法，再读句子）</h3>
+  <div class="qbox"><div class="qt">这一层回答</div><div class="qq">每个模块都在调、但指南从没打开的 3 个机制是什么？</div></div>
+  <div class="ans"><div class="at">💡 一句话答案</div><div class="aa">① <b>配置层</b>（config.py + .env，集中管路径/参数）② <b>日志层</b>（logger.py，统一 log）③ <b>模型懒加载缓存</b>（lru_cache，2.27GB 模型只加载一次）。三者被所有管道模块复用。</div></div>
+
+  <h4>L1-1 · 配置层：<code>config.py</code> + dotenv</h4>
+  <p>所有路径/参数不写死在代码里，集中到 <code>config.py</code>，且都能被 <code>.env</code> 覆盖：</p>
+  <pre><code><span class="c"># knowledge_service/src/config.py</span>
+<span class="k">from</span> dotenv <span class="k">import</span> load_dotenv
+ROOT = Path(__file__).resolve().parent.parent
+load_dotenv(ROOT / <span class="s">".env"</span>)                <span class="c"># 启动时读 .env</span>
+
+CORPUS_DIR = Path(os.getenv(<span class="s">"CORPUS_DIR"</span>, str(ROOT / <span class="s">"data/corpus"</span>)))
+CHROMA_DIR = Path(os.getenv(<span class="s">"CHROMA_DIR"</span>, str(ROOT / <span class="s">"data/chroma"</span>)))
+BGE_M3_PATH = os.getenv(<span class="s">"BGE_M3_PATH"</span>, <span class="s">"C:/.../bge-m3"</span>)
+CHUNK_SIZE = int(os.getenv(<span class="s">"CHUNK_SIZE"</span>, <span class="s">"500"</span>))
+SERVICE_PORT = int(os.getenv(<span class="s">"KNOWLEDGE_SERVICE_PORT"</span>, <span class="s">"8092"</span>))</code></pre>
+  <div class="card tip"><div class="t">为什么这样设计</div><p>换机器（路径不同）、换语料、调切片大小，都只改 <code>.env</code> 不动代码。实验 1 改 CHUNK_SIZE 就是靠这套机制。dotenv 让配置和环境分离，是工程标配。</p></div>
+
+  <h4>L1-2 · 日志层：<code>logger.py</code></h4>
+  <p>所有模块 <code>from src.logger import log</code>，统一一个 logger。search.py 的 <code>log.info("检索完成 mode=%s ...")</code>、bm25 的 <code>log.info("BM25 索引建好: %d 个 chunk")</code> 全走它。标准化日志格式，方便联调时盯终端判断走到哪一步。</p>
+
+  <h4>L1-3 · 模型懒加载缓存：<code>lru_cache</code></h4>
+  <p>embedder 和 reranker 的 <code>get_model()</code> 都套 <code>@lru_cache(maxsize=1)</code>。这是<b>整个服务性能的关键</b>：</p>
+  <pre><code>@lru_cache(maxsize=1)          <span class="c"># 进程内只执行一次</span>
+<span class="k">def</span> get_model():
+    <span class="k">return</span> BGEM3FlagModel(path, ...)   <span class="c"># 2.27GB，加载几秒</span></code></pre>
+  <div class="card key"><div class="t">为什么这是性能关键</div><p>没有 lru_cache，每次检索都重载 2.27GB 模型，每次都要几秒+占双倍内存。有了它，模型加载一次常驻内存，之后每次检索只是 <code>model.encode()</code> 推理。这就是为什么服务启动后首次检索慢、之后飞快。store.py 的 <code>_collection</code> 单例、bm25 的 <code>_index</code> 单例也是同理。</p></div>
+
+  <div class="exp">
+    <div class="et">动手实验 L1 · 感受懒加载</div>
+    <ol>
+      <li>重启 knowledge_service，立刻发一个查询（curl 或 test_search）。</li>
+      <li>看首次查询的 <code>embeddingTimeCost</code>——会明显偏大（含模型加载）。</li>
+      <li>紧接着发第二个查询，看 <code>embeddingTimeCost</code>——骤降（模型已缓存，只剩推理）。</li>
+    </ol>
+    <div class="look"><b>你会观察到</b>：首次慢、后续快，差距来自 lru_cache。这就是懒加载缓存的效果。</div>
+  </div>
+
+  <div class="quiz">
+    <div class="qt">3 题自测</div>
+    <div class="qi"><div class="q">为什么路径/参数要放 config.py + .env，不写死在代码？</div>
+      <details><summary>看答案</summary><div class="a">换机器（模型路径不同）、换语料、调参数（chunk_size）时只改 .env 不动代码。配置与环境分离，方便部署和实验。dotenv 是工程标配。</div></details></div>
+    <div class="qi"><div class="q">lru_cache 在解决什么问题？没有它会怎样？</div>
+      <details><summary>看答案</summary><div class="a">解决「大模型重复加载」。没有它，每次检索都重载 2.27GB 模型，每次几秒+占双倍内存。有它，模型加载一次常驻，之后只推理。store/bm25 的单例同理。</div></details></div>
+    <div class="qi"><div class="q">为什么首次检索慢、之后快？</div>
+      <details><summary>看答案</summary><div class="a">首次检索触发 get_model() 真正加载模型（lru_cache 未命中），耗时几秒；之后 lru_cache 命中直接返回已加载实例，只剩 encode 推理时间。加载是「一次性税」。</div></details></div>
+  </div>
+
+  <h3 id="l2">L2 · 管道内部（按数据流方向通读）</h3>
+  <div class="qbox"><div class="qt">这一层回答</div><div class="qq">每个模块完整实现长啥样？读什么、调什么、产出什么？</div></div>
+  <div class="ans"><div class="at">💡 一句话答案</div><div class="aa">两条线按数据流通读：① <b>入库线</b> loader->splitter->embedder->store->ingest(编排)；② <b>检索线</b> embedder->bm25+vector->hybrid->reranker->search(编排)。每个模块盯「输入什么/调什么/产出什么」三列。</div></div>
+  <p>文件都在 <code>knowledge_service/src/</code>。下面是阅读清单：</p>
+  <table>
+    <tr><th>模块 / 函数</th><th>输入</th><th>调什么</th><th>产出</th><th>关键细节</th></tr>
+    <tr><td><code>pipeline/loader.py</code></td><td>corpus 目录</td><td>glob + HTMLParser</td><td>[{doc_id,file_name,content}]</td><td>.html 用 stdlib 抽纯文本跳 script/style，无 bs4 依赖</td></tr>
+    <tr><td><code>pipeline/splitter.py</code></td><td>一篇文档文本</td><td>递归切 + 贪心合并</td><td>[chunk_str]</td><td>SEPARATORS 多级；overlap=50 防断裂（Q1）</td></tr>
+    <tr><td><code>pipeline/embedder.py</code></td><td>文本/文本列表</td><td>BGEM3FlagModel.encode</td><td>1024 维向量</td><td>lru_cache 懒加载；normalize 归一化（Q2、L1-3）</td></tr>
+    <tr><td><code>pipeline/store.py</code></td><td>chunks+向量</td><td>chromadb PersistentClient</td><td>持久化向量库</td><td>cosine 空间；query_knn 把距离转相似度 1-dist</td></tr>
+    <tr><td><code>pipeline/ingest.py</code></td><td>corpus 目录</td><td>编排 load/split/embed/store</td><td>{docs,chunks}</td><td>批量 50 写入；末尾重建 BM25 索引（Q1）</td></tr>
+    <tr><td><code>retrieval/bm25.py</code></td><td>查询文本</td><td>jieba + BM25Okapi</td><td>[{id,content,score}]</td><td>首次从 Chroma 拉全量建索引，_index 单例缓存（Q3）</td></tr>
+    <tr><td><code>retrieval/vector.py</code></td><td>查询向量</td><td>store.query_knn</td><td>[{id,content,score}]</td><td>薄封装，转调 store</td></tr>
+    <tr><td><code>retrieval/hybrid.py</code></td><td>多路排名</td><td>RRF 公式</td><td>融合排名</td><td>1/(k+rank+1)，k=60；共识 chunk 加分（Q3）</td></tr>
+    <tr><td><code>pipeline/reranker.py</code></td><td>query+候选 docs</td><td>AutoModelForSequenceClassification</td><td>[score]</td><td>绕开 FlagReranker（Q6）；sigmoid 归一化</td></tr>
+    <tr><td><code>retrieval/search.py</code></td><td>查询+参数</td><td>编排上面全部</td><td>(hits_vo, timings)</td><td>三模式+两层降级+三段耗时（Q3/Q4/Q5）</td></tr>
+  </table>
+  <div class="card warn"><div class="t">两个容易漏的关键细节</div>
+    <p>① <b>store.query_knn 的距离->相似度转换</b>：<code>score = 1 - distance</code>。Chroma 返回的是 cosine <b>距离</b>（0=最相似），但我们要的是相似度（越大越好），所以用 1 减。读源码时注意这个转换，否则分数方向会搞反。</p>
+    <p>② <b>bm25 的懒加载依赖 store</b>：<code>bm25.get_index()</code> 首次调用时 <code>from src.pipeline.store import get_all_chunks</code> 从 Chroma 拉全量 chunk 建 BM25。所以<b>必须先 ingest 入库，BM25 才有数据</b>。这就是为什么 ingest.py 末尾要 <code>bm25.reset_index()</code>。</p></div>
+
+  <div class="exp">
+    <div class="et">动手实验 L2 · 给 search 加一行观察融合</div>
+    <ol>
+      <li>打开 <code>search.py</code>，在 <code>merged = hybrid.rrf([vec_hits, bm_hits])</code> 后加：<code>log.info("[mix] vec_top=%s bm_top=%s merged_top=%s", vec_hits[0]["id"] if vec_hits else None, bm_hits[0]["id"] if bm_hits else None, merged[0]["id"] if merged else None)</code>。</li>
+      <li>重启服务，跑 test_search。</li>
+      <li>看日志：对比两路各自的 top1 和融合后 top1，验证「共识 chunk 冒泡」。</li>
+    </ol>
+    <div class="look"><b>你会观察到</b>：融合后 top1 往往是两路都召回的 chunk（共识项）。这就是通读 hybrid+search 才能看清的细节。</div>
+  </div>
+
+  <div class="quiz">
+    <div class="qt">2 题自测</div>
+    <div class="qi"><div class="q">store.query_knn 为什么用 <code>1 - distance</code>？</div>
+      <details><summary>看答案</summary><div class="a">Chroma 返回 cosine 距离（0=最相似，越大越不相似），但检索要的是「相似度越大越好」的分数。1-distance 把距离翻转成相似度，方向统一，方便排序和与 rerank 分对齐。</div></details></div>
+    <div class="qi"><div class="q">为什么必须先 ingest 入库，BM25 才能用？</div>
+      <details><summary>看答案</summary><div class="a">BM25 索引不独立存储，而是 <code>get_index()</code> 首次调用时从 Chroma 拉全量 chunk 建的。没入库=Chroma 空=BM25 没数据。所以 ingest.py 末尾要 reset_index 重建。BM25 依赖 store。</div></details></div>
+  </div>
+
+  <h3 id="l3">L3 · 被指南略过的子系统（拓宽视野）</h3>
+  <div class="qbox"><div class="qt">这一层回答</div><div class="qq">指南为了讲清主链路做了哪些简化？真实服务还藏了什么？</div></div>
+  <div class="ans"><div class="at">💡 一句话答案</div><div class="aa">指南只讲了「召回->融合->重排」主干。真实服务还有：① 日期/来源过滤（_filter）② VO 字段对齐（_to_vo）③ FastAPI 层（routes/schemas/main）④ MCP 桥接（fetch_knowledge 给 agent 用）⑤ loader 的 HTML 抽纯文本。</div></div>
+
+  <h4>L3-1 · 过滤：<code>_filter</code> 日期/来源后处理</h4>
+  <p>search.py 有个 <code>_filter</code> 函数，在融合后、rerank 前做 <b>发布日期</b> 和 <b>来源类型</b> 过滤：</p>
+  <pre><code><span class="c"># search.py · _filter</span>
+<span class="k">for</span> h <span class="k">in</span> hits:
+    pt = md.get(<span class="s">"publishTime"</span>)
+    <span class="k">if</span> publish_start <span class="k">and</span> pt <span class="k">and</span> pt &lt; publish_start: <span class="k">continue</span>   <span class="c"># 早于起始</span>
+    <span class="k">if</span> publish_end <span class="k">and</span> pt <span class="k">and</span> pt &gt; publish_end: <span class="k">continue</span>     <span class="c"># 晚于结束</span>
+    <span class="k">if</span> source_type <span class="k">is not</span> <span class="k">None</span> <span class="k">and</span> md.get(<span class="s">"sourceType"</span>) != source_type: <span class="k">continue</span></code></pre>
+  <div class="card tip"><div class="t">为什么在 Python 侧后处理，不用 Chroma 过滤？</div><p>因为 Chroma 的 metadata 过滤能力较弱（日期比较不灵活），所以召回时不过滤、拿回来后在 Python 侧按 publishTime/sourceType 筛。这是「召回多取 -> 后处理精筛」的常见模式。</p></div>
+
+  <h4>L3-2 · VO 对齐：<code>_to_vo</code></h4>
+  <p>检索结果最后过一遍 <code>_to_vo</code>，输出字段和原版 <code>KnowledgeSearchVO</code> 完全对齐：</p>
+  <pre><code><span class="c"># search.py · _to_vo</span>
+<span class="k">return</span> {
+    <span class="s">"id"</span>: hit[<span class="s">"id"</span>], <span class="s">"content"</span>: hit[<span class="s">"content"</span>],
+    <span class="s">"fileName"</span>: md.get(<span class="s">"fileName"</span>), <span class="s">"source"</span>: md.get(<span class="s">"source"</span>),
+    <span class="s">"sourceType"</span>: md.get(<span class="s">"sourceType"</span>, 1), <span class="s">"publishTime"</span>: md.get(<span class="s">"publishTime"</span>),
+    <span class="s">"score"</span>: round(<span class="k">float</span>(hit.get(<span class="s">"score"</span>, 0.0)), 6), ...
+}</code></pre>
+  <p>这是「复刻」落地的关键——外部调用方拿到的 JSON 结构和原版一致，能无缝替换。读 <code>api/schemas.py</code> 看 Pydantic 定义的请求/响应模型。</p>
+
+  <h4>L3-3 · FastAPI 层：<code>routes.py</code> / <code>main.py</code></h4>
+  <p>指南没讲 HTTP 怎么暴露。<code>main.py</code> 建 FastAPI app + CORS（allow_origins=["*"]）+ lifespan（启动日志打印已入库 chunks）。<code>routes.py</code> 三个端点：</p>
+  <pre><code>GET  /health                          <span class="c"># 健康检查 + chunk 数</span>
+POST /knowledge-base/report/search    <span class="c"># 检索（主端点）</span>
+POST /knowledge-base/index            <span class="c"># 触发重新入库</span></code></pre>
+  <p><code>schemas.py</code> 用 Pydantic 校验请求（content/topK/reRank/mode/日期/sourceType）。CORS 开 * 是为了 agent_service 跨域调用。</p>
+
+  <h4>L3-4 · MCP 桥接：<code>fetch_knowledge</code></h4>
+  <p>知识库怎么被 agent 用？<code>mcp_server/server.py</code> 有个 <code>fetch_knowledge</code> 工具，它<b>转调</b> :8092 的检索端点，把结果格式化成 <code>【知识库检索 N 条】</code> 文本喂给 agent：</p>
+  <pre><code><span class="c"># mcp_server/server.py · fetch_knowledge</span>
+@mcp.tool()
+<span class="k">def</span> fetch_knowledge(query, topK=5, reRank=1) -> str:
+    <span class="s">"""知识库检索：在已入库的铁矿石分析文档里检索相关片段..."""</span>
+    r = httpx.post(<span class="s">"http://127.0.0.1:8092/knowledge-base/report/search"</span>,
+                   json={<span class="s">"content"</span>: query, <span class="s">"topK"</span>: topK, <span class="s">"reRank"</span>: reRank, <span class="s">"mode"</span>: <span class="s">"mix"</span>})
+    <span class="c"># 格式化成 【知识库检索 N 条】 + 每条 [fileName] content ...</span>
+    <span class="k">return</span> <span class="s">"\n"</span>.join(parts)</code></pre>
+  <p>这就是 agent 复刻指南里 researcher 的 <code>fetch_knowledge</code> 工具背后的实现——它把知识库检索能力桥接给 agent。两份指南在此交汇：知识库复刻提供「检索能力」，agent 复刻提供「调用检索的研究流程」。</p>
+
+  <h4>L3-5 · loader 的 HTML 抽纯文本</h4>
+  <p><code>loader.py</code> 的 <code>_TextExtractor(HTMLParser)</code> 用<b>标准库</b>（不引 bs4）从 HTML 抽纯文本：跳过 script/style，在 p/div/br/li 等标签后插换行，最后 unescape + 压缩空白。这是「能不引依赖就不引」的工程克制——抽文本不需要重量级的 BeautifulSoup。</p>
+
+  <div class="quiz">
+    <div class="qt">2 题自测</div>
+    <div class="qi"><div class="q">日期/来源过滤为什么在 Python 侧做，不交给 Chroma？</div>
+      <details><summary>看答案</summary><div class="a">Chroma 的 metadata 过滤对日期比较等不灵活。采用「召回多取 -> Python 后处理精筛」模式：召回时不过滤拿回 pool_k 个，再在 Python 侧按 publishTime/sourceType 筛。简单可控。</div></details></div>
+    <div class="qi"><div class="q">fetch_knowledge 工具和 knowledge_service 是什么关系？</div>
+      <details><summary>看答案</summary><div class="a">fetch_knowledge 是 mcp_server 里的一个工具，它内部 httpx 转调 knowledge_service 的 /report/search 端点，把检索结果格式化成文本给 agent。knowledge_service 提供检索能力，fetch_knowledge 把这能力桥接给 agent。两份指南在此交汇。</div></details></div>
+  </div>
+
+  <h3 id="l4">L4 · 动手改造（验证你真懂了）</h3>
+  <div class="qbox"><div class="qt">这一层回答</div><div class="qq">读完源码怎么确认自己懂了？——改一个能跑通且能验证效果的东西出来。</div></div>
+  <div class="pathbox">
+    <div class="p"><div class="e">🔧</div><b>任务 A · 调切片</b>把 CHUNK_SIZE 改 300/800，重新 ingest，跑 eval.py 对比 hit@5 变化，预言并验证。</div>
+    <div class="p"><div class="e">🧩</div><b>任务 B · 加文档</b>往 data/corpus 丢一篇新 md，调 /knowledge-base/index 重新入库，检索验证能查到。</div>
+    <div class="p"><div class="e">⚙️</div><b>任务 C · 关 rerank</b>把默认 reRank 改 0，跑 eval 看命中率掉多少，量化 rerank 价值。</div>
+    <div class="p"><div class="e">📐</div><b>任务 D · 加过滤</b>给某个文档加 publishTime metadata，用 publishStartDate 过滤验证只返回区间内。</div>
+  </div>
+  <div class="card warn"><div class="t">改造心法</div><p>每改一处，先<b>预言</b>会发生什么（hit@5 升还是降？top1 变成啥？），再跑 eval.py 验证。预言对了=懂了；错了=回去读对应源码。这比单纯「读懂」扎实十倍。</p></div>
+
+  <div class="card tip"><div class="t">一句话送你（第二阶段）</div><p>第一阶段让你看到「RAG 链路怎么走」，第二阶段让你看到「每个零件怎么转」。读完 L1+L2 你能改任何参数；读完 L3 你知道这服务全貌还能往哪扩（过滤/VO/API/MCP 桥接）；做完 L4 你就真的拿下了。</p></div>
+</section>
+
+</main>
+</div>
+
+<script>
+  // 导航高亮当前章节
+  const links = document.querySelectorAll('nav a.nav');
+  const secs = document.querySelectorAll('section[id]');
+  window.addEventListener('scroll', () => {
+    let cur = '';
+    secs.forEach(s => { if (window.scrollY >= s.offsetTop - 60) cur = s.id; });
+    links.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + cur));
+  });
+</script>
+</body>
+</html>
