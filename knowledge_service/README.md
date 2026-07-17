@@ -11,7 +11,7 @@
 - ✅ mcp_server:`fetch_knowledge` 工具(见 `../mcp_server/server.py`)
 - ✅ agent:`.env.dev` 的 DEFAULT/SYNTHESIS 的 researcher+analyst 已加 `fetch_knowledge`
 - ✅ 评估:hit@5 = 88%(`scripts/eval.py`)
-- ⬜ agent 联调:需启动 agent_service 跑 `generate_report.py`(见「运行」)
+- ✅ agent 联调:三服务起齐跑 `generate_report.py`,fetch_knowledge 触发、报告引用知识库(2026-07-17,见 `../完整agent服务集成方案.md`「联调结果」)
 
 ## 架构
 

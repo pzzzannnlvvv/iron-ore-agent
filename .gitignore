@@ -22,6 +22,9 @@ __pycache__/
 05_feature_engineering/outputs/09_features_final.csv
 06_data_split/outputs/train.csv
 
+# ===== 11 报告生成产物(agent 运行输出,可由 generate_report.py 重新生成,不提交) =====
+11_report_generation/outputs/
+
 # ===== IDE / 编辑器 / 系统 =====
 .idea/
 .vscode/

@@ -93,7 +93,7 @@ def generate_report(question: str, timeout: float = 600):
 
 #基于铁矿石库存预测模型的结果，生成一份库存走势与分析报告，""包括模型表现（MDA、MAPE）和最近的预测值
 def main():
-    default_q = ("这个项目的数据时间范围、训练/测试集怎么划分的？gap 多少？")
+    default_q = ("结合知识库里过往的铁矿石库存分析报告与项目预测数据，梳理本期库存走势与分析结论。")
     question = " ".join(sys.argv[1:]) or default_q
     report, tool_events = generate_report(question)
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)

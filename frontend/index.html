@@ -15,12 +15,24 @@
   body{margin:0;font-family:-apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
     background:var(--bg);color:var(--text);line-height:1.7;font-size:16px}
   .container{max-width:860px;margin:0 auto;padding:40px 24px 80px}
-  header{margin-bottom:24px}
+  header{margin-bottom:20px}
   h1{font-size:26px;margin:0 0 6px;color:var(--text)}
   .hint{color:var(--muted);font-size:14px;margin:0}
 
+  /* 视角标签栏 */
+  .perspective-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+  .bar-label{font-size:13px;color:var(--muted);font-weight:600;margin-right:4px}
+  .perspective{cursor:pointer;border:1px solid var(--border);border-radius:20px;background:var(--panel);
+    color:var(--text);font-family:inherit;font-size:13px;font-weight:600;padding:5px 14px;transition:all .15s}
+  .perspective:hover{border-color:var(--accent);color:var(--accent)}
+  .perspective.active{background:var(--accent);border-color:var(--accent);color:#fff}
+  .perspective.disabled{color:#b8c2cf;background:var(--panel2);cursor:not-allowed;position:relative}
+  .perspective.disabled:hover{border-color:var(--border);color:#b8c2cf}
+  .perspective.disabled::after{content:"测试中";font-size:10px;color:var(--warn);position:absolute;top:-6px;right:-8px;
+    background:var(--soft-yellow);padding:1px 5px;border-radius:8px;border:1px solid #fde68a;line-height:1.4}
+
   /* 输入区 */
-  .input-row{display:flex;gap:10px;align-items:stretch;margin-bottom:14px}
+  .input-row{display:flex;gap:10px;align-items:stretch;margin-bottom:12px}
   textarea{flex:1;resize:vertical;min-height:60px;padding:14px 16px;border:1px solid var(--border);
     border-radius:12px;font-family:inherit;font-size:15px;line-height:1.6;color:var(--text);
     background:var(--panel);box-shadow:0 1px 3px rgba(0,0,0,.04);outline:none;transition:border-color .15s}
@@ -35,8 +47,15 @@
   button.ghost{background:var(--panel2);color:var(--text);border:1px solid var(--border);font-weight:500;padding:6px 14px;font-size:13px}
   button.ghost:hover{background:#e8eef7}
 
+  /* 示例问题 */
+  .examples{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+  .examples-label{font-size:13px;color:var(--muted)}
+  .example-chip{cursor:pointer;border:1px solid var(--border);border-radius:18px;background:var(--soft-blue);
+    color:var(--accent);font-family:inherit;font-size:13px;padding:4px 12px;transition:all .15s}
+  .example-chip:hover{background:var(--accent);color:#fff;border-color:var(--accent)}
+
   /* 状态条 */
-  .status-row{display:flex;align-items:center;gap:12px;margin-bottom:18px;min-height:28px;flex-wrap:wrap}
+  .status-row{display:flex;align-items:center;gap:12px;margin-bottom:14px;min-height:28px;flex-wrap:wrap}
   .pill{display:inline-flex;align-items:center;gap:6px;padding:4px 14px;border-radius:20px;font-size:13px;font-weight:600}
   .pill.idle{background:var(--panel2);color:var(--muted)}
   .pill.running{background:var(--soft-blue);color:var(--accent)}
@@ -47,6 +66,30 @@
   @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.8)}}
   .timer{color:var(--muted);font-size:13px;font-variant-numeric:tabular-nums}
   .error{color:#dc2626;font-size:13px;font-weight:500}
+
+  /* 进度面板 */
+  .progress-card{background:var(--panel);border:1px solid var(--border);border-radius:14px;
+    box-shadow:0 1px 3px rgba(0,0,0,.04);overflow:hidden;margin-bottom:14px}
+  .progress-head{display:flex;align-items:center;justify-content:space-between;gap:12px;
+    padding:12px 20px;border-bottom:1px solid var(--border);background:var(--panel2)}
+  .progress-stage{font-size:15px;font-weight:700;color:var(--accent);display:flex;align-items:center;gap:8px}
+  .progress-stage::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--accent);animation:pulse 1.1s infinite;flex-shrink:0}
+  .progress-card.done .progress-stage{color:var(--accent2)}
+  .progress-card.done .progress-stage::before{background:var(--accent2);animation:none}
+  .progress-card.stopped .progress-stage{color:var(--muted)}
+  .progress-card.stopped .progress-stage::before{background:var(--muted);animation:none}
+  .progress-summary{font-size:12px;color:var(--muted);font-weight:500;text-align:right}
+  .timeline{padding:8px 20px 12px;max-height:240px;overflow-y:auto}
+  .progress-card.collapsed .timeline{display:none}
+  .progress-card.collapsed .progress-head{border-bottom:none}
+  .timeline-item{display:flex;align-items:center;gap:10px;padding:5px 0;font-size:13px}
+  .timeline-item .dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;background:var(--border)}
+  .timeline-item.running .dot{background:var(--accent);animation:pulse 1.1s infinite}
+  .timeline-item.done .dot{background:var(--accent2)}
+  .timeline-item .step-label{flex:1;color:var(--text)}
+  .timeline-item.running .step-label{color:var(--accent);font-weight:600}
+  .timeline-item .step-time{color:var(--muted);font-size:12px;font-variant-numeric:tabular-nums}
+  .timeline-empty{color:#9aa6b6;font-size:13px;padding:4px 0}
 
   /* 报告区 */
   #report-wrap{background:var(--panel);border:1px solid var(--border);border-radius:14px;
@@ -79,6 +122,12 @@
   .markdown hr{border:none;border-top:1px solid var(--border);margin:18px 0}
   .markdown strong{color:var(--text)}
 
+  /* toast */
+  .toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#1e2937;color:#fff;
+    padding:10px 18px;border-radius:10px;font-size:14px;z-index:99;box-shadow:0 4px 12px rgba(0,0,0,.2);
+    opacity:0;transition:opacity .2s;pointer-events:none;max-width:90%;text-align:center;line-height:1.5}
+  .toast.show{opacity:1}
+
   .foot{margin-top:20px;color:var(--muted);font-size:12px;text-align:center}
 </style>
 </head>
@@ -86,18 +135,46 @@
 <div class="container">
   <header>
     <h1>🪨 铁矿石库存研究助手</h1>
-    <p class="hint">输入问题，等 1–3 分钟，报告会自己流出来。中间不用管。</p>
+    <p class="hint">选个视角，输入问题，等 1–3 分钟，报告会自己流出来。中间能看到每一步在做什么。</p>
   </header>
 
+  <div class="perspective-bar">
+    <span class="bar-label">分析视角</span>
+    <button class="perspective active" data-agent="default">通用</button>
+    <button class="perspective" data-agent="report">研报</button>
+    <button class="perspective disabled" data-agent="price">价格预测</button>
+    <button class="perspective disabled" data-agent="supply">供应</button>
+    <button class="perspective disabled" data-agent="demand">需求</button>
+    <button class="perspective disabled" data-agent="sd_balance">供需平衡</button>
+  </div>
+
   <div class="input-row">
-    <textarea id="q" placeholder="比如：这个项目的数据时间范围、训练/测试集怎么划分的？gap 多少？" rows="3"></textarea>
+    <textarea id="q" placeholder="比如：本周铁矿石港口库存有何变化？后续怎么看？" rows="3"></textarea>
     <button id="send">发送</button>
+  </div>
+
+  <div class="examples">
+    <span class="examples-label">试试这些问题：</span>
+    <button class="example-chip">本周铁矿石港口库存有何变化？后续怎么看？</button>
+    <button class="example-chip">梳理本期铁矿石库存走势与分析结论</button>
+    <button class="example-chip">当前铁矿石供应侧有何值得关注的变化？</button>
+    <button class="example-chip">铁矿石需求端最近有什么动向？</button>
   </div>
 
   <div class="status-row">
     <span id="status" class="pill idle">就绪</span>
     <span id="timer" class="timer"></span>
     <span id="error" class="error"></span>
+  </div>
+
+  <div id="progress-card" class="progress-card" hidden>
+    <div class="progress-head">
+      <span id="progress-stage" class="progress-stage">准备中…</span>
+      <span id="progress-summary" class="progress-summary"></span>
+    </div>
+    <div id="timeline" class="timeline">
+      <div class="timeline-empty">等待 agent 开始工作…</div>
+    </div>
   </div>
 
   <div id="report-wrap" hidden>
@@ -111,8 +188,10 @@
     <article id="report" class="markdown"></article>
   </div>
 
-  <p class="foot">Ctrl/⌘ + Enter 发送 · 运行中点“停止”可中断</p>
+  <p class="foot">Ctrl/⌘ + Enter 发送 · 运行中点"停止"可中断</p>
 </div>
+
+<div id="toast" class="toast"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
@@ -133,14 +212,42 @@ const CONFIG = {
   RENDER_DEBOUNCE_MS: 80,            // markdown 重渲染节流，防闪烁
 };
 
+/* 节点名 -> 中文阶段（依据 agent_service/src/graph/deepresearch/builder.py 的 add_node） */
+const NODE_LABELS = {
+  coordinator: "协调调度",
+  background_investigator: "背景调查",
+  planner: "规划方案",
+  research_team: "研究团队调度",
+  researcher: "研究中",
+  parallel_researcher: "并行研究",
+  simple_researcher: "快速研究",
+  analyst: "综合分析",
+  reporter: "撰写报告",
+  human_feedback: "等待反馈",
+  tool_executor: "执行工具",
+  summary: "汇总",
+};
+
+/* 工具名 -> 中文（依据 mcp_server/server.py 已实现的工具） */
+const TOOL_LABELS = {
+  fetch_data: "查询数据",
+  fetch_background: "查询背景",
+  fetch_news: "查询新闻",
+  fetch_graph: "查询图谱",
+  fetch_knowledge: "检索知识库",
+  model_choice: "选择模型",
+  model_predict: "运行预测",
+  draw_chart: "绘制图表",
+  fetch_opinion_index: "查询情绪指数",
+  fetch_subject_data: "查询专题数据",
+  fetch_news_private: "查询新闻",
+};
+
 /* ============================================================
- * 流式核心 —— 和 DOM 解耦的纯函数
- * Phase 2 升级 React 时，把这个函数原样搬进 useEffect，
- * 把下面的 DOM 回调换成 setState 即可，核心逻辑零改动。
- * 输入：question + { onStatus, onReportChunk, onError, onDone }
- * 输出：{ abort } 句柄
+ * 流式核心 -- 和 DOM 解耦的纯函数
+ * 把 SSE 事件翻译成语义回调：onStage / onToolCall / onToolResult / onReportChunk / onError / onDone
  * ============================================================ */
-function streamReport(question, { onStatus, onReportChunk, onError, onDone }) {
+function streamReport(question, { onStage, onToolCall, onToolResult, onReportChunk, onError, onDone }) {
   const controller = new AbortController();
   const payload = { messages: [{ role: "user", content: question }], ...CONFIG.PAYLOAD };
   let reportText = "";
@@ -180,7 +287,6 @@ function streamReport(question, { onStatus, onReportChunk, onError, onDone }) {
         const { done, value } = await reader.read();
         if (done) break;
         buffer += decoder.decode(value, { stream: true });
-        // SSE 事件之间用空行分隔
         let sep;
         while ((sep = buffer.indexOf("\n\n")) >= 0) {
           const raw = buffer.slice(0, sep);
@@ -212,23 +318,43 @@ function streamReport(question, { onStatus, onReportChunk, onError, onDone }) {
     return { event, data };
   }
 
-  /* ---- 事件分发（只认这几类，其余忽略）---- */
+  /* ---- 事件分发 ---- */
   function handleEvent({ event, data }) {
-    const agent = (data.agent || data.langgraph_node || "").toLowerCase();
+    const node = (data.langgraph_node || data.agent || "").toLowerCase();
+
+    // 任何事件都带节点名 -> 更新当前阶段（reporter 在下面单独处理）
+    if (node && !node.includes("reporter")) {
+      onStage(NODE_LABELS[node] || node);
+    }
+
     if (event === "error") {
       onError(data.error || "未知错误");
     } else if (event === "finish") {
       finish(false);
     } else if (event === "message_chunk") {
-      if (agent.includes("reporter")) {
+      // 只有 reporter 的文本才是报告正文
+      if (node.includes("reporter")) {
+        onStage("撰写报告");
         if (data.content) { reportText += data.content; onReportChunk(reportText); }
-        onStatus("撰写报告中…");
-      } else {
-        onStatus("研究中…");
       }
-    } else if (event === "tool_calls" || event === "tool_call_result" ||
-               event === "tool_calls_injection" || event === "tool_call_chunks") {
-      onStatus("研究中…");
+      // 其它节点的思考文本不显示，只更新阶段（上面已处理）
+    } else if (event === "tool_calls" || event === "tool_calls_injection" || event === "tool_call_chunks") {
+      // 提取工具调用，加到时间线
+      let calls = [];
+      if (event === "tool_calls_injection" && data.tool_calls_injection) {
+        const ti = data.tool_calls_injection;
+        calls = [{ name: ti.name, id: ti.id }];
+      } else if (Array.isArray(data.tool_calls)) {
+        calls = data.tool_calls.map(c => ({ name: c.name, id: c.id }));
+      } else if (Array.isArray(data.tool_call_chunks)) {
+        // 流式 chunk：取有名字的
+        calls = data.tool_call_chunks.filter(c => c && c.name).map(c => ({ name: c.name, id: c.id }));
+      }
+      for (const c of calls) {
+        if (c && c.name) onToolCall(c.name, c.id);
+      }
+    } else if (event === "tool_call_result") {
+      onToolResult(data.tool_call_id);
     }
   }
 
@@ -236,7 +362,7 @@ function streamReport(question, { onStatus, onReportChunk, onError, onDone }) {
 }
 
 /* ============================================================
- * DOM 层（订阅流式核心的回调）
+ * DOM 层
  * ============================================================ */
 marked.setOptions({ gfm: true, breaks: true });
 
@@ -244,31 +370,89 @@ const $ = (sel) => document.querySelector(sel);
 const els = {
   q: $("#q"), send: $("#send"),
   status: $("#status"), timer: $("#timer"), error: $("#error"),
+  progressCard: $("#progress-card"), progressStage: $("#progress-stage"),
+  progressSummary: $("#progress-summary"), timeline: $("#timeline"),
   reportWrap: $("#report-wrap"), report: $("#report"),
   actions: $("#actions"), copy: $("#copy"), download: $("#download"),
+  perspectives: document.querySelectorAll(".perspective"),
+  examples: document.querySelectorAll(".example-chip"),
+  toast: $("#toast"),
 };
 
 let currentAbort = null;
 let timerInt = null;
 let renderPending = false;
 let lastReportText = "";
+let progressSteps = [];   // [{label, name, id, status, t0, t1}]
+let lastStage = "";
+let t0Time = 0;
 
 function setStatus(text, cls) { els.status.textContent = text; els.status.className = "pill " + cls; }
 function setRunning(running) {
   els.send.textContent = running ? "停止" : "发送";
   els.send.classList.toggle("stop", running);
 }
+function showToast(msg) {
+  els.toast.textContent = msg;
+  els.toast.classList.add("show");
+  setTimeout(() => els.toast.classList.remove("show"), 4000);
+}
 function startTimer() {
-  const t0 = Date.now();
+  t0Time = Date.now();
   stopTimer();
   timerInt = setInterval(() => {
-    const s = Math.floor((Date.now() - t0) / 1000);
+    const s = Math.floor((Date.now() - t0Time) / 1000);
     const m = Math.floor(s / 60);
     const ss = String(s % 60).padStart(2, "0");
     els.timer.textContent = m > 0 ? `${m}分${ss}秒` : `${ss}秒`;
   }, 500);
 }
 function stopTimer() { if (timerInt) { clearInterval(timerInt); timerInt = null; } }
+
+function setStage(label) {
+  if (lastStage === label) return;
+  lastStage = label;
+  els.progressStage.textContent = label + "…";
+  setStatus(label + "…", "running");
+}
+
+/* ---- 时间线 ---- */
+function addToolStep(name, id) {
+  // 同一 tool_call_id 去重（tool_calls 与 tool_calls_injection 会带相同 id）
+  if (id && progressSteps.some(s => s.id === id)) return;
+  // 无 id 时按"同名 + 进行中"去重（流式 chunks 可能多次发同一工具）
+  if (!id && progressSteps.some(s => s.name === name && s.status === "running")) return;
+  progressSteps.push({
+    label: TOOL_LABELS[name] || name,
+    name, id: id || "", status: "running", t0: Date.now(), t1: null,
+  });
+  renderTimeline();
+}
+function completeToolStep(id) {
+  let step = id ? progressSteps.find(s => s.id === id) : null;
+  if (!step) step = progressSteps.find(s => s.status === "running");  // id 没匹配上就完成最早一个进行中的
+  if (step) { step.status = "done"; step.t1 = Date.now(); renderTimeline(); }
+}
+function renderTimeline() {
+  if (!progressSteps.length) {
+    els.timeline.innerHTML = '<div class="timeline-empty">等待 agent 开始工作…</div>';
+    els.progressSummary.textContent = "";
+    return;
+  }
+  els.timeline.innerHTML = "";
+  for (const s of progressSteps) {
+    const div = document.createElement("div");
+    div.className = "timeline-item " + s.status;
+    const time = s.status === "done"
+      ? `${Math.max(1, Math.round((s.t1 - s.t0) / 1000))}秒`
+      : "进行中";
+    div.innerHTML = `<span class="dot"></span><span class="step-label">${s.label}</span><span class="step-time">${time}</span>`;
+    els.timeline.appendChild(div);
+  }
+  const doneCount = progressSteps.filter(s => s.status === "done").length;
+  els.progressSummary.textContent = `已调用 ${doneCount}/${progressSteps.length} 个工具`;
+  els.timeline.scrollTop = els.timeline.scrollHeight;  // 自动滚到底
+}
 
 function renderReport(text) {
   lastReportText = text;
@@ -290,15 +474,22 @@ function send() {
   els.error.textContent = "";
   els.report.innerHTML = "";
   lastReportText = "";
+  progressSteps = [];
+  lastStage = "";
+  renderTimeline();
+  els.progressCard.hidden = false;
+  els.progressCard.classList.remove("done", "stopped", "collapsed");
   els.reportWrap.hidden = false;
   els.actions.hidden = true;
-  setStatus("研究中…", "running");
+  setStage("准备中");
   els.timer.textContent = "0秒";
   setRunning(true);
   startTimer();
 
   currentAbort = streamReport(q, {
-    onStatus: (s) => setStatus(s, "running"),
+    onStage: (label) => setStage(label),
+    onToolCall: (name, id) => addToolStep(name, id),
+    onToolResult: (id) => completeToolStep(id),
     onReportChunk: (text) => renderReport(text),
     onError: (msg) => {
       els.error.textContent = msg;
@@ -308,13 +499,27 @@ function send() {
       flushReport();
       stopTimer();
       setRunning(false);
+      const totalSec = Math.max(1, Math.round((Date.now() - t0Time) / 1000));
+      const doneCount = progressSteps.filter(s => s.status === "done").length;
+      const m = Math.floor(totalSec / 60);
+      const ss = String(totalSec % 60).padStart(2, "0");
+      const dur = m > 0 ? `${m}分${ss}秒` : `${ss}秒`;
+
       if (aborted) {
         setStatus("已停止", "idle");
+        els.progressCard.classList.add("stopped");
+        els.progressStage.textContent = "已停止";
+        els.progressSummary.textContent = `用时 ${dur} · 调用 ${doneCount} 个工具`;
       } else if (!reportText) {
         setStatus("无内容", "error");
         els.error.textContent = "未收到报告内容（reporter 可能未触发，请查 agent_service 日志）。";
+        els.progressStage.textContent = "未出报告";
+        els.progressSummary.textContent = `用时 ${dur} · 调用 ${doneCount} 个工具`;
       } else {
         setStatus("完成", "done");
+        els.progressCard.classList.add("done", "collapsed");
+        els.progressStage.textContent = "完成";
+        els.progressSummary.textContent = `用时 ${dur} · 调用 ${doneCount} 个工具`;
       }
       els.actions.hidden = !lastReportText;
       currentAbort = null;
@@ -322,7 +527,29 @@ function send() {
   });
 }
 
-/* ---- 事件绑定 ---- */
+/* ---- 视角标签 ---- */
+els.perspectives.forEach(btn => {
+  btn.addEventListener("click", () => {
+    if (btn.classList.contains("disabled")) {
+      showToast('该视角依赖的工具（fetch_opinion_index / fetch_subject_data）尚未在 mcp_server 实现，启用会调用失败。目前仅"通用"和"研报"可用。');
+      return;
+    }
+    if (currentAbort) { showToast("运行中不能切换视角，请先停止或等完成。"); return; }
+    els.perspectives.forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    CONFIG.PAYLOAD.agent_type = btn.dataset.agent;
+  });
+});
+
+/* ---- 示例问题：点击填入 ---- */
+els.examples.forEach(chip => {
+  chip.addEventListener("click", () => {
+    els.q.value = chip.textContent.trim();
+    els.q.focus();
+  });
+});
+
+/* ---- 发送 / 停止 / 快捷键 ---- */
 els.send.addEventListener("click", () => {
   if (currentAbort) currentAbort.abort();   // 运行中点击 = 停止
   else send();

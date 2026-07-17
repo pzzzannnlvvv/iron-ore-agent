@@ -25,24 +25,50 @@
   1. **planner 崩溃**：ChatAnthropic 返回 content 为 thinking+text 列表，`full_response += chunk.content` 报 `TypeError: can only concatenate str (not "list") to str`。加 `_content_to_text` helper 修复（见改动第 11 条）
   2. **报告截断**：thinking 吃 max_tokens，4096 不够 → `.env.dev` 的 `LLM_MAX_TOKENS` 调到 16000（改动第 12 条）
 
+## 知识库端到端联调结果（2026-07-17）
+
+> 在阶段5基础上接入 knowledge_service，打通 agent↔mcp_server↔knowledge_service 完整链。原方案见 `完整agent服务集成方案.md`「现状核实与下一步」节。
+
+### 联调前补的缺口（不补则 researcher 不会调 fetch_knowledge）
+1. `researcher.md`：工具表加 `fetch_knowledge` 行（查过往分析报告/学习笔记/项目文档结论/口径说明）；第53行改为「查文档类信息优先 fetch_knowledge，但不重复验证 fetch_data 数值」。
+2. `planner.md`：第7行项目上下文补 `fetch_knowledge`；第73行「只有口径说明才规划」拓宽为「涉及过往报告/笔记/文档结论/口径说明时应规划 fetch_knowledge 步骤」。
+3. `generate_report.py`：`default_q` 改为引导知识库：「结合知识库里过往的铁矿石库存分析报告与项目预测数据，梳理本期库存走势与分析结论」。
+4.（轻量）`analyst.md`：补一句 fetch_knowledge 可用于综合分析补文档。
+
+### 联调结果（report_20260717_091245.md，28 次工具调用）
+- ✅ fetch_knowledge 触发：parallel_researcher 多次调用（口径定义、关键驱动因素等不同角度）。
+- ✅ 报告引用知识库：报告「口径说明」明写「与知识库中3份过往分析报告保持一致」，含 KB 来源的港口明细（曹妃甸港、江阴港）、分地区（华北/华南/长江沿江/华东）、业务因果链（废钢价差↑->废钢替代铁矿↑->铁矿需求↓->库存↑）--fetch_data/fetch_background 不返回这些。
+- ✅ knowledge_service 三段耗时：首查 embeddingTimeCost=28.96s（bge-m3 首次加载）、searchTime=0.68s（BM25+KNN+RRF）、reRankTimeCost=14.78s（bge-reranker）；后续查询 embedding 降至 0.1s。BM25 索引由 Chroma 237 chunk 现建。
+- ✅ 完整链路：agent:5000 -> mcp:17000 -> knowledge:8092，多轮 POST /knowledge-base/report/search 200 OK。
+
+### 踩坑
+- mcp_server 用 `uv run python server.py` 撞清华镜像 403（httpx-0.28.1 轮子下载失败）；改用 `mcp_server/.venv/Scripts/python.exe server.py` 直跑解决（依赖已装）。
+
 ## 如何再次生成报告
 **前提**：`.env.dev` 的 `LLM_API_KEY` 是用户的火山方舟 key（ark 开头，用户手填，Claude 不写）。
 
-开 3 个终端（命令用完整 uv 路径）：
+开 4 个终端（命令用完整 uv 路径；知识库联调需先起 knowledge_service）：
 
-**终端1 · MCP server**（常驻）
+**终端1 · knowledge_service**（常驻，知识库联调必需，先起）
+```
+/c/Users/admin/.local/bin/uv.exe --directory "C:/Users/admin/Desktop/项目复现2/knowledge_service" run uvicorn main:app --port 8092 --host 127.0.0.1
+```
+等 `knowledge_service 启动 port=8092 已入库 chunks=237`（首查会加载 bge 模型约 30s）
+
+**终端2 · MCP server**（常驻）
 ```
 /c/Users/admin/.local/bin/uv.exe --directory "C:/Users/admin/Desktop/项目复现2/mcp_server" run python server.py
 ```
 等 `Uvicorn running on http://127.0.0.1:17000`
+> 若 `uv run` 撞清华镜像 403（httpx 轮子下载失败），改用 `mcp_server/.venv/Scripts/python.exe server.py` 直跑（依赖已装）。
 
-**终端2 · agent_service**（常驻）
+**终端3 · agent_service**（常驻）
 ```
 /c/Users/admin/.local/bin/uv.exe --directory "C:/Users/admin/Desktop/项目复现2/agent_service" run uvicorn main:app --host 0.0.0.0 --port 5000
 ```
 等 `Application started successfully`
 
-**终端3 · 生成报告**
+**终端4 · 生成报告**
 ```
 /c/Users/admin/.local/bin/uv.exe --directory "C:/Users/admin/Desktop/项目复现2/agent_service" run python "C:/Users/admin/Desktop/项目复现2/11_report_generation/scripts/generate_report.py"
 ```

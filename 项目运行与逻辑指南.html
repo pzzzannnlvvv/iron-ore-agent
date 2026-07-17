@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>项目复现2 · 运行与逻辑指南</title>
+<style>
+  :root{
+    --bg:#fbfcfe; --panel:#ffffff; --panel2:#f4f7fb; --border:#e3e9f2;
+    --text:#2b3543; --muted:#6b7888; --accent:#3b82f6; --accent2:#10a37f;
+    --warn:#d97706; --pink:#ec4899; --purple:#8b5cf6; --code-bg:#1e2937;
+    --soft-blue:#eff6ff; --soft-green:#ecfdf5; --soft-yellow:#fefce8; --soft-pink:#fdf2f8;
+    --soft-purple:#f5f3ff;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+    background:var(--bg);color:var(--text);line-height:1.85;font-size:16px}
+  a{color:var(--accent)}
+  .wrap{max-width:860px;margin:0 auto;padding:40px 28px 90px}
+  .view{animation:fade .25s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  h1{font-size:30px;margin:0 0 8px;color:var(--text)}
+  h2{font-size:24px;margin:0 0 14px;color:var(--accent);padding-bottom:8px;border-bottom:2px solid var(--soft-blue)}
+  h3{font-size:18px;margin:22px 0 8px;color:var(--purple)}
+  h4{font-size:15px;margin:14px 0 6px;color:var(--text)}
+  .sub{color:var(--muted);font-size:14px;margin-bottom:22px}
+  p{margin:12px 0}
+  code{background:var(--panel2);border:1px solid var(--border);padding:2px 7px;border-radius:5px;
+    font-family:"JetBrains Mono","Consolas",monospace;font-size:13.5px;color:var(--pink)}
+  pre{background:var(--code-bg);border-radius:10px;padding:16px 18px;overflow-x:auto;margin:14px 0}
+  pre code{background:none;border:none;color:#cbd5e1;padding:0;font-size:13px;line-height:1.6}
+  pre .c{color:#64748b}
+  pre .k{color:#c084fc}
+  pre .s{color:#86efac}
+  pre .f{color:#fcd34d}
+  .card{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:18px 22px;margin:16px 0;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+  .card.tip{border-left:4px solid var(--accent2);background:var(--soft-green)}
+  .card.warn{border-left:4px solid var(--warn);background:var(--soft-yellow)}
+  .card.key{border-left:4px solid var(--accent);background:var(--soft-blue)}
+  .card.cute{border-left:4px solid var(--pink);background:var(--soft-pink)}
+  .card .t{font-weight:700;margin-bottom:4px}
+  .pill{display:inline-block;background:var(--soft-blue);border:1px solid #cfe0fb;border-radius:20px;padding:3px 12px;font-size:13px;margin:3px;color:var(--accent)}
+  .pill.g{background:var(--soft-green);border-color:#a7e9d0;color:var(--accent2)}
+  .pill.p{background:var(--soft-pink);border-color:#f5c6dd;color:var(--pink)}
+  .pill.u{background:var(--soft-purple);border-color:#ddd0fb;color:var(--purple)}
+  .port{display:inline-block;background:var(--soft-purple);border:1px solid #ddd0fb;color:var(--purple);border-radius:6px;padding:1px 8px;font-family:monospace;font-size:13px}
+  table{width:100%;border-collapse:collapse;margin:14px 0;font-size:14px;background:var(--panel);border-radius:10px;overflow:hidden}
+  th,td{border:1px solid var(--border);padding:10px 14px;text-align:left;vertical-align:top}
+  th{background:var(--panel2);color:var(--accent);font-weight:700}
+  ul{padding-left:22px} li{margin:5px 0}
+  .hero{background:linear-gradient(135deg,#3b82f6,#8b5cf6);color:#fff;border-radius:16px;padding:28px 32px;margin-bottom:26px}
+  .hero h1{color:#fff;margin:0} .hero p{margin:8px 0 0;opacity:.95}
+  .rolemap{display:grid;grid-template-columns:1fr;gap:8px;margin:14px 0}
+  .rolemap .r{background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:12px 16px;font-size:14px}
+  .rolemap .r b{color:var(--accent)}
+  .ans{background:var(--soft-green);border:2px solid #a7e9d0;border-radius:10px;padding:14px 20px;margin:16px 0}
+  .ans .at{font-weight:700;color:var(--accent2);font-size:13px;letter-spacing:.03em}
+  .ans .aa{font-size:16px;margin-top:2px}
+  details.fold{margin:14px 0;border:1px solid var(--border);border-radius:10px;background:var(--panel);padding:6px 18px}
+  details.fold summary{cursor:pointer;font-weight:700;color:var(--purple);padding:8px 0;list-style:none}
+  details.fold summary::before{content:"▶ ";font-size:11px}
+  details.fold[open] summary::before{content:"▼ "}
+  details.fold summary::-webkit-details-marker{display:none}
+  .flow{display:flex;flex-wrap:wrap;align-items:stretch;margin:16px 0;gap:0}
+  .flow .node{flex:1;min-width:80px;background:var(--panel);border:2px solid var(--accent);border-radius:10px;padding:10px 6px;text-align:center;font-size:12.5px}
+  .flow .node b{display:block;color:var(--accent);margin-bottom:3px;font-size:13px}
+  .flow .node.green{border-color:var(--accent2)} .flow .node.green b{color:var(--accent2)}
+  .flow .node.purple{border-color:var(--purple)} .flow .node.purple b{color:var(--purple)}
+  .flow .node.pink{border-color:var(--pink)} .flow .node.pink b{color:var(--pink)}
+  .flow .arr{display:flex;align-items:center;color:var(--muted);padding:0 3px;font-size:18px}
+
+  /* 主页流程卡片 */
+  .flow-card{display:flex;align-items:center;gap:16px;background:var(--panel);border:1px solid var(--border);
+    border-radius:12px;padding:16px 20px;margin:10px 0;text-decoration:none;color:var(--text);
+    transition:all .15s;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+  .flow-card:hover{border-color:var(--accent);transform:translateX(5px);box-shadow:0 4px 12px rgba(59,130,246,.14)}
+  .flow-card .num{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#3b82f6,#8b5cf6);
+    color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0;font-size:16px}
+  .flow-card .body{flex:1}
+  .flow-card .body b{color:var(--accent);font-size:16px;display:block}
+  .flow-card .body span{color:var(--muted);font-size:13px}
+  .flow-card .arrow{color:#b8c2cf;font-size:22px;flex-shrink:0}
+  .flow-card:hover .arrow{color:var(--accent)}
+
+  /* 详情页导航 */
+  .detail-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;
+    padding-bottom:14px;border-bottom:2px solid var(--soft-blue)}
+  .detail-nav a{color:var(--accent);text-decoration:none;font-weight:600;font-size:14px}
+  .detail-nav a:hover{text-decoration:underline}
+  .detail-nav .count{color:var(--muted);font-size:13px}
+  .step-nav{display:flex;justify-content:space-between;margin-top:36px;padding-top:20px;border-top:1px solid var(--border);gap:12px}
+  .step-nav a{flex:1;padding:12px 18px;border-radius:10px;text-decoration:none;font-weight:600;font-size:14px;text-align:center}
+  .step-nav .prev{background:var(--panel2);color:var(--text);border:1px solid var(--border)}
+  .step-nav .prev:hover{background:#e8eef7}
+  .step-nav .next{background:var(--accent);color:#fff}
+  .step-nav .next:hover{background:#2563eb}
+  .step-nav .spacer{flex:1}
+  .src{color:var(--muted);font-size:12.5px;font-family:monospace;margin:-8px 0 12px}
+  .glossary dt{font-weight:700;color:var(--purple);margin-top:14px;font-size:16px}
+  dd{margin:2px 0 0 0;color:var(--muted)}
+  @media(max-width:640px){.wrap{padding:24px 16px}.flow{flex-direction:column}.flow .arr{transform:rotate(90deg);padding:2px 0}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- ============ 主页 ============ -->
+<section class="view" id="home">
+  <div class="hero">
+    <h1>🏭 项目复现2 · 运行与逻辑指南</h1>
+    <p>一份「主流程 + 点步骤看细节」的指南。主页只看骨架，点每一步跳详情页看文字讲解和代码逻辑。</p>
+  </div>
+
+  <div class="ans"><div class="at">💡 这个项目是什么</div><div class="aa">铁矿石库存<b>预测 + agent 自主研究报告 + 知识库 RAG</b> 三合一：LightGBM 预测库存涨跌方向（MDA 84.91%），agent「研究团队」自动查预测数据和知识库里的过往报告，写成分析报告。</div></div>
+
+  <div class="card key"><div class="t">三块的关系：数据 + 文档 → agent → 报告</div>
+    <div class="rolemap">
+      <div class="r"><b>① 建模流水线（01~07）</b> · 离线训练 LightGBM，产出预测结果到 <code>07/outputs/</code>。<span class="pill">跑一次存盘</span></div>
+      <div class="r"><b>② agent 服务（agent_service + mcp_server）</b> · LangGraph 研究团队，查资料写报告。<span class="pill g">:5000 + :17000</span></div>
+      <div class="r"><b>③ 知识库服务（knowledge_service）</b> · RAG 检索过往文档，被 agent 调用。<span class="pill p">:8092</span></div>
+    </div>
+    <p style="margin:6px 0 0;color:var(--muted);font-size:14px">agent 是「中间人」：不存数据，只查现成的预测（左路）和知识库文档（右路），综合成报告。</p>
+  </div>
+
+  <details class="fold">
+    <summary>🚀 快速运行（4 终端，点开看命令）</summary>
+    <p style="font-size:14px;color:var(--muted)">3 个常驻服务按顺序起，看到成功信号再起下一个。命令用各自 <code>.venv</code> 的 python，不用 uv（避 403）。</p>
+    <pre><code><span class="c"># 终端1 知识库（先起，加载模型）</span>
+cd knowledge_service && .venv\Scripts\python.exe -m uvicorn main:app --port 8092 --host 127.0.0.1
+<span class="c"># 终端2 MCP 桥接</span>
+cd mcp_server && .venv\Scripts\python.exe server.py
+<span class="c"># 终端3 agent 主服务</span>
+cd agent_service && .venv\Scripts\python.exe main.py
+<span class="c"># 终端4 生成报告（跑完自动结束）</span>
+agent_service\.venv\Scripts\python.exe 11_report_generation\scripts\generate_report.py</code></pre>
+    <div class="card warn" style="margin-top:10px"><div class="t">常见报错（详见 agent复刻进度.md）</div>
+      <ul style="margin:4px 0">
+        <li><b>mcp 403</b>：别用 <code>uv run</code>，直接 <code>.venv\Scripts\python.exe</code></li>
+        <li><b>第一次特别慢</b>：bge 模型冷启动 30-60 秒，正常，后面就快</li>
+        <li><b>端口占用</b>：<code>netstat -ano | findstr :8092</code> 找 PID，<code>taskkill /PID &lt;pid&gt; /F</code></li>
+      </ul></div>
+  </details>
+
+  <h2 style="margin-top:34px">🛤️ 主流程 · 一次请求的旅程</h2>
+  <p class="sub">从一个问题进，到一份报告出，经过这 8 步。点任意一步进入详情（文字讲解 + 代码逻辑）。</p>
+
+  <a class="flow-card" href="#step-1"><div class="num">1</div><div class="body"><b>客户端发请求</b><span>SSE 流式 POST 到 :5000，auto_accepted_plan=True</span></div><div class="arrow">›</div></a>
+  <a class="flow-card" href="#step-2"><div class="num">2</div><div class="body"><b>coordinator 接单</b><span>前台主管读问题，调 handoff_to_planner 交规划师</span></div><div class="arrow">›</div></a>
+  <a class="flow-card" href="#step-3"><div class="num">3</div><div class="body"><b>planner 拆任务</b><span>把问题拆成 step 列表，输出 Plan JSON</span></div><div class="arrow">›</div></a>
+  <a class="flow-card" href="#step-4"><div class="num">4</div><div class="body"><b>research_team 调度</b><span>调度室派活（本体竟是空的 pass），靠图边轮询</span></div><div class="arrow">›</div></a>
+  <a class="flow-card" href="#step-5"><div class="num">5</div><div class="body"><b>researcher 装工具箱</b><span>按权限连 MCP 拉工具，每个 step 现装一次</span></div><div class="arrow">›</div></a>
+  <a class="flow-card" href="#step-6"><div class="num">6</div><div class="body"><b>fetch_data 读预测</b><span>mcp_server 直接 pd.read_csv 读 07/outputs</span></div><div class="arrow">›</div></a>
+  <a class="flow-card" href="#step-7"><div class="num">7</div><div class="body"><b>fetch_knowledge 查知识库</b><span>转发到 :8092，双路召回+RRF+rerank</span></div><div class="arrow">›</div></a>
+  <a class="flow-card" href="#step-8"><div class="num">8</div><div class="body"><b>reporter 出报告 + 流回</b><span>综合所有发现写报告，SSE 流回客户端存盘</span></div><div class="arrow">›</div></a>
+
+  <h2 style="margin-top:34px">📎 附录</h2>
+  <a class="flow-card" href="#glossary"><div class="num">📖</div><div class="body"><b>术语表</b><span>MCP / LangGraph / ReAct / SSE / RAG / RRF / Chroma / MDA …</span></div><div class="arrow">›</div></a>
+  <div class="card cute" style="margin-top:14px"><div class="t">📊 数据从哪来 · 建模流水线</div>
+    <p style="margin:4px 0">agent 读的预测来自 <code>01~07</code> 离线流水线（数据准备→预处理→清洗→ADF→特征工程 3184 特征→分割→LightGBM+Optuna 200 次），产出存 <code>07/outputs/</code>。训练目标用 <b>diff（一阶差分）</b>，因为 ADF 确认原始序列非平稳。日常生成报告<b>不用重跑建模</b>，agent 读现成结果。</p>
+    <p style="margin:0;font-size:13px">详细阶段见 <code>项目执行计划.md</code>。</p></div>
+  <div class="card tip"><div class="t">📚 配套文档</div>
+    <ul style="margin:4px 0">
+      <li><a href="knowledge_be复刻学习指南.html">knowledge_be复刻学习指南.html</a> · 知识库 RAG 8 问深入</li>
+      <li><code>agent复刻架构图.md</code> · 节点文件:行号索引</li>
+      <li><code>agent复刻进度.md</code> · 复刻进度 + 4 终端启动 + 联调结果</li>
+      <li><code>项目执行计划.md</code> · 建模流水线 01~10</li>
+    </ul></div>
+</section>
+
+<!-- ============ 步骤 1 ============ -->
+<section class="view" id="step-1" hidden>
+  <div class="detail-nav"><a href="#home">← 返回主流程</a><span class="count">步骤 1 / 8</span></div>
+  <h2>① 客户端发请求</h2>
+  <p>客户端（<code>generate_report.py</code> 或前端网页）向 <span class="port">:5000</span> 发一个 POST，把问题和几个开关打包进去，然后用 <b>SSE（Server-Sent Events）流式</b>接收--不用等全部生成完，agent 边研究边把过程一行行推过来。</p>
+
+  <h3>客户端怎么发</h3>
+  <p class="src">11_report_generation/scripts/generate_report.py:55</p>
+  <pre><code><span class="k">def</span> <span class="f">generate_report</span>(question, timeout=600):
+    payload = {
+        <span class="s">"messages"</span>: [{<span class="s">"role"</span>: <span class="s">"user"</span>, <span class="s">"content"</span>: question}],
+        <span class="s">"agent_type"</span>: <span class="s">"default"</span>,
+        <span class="s">"auto_accepted_plan"</span>: <span class="k">True</span>,          <span class="c"># 自动接受计划，不中断等人审</span>
+        <span class="s">"enable_background_investigation"</span>: <span class="k">False</span>,
+        <span class="s">"enable_clarification"</span>: <span class="k">False</span>,       <span class="c"># 不多轮澄清</span>
+        <span class="s">"locale"</span>: <span class="s">"zh-CN"</span>, <span class="s">"max_step_num"</span>: 4,
+    }
+    <span class="k">with</span> httpx.Client(timeout=timeout) <span class="k">as</span> client:
+        <span class="k">with</span> client.stream(<span class="s">"POST"</span>, AGENT_URL, json=payload) <span class="k">as</span> resp:
+            <span class="k">for</span> line <span class="k">in</span> resp.iter_lines():        <span class="c"># SSE 一行行读</span>
+                <span class="k">if</span> line.startswith(<span class="s">"event: "</span>):  event_type = line[7:].strip()
+                <span class="k">elif</span> line.startswith(<span class="s">"data: "</span>):
+                    <span class="k">if</span> line[6:] == <span class="s">"[DONE]"</span>: <span class="k">break</span>   <span class="c"># 流结束标志</span>
+                    handle_event(event_type, json.loads(line[6:]), ...)</code></pre>
+
+  <h3>客户端怎么挑出报告</h3>
+  <p>SSE 会推很多事件（思考、工具调用、工具结果…），客户端只把 <b>reporter 节点</b>的文本当报告拼起来。</p>
+  <p class="src">generate_report.py:30</p>
+  <pre><code><span class="k">def</span> <span class="f">handle_event</span>(event_type, data, report_chunks, ...):
+    agent = data.get(<span class="s">"agent"</span>, <span class="s">""</span>) <span class="k">or</span> data.get(<span class="s">"langgraph_node"</span>, <span class="s">""</span>)
+    <span class="k">if</span> event_type == <span class="s">"message_chunk"</span> <span class="k">and</span> <span class="s">"reporter"</span> <span class="k">in</span> agent.lower():
+        report_chunks.append(data[<span class="s">"content"</span>])   <span class="c"># 只有 reporter 的输出拼进报告</span>
+    <span class="k">elif</span> event_type == <span class="s">"tool_calls"</span>:        <span class="c"># 顺带打印研究过程</span>
+        print(f<span class="s">"[工具调用] agent={agent} tools={...}"</span>)</code></pre>
+
+  <h3>服务端怎么回</h3>
+  <p class="src">agent_service/src/server/deepresearch.py:32</p>
+  <pre><code>@router.post(<span class="s">"/deepresearch/stream"</span>)
+<span class="k">async def</span> <span class="f">chat_stream</span>(request: ChatRequest):
+    ...   <span class="c"># 解析 messages / agent_type / mcp_settings 等</span>
+    <span class="k">return</span> StreamingResponse(
+        _astream_workflow_generator(...),
+        media_type=<span class="s">"text/event-stream"</span>,   <span class="c"># SSE</span>
+    )
+<span class="c"># utils.py:18 · 流结束标记</span>
+SSE_DONE = <span class="s">"event: finish\ndata: [DONE]\n\n"</span></code></pre>
+
+  <div class="card key"><div class="t">关键点</div>
+    <ul style="margin:4px 0">
+      <li><b>auto_accepted_plan=True</b>：不弹计划给人审，自动开干。关掉的话 agent 会在 planner 后中断，等用户点「接受」。</li>
+      <li><b>SSE 协议</b>：每个事件是 <code>event: 类型\ndata: {json}\n\n</code>，用空行分隔。<code>[DONE]</code> 表示流结束。</li>
+      <li>请求字段全在 <code>schemas.py:41 ChatRequest</code>，前端/客户端只填关键字段，其余有默认值。</li>
+    </ul></div>
+  <div class="step-nav"><a class="prev" href="#home">← 主流程</a><span class="spacer"></span><a class="next" href="#step-2">下一步 coordinator 接单 →</a></div>
+</section>
+
+<!-- ============ 步骤 2 ============ -->
+<section class="view" id="step-2" hidden>
+  <div class="detail-nav"><a href="#home">← 返回主流程</a><span class="count">步骤 2 / 8</span></div>
+  <h2>② coordinator 接单</h2>
+  <p>问题进了 agent_service，第一个接待的是 <b>coordinator（前台主管）</b>。它读问题、判断这是要正经研究还是闲聊，然后调一个 <b>handoff 工具</b>把任务交给规划师。</p>
+
+  <h3>coordinator 是个「路由器」</h3>
+  <p class="src">agent_service/src/graph/deepresearch/nodes.py:648</p>
+  <pre><code><span class="k">async def</span> <span class="f">coordinator_node</span>(state, config) -> Command[
+    Literal[<span class="s">"planner"</span>, <span class="s">"background_investigator"</span>, <span class="s">"coordinator"</span>,
+            <span class="s">"research_team"</span>, <span class="s">"researcher"</span>, <span class="s">"tool_executor"</span>, END]]:
+    <span class="c"># 过滤消息：不让 coordinator 看到 planner/deepresearch 的思考过程</span>
+    user_role_messages = [i <span class="k">for</span> i <span class="k">in</span> state[<span class="s">"messages"</span>] <span class="k">if</span> ...]
+    compressed_state = ContextManager(...).compress_messages({<span class="s">"messages"</span>: user_role_messages})
+
+    <span class="c"># 本项目 enable_clarification=False（不开多轮澄清）</span>
+    tools = [handoff_to_planner]          <span class="c"># 只绑这一个 handoff 工具</span>
+    response = <span class="k">await</span> (
+        get_llm_by_type(AGENT_LLM_MAP[<span class="s">"coordinator"</span>])
+        .bind_tools(tools)               <span class="c"># LLM 只能调 handoff_to_planner</span>
+        .ainvoke(messages)
+    )
+    <span class="c"># LLM 决定调 handoff_to_planner -> Command 跳到 planner 节点</span></code></pre>
+
+  <div class="card tip"><div class="t">为什么用 bind_tools 而不是写死跳转？</div>
+    <p>coordinator 把「去哪」也交给 LLM 决定。LLM 读问题后，如果是闲聊可能直接回（去 END），如果要研究就调 <code>handoff_to_planner</code>。这是 LangGraph 的 <b>工具即路由</b>模式：LLM 调哪个 handoff 工具，图就跳到对应节点。</p></div>
+  <div class="card key"><div class="t">消息过滤的细节</div>
+    <p>coordinator 会过滤掉 <code>name=='planner'</code> 或 <code>'deepresearch'</code> 的 AI 消息（不让自己看到规划思路），也过滤自己带 tool_calls 的消息（路由指令不暴露给下一轮）。只保留干净的对话上下文。这是为了避免上下文污染。</p></div>
+  <div class="step-nav"><a class="prev" href="#step-1">← 上一步 发请求</a><a class="next" href="#step-3">下一步 planner 拆任务 →</a></div>
+</section>
+
+<!-- ============ 步骤 3 ============ -->
+<section class="view" id="step-3" hidden>
+  <div class="detail-nav"><a href="#home">← 返回主流程</a><span class="count">步骤 3 / 8</span></div>
+  <h2>③ planner 拆任务</h2>
+  <p>规划师 <b>planner</b> 拿到问题，把它拆成几个 <b>step</b>（研究步骤），输出一个 <code>Plan</code> JSON 贴到 state 白板上。比如「梳理库存走势」会拆成：查预测数据、查知识库过往报告、查特征体系。</p>
+
+  <h3>planner 调 LLM 生成 Plan</h3>
+  <p class="src">nodes.py:318</p>
+  <pre><code><span class="k">async def</span> <span class="f">planner_node</span>(state, config) -> Command[Literal[<span class="s">"human_feedback"</span>, <span class="s">"reporter"</span>]]:
+    prompt_template = get_agent_prompt(<span class="s">"planner"</span>, configurable.agent_type.value)
+    <span class="c"># 把「研究员能用哪些工具」也告诉 planner，方便它规划查什么</span>
+    researcher_tool_background = build_researcher_tool_background(configurable.mcp_settings)
+    messages = apply_prompt_template(prompt_template, state, extra_vars)
+
+    <span class="k">if</span> plan_iterations >= configurable.max_plan_iterations:
+        <span class="k">return</span> Command(goto=<span class="s">"reporter"</span>)    <span class="c"># 迭代够了直接写报告</span>
+
+    llm = get_llm_by_type(AGENT_LLM_MAP[<span class="s">"planner"</span>])
+    <span class="c"># LLM 输出结构化 Plan JSON（结构见下）</span></code></pre>
+
+  <h3>Plan 的数据结构</h3>
+  <p class="src">agent_service/src/graph/deepresearch/planner_model.py:16</p>
+  <pre><code><span class="k">class</span> <span class="f">Step</span>(BaseModel):
+    need_search: bool          <span class="c"># 这步要不要查资料</span>
+    title: str
+    description: str           <span class="c"># 具体查什么</span>
+    step_type: StepType        <span class="c"># RESEARCH / ANALYSIS / PROCESSING</span>
+    execution_res: str = <span class="k">None</span>  <span class="c"># 执行结果，执行后回写（步骤4用到）</span>
+
+<span class="k">class</span> <span class="f">Plan</span>(BaseModel):
+    locale: str
+    has_enough_context: bool
+    thought: str               <span class="c"># 规划思路</span>
+    title: str
+    steps: List[Step]          <span class="c"># 步骤列表</span></code></pre>
+
+  <div class="card key"><div class="t">关键设计：step_type 区分谁来做</div>
+    <p><b>RESEARCH</b> 步骤派给 researcher（要查资料、调工具）；<b>ANALYSIS</b> 步骤派给 analyst（纯 LLM 推理综合，也能调 fetch_knowledge）。planner 不执行，只规划--它输出的 Plan 是后续调度的依据。</p></div>
+  <div class="card warn"><div class="t">auto_accepted_plan 的影响</div>
+    <p>本项目 <code>auto_accepted_plan=True</code>，所以 planner 出完计划<b>不等人工审核</b>，直接进 research_team。如果关掉，会跳 <code>human_feedback</code> 节点弹计划给人改。</p></div>
+  <div class="step-nav"><a class="prev" href="#step-2">← 上一步 coordinator</a><a class="next" href="#step-4">下一步 调度室 →</a></div>
+</section>
+
+<!-- ============ 步骤 4 ============ -->
+<section class="view" id="step-4" hidden>
+  <div class="detail-nav"><a href="#home">← 返回主流程</a><span class="count">步骤 4 / 8</span></div>
+  <h2>④ research_team 调度派活</h2>
+  <p>这里有个反直觉的真相：<b>调度室节点 <code>research_team_node</code> 本体是空的（只有 <code>pass</code>）！</b> 真正的「派活」靠 LangGraph <b>图的边</b>和一个辅助函数完成。</p>
+
+  <h3>调度室本体：空的</h3>
+  <p class="src">nodes.py:1169</p>
+  <pre><code><span class="k">def</span> <span class="f">research_team_node</span>(state: State):
+    <span class="s">"""Research team node that collaborates on tasks."""</span>
+    logger.info(<span class="s">"Research team is collaborating on tasks."</span>)
+    <span class="k">pass</span>     <span class="c"># ← 调度室本体啥也不干！</span></code></pre>
+
+  <h3>那派活靠谁？靠「图的边」</h3>
+  <p class="src">agent_service/src/graph/deepresearch/builder.py:104</p>
+  <pre><code><span class="c"># 图在 research_team 之后接一个条件边，由这个函数决定下一步去哪</span>
+builder.add_conditional_edges(
+    <span class="s">"research_team"</span>,
+    continue_to_running_research_team,   <span class="c"># 看白板状态：还有没有没做的 step</span>
+)
+<span class="c"># 研究员做完一个 step，回到调度室复命</span>
+builder.add_edge(<span class="s">"parallel_researcher"</span>, <span class="s">"research_team"</span>)
+builder.add_edge(<span class="s">"researcher"</span>, <span class="s">"research_team"</span>)</code></pre>
+
+  <h3>找就绪 step 的逻辑</h3>
+  <p class="src">nodes.py:1196（_execute_agent_step）</p>
+  <pre><code><span class="c"># 扫白板，找第一个还没执行的 step</span>
+<span class="k">for</span> idx, step <span class="k">in</span> enumerate(current_plan.steps):
+    <span class="k">if</span> step.execution_res <span class="k">is</span> <span class="k">None</span>:       <span class="c"># execution_res 为空 = 没做过</span>
+        current_step = step
+        <span class="k">break</span>
+<span class="c"># 把已完成的 step 结果拼进上下文，执行 current_step</span>
+<span class="c"># 执行完回写 step.execution_res，goto="research_team" 回调度室</span></code></pre>
+
+  <div class="card key"><div class="t">反馈式轮询（核心机制）</div>
+    <p>不是一次把所有 step 派完，而是：<b>派一个/一批 → 回调度室 → 重算就绪 → 派下一个</b>，循环到全部 <code>execution_res</code> 都填满。这样后面的 step 能看到前面 step 的发现，依赖关系靠这轮询兑现。这也是为什么 researcher 做完要 <code>goto="research_team"</code> 回来。</p></div>
+  <div class="card tip"><div class="t">为什么节点是空的？</div>
+    <p>LangGraph 的节点不一定要干活，可以只是「编排点」。research_team 就是这样一个点--它存在的意义是让多条边汇聚到这里、由条件边决定分流。真正的状态判断在 <code>continue_to_running_research_team</code> 和 <code>_execute_agent_step</code> 里。</p></div>
+  <div class="step-nav"><a class="prev" href="#step-3">← 上一步 planner</a><a class="next" href="#step-5">下一步 研究员装工具箱 →</a></div>
+</section>
+
+<!-- ============ 步骤 5 ============ -->
+<section class="view" id="step-5" hidden>
+  <div class="detail-nav"><a href="#home">← 返回主流程</a><span class="count">步骤 5 / 8</span></div>
+  <h2>⑤ researcher 装工具箱</h2>
+  <p>研究员 <b>researcher</b> 到岗，要查资料了。但它不是随便能调所有工具--它先调 <code>merge_mcp_tools</code>，<b>按自己的节点名</b>从配置里拉能用的工具，挎上工具箱，才开始 ReAct 调工具。而且<b>每个 step 都重新装一次</b>。</p>
+
+  <h3>researcher 到岗</h3>
+  <p class="src">nodes.py:1476</p>
+  <pre><code><span class="k">async def</span> <span class="f">researcher_node</span>(state, config) -> Command[Literal[<span class="s">"research_team"</span>]]:
+    tools = []
+    <span class="k">return</span> <span class="k">await</span> _setup_and_execute_agent_step(state, config, <span class="s">"researcher"</span>, tools)
+<span class="c"># analyst_node 同理，传 "analyst"（nodes.py:1498）</span></code></pre>
+
+  <h3>装工具箱：按节点过滤</h3>
+  <p class="src">nodes.py:1439 → agent_service/src/agents/mcps.py:7</p>
+  <pre><code><span class="c"># _setup_and_execute_agent_step 里调：</span>
+enable_mcp_servers, loaded_tools = <span class="k">await</span> merge_mcp_tools(
+    agent_name,        <span class="c"># "researcher" 或 "analyst"</span>
+    mcp_settings,      <span class="c"># 来自 .env.dev 的 MCP_DEFAULT_SETTINGS</span>
+    default_tools,
+)
+
+<span class="c"># mcps.py · merge_mcp_tools 的核心：按节点名过滤工具</span>
+<span class="k">async def</span> <span class="f">merge_mcp_tools</span>(agent_name, mcp_settings, default_tools):
+    <span class="k">for</span> i <span class="k">in</span> server_config[<span class="s">"enabled_tools"</span>]:
+        <span class="k">if</span> agent_name == i[<span class="s">"node"</span>]:           <span class="c"># 只取本节点配的工具</span>
+            <span class="k">for</span> tool_name <span class="k">in</span> i[<span class="s">"tools"</span>]:
+                enabled_tools[tool_name] = server_name
+    <span class="c"># 连 MCP 拉工具，只保留 enabled_tools 里的，并 inject 描述</span>
+    <span class="k">for</span> tool <span class="k">in</span> <span class="k">await</span> client.get_tools():
+        <span class="k">if</span> tool.name <span class="k">in</span> enabled_tools:
+            tool.description = f<span class="s">"Powered by '{...}'.\n{tool.description}"</span>
+            loaded_tools.append(tool)</code></pre>
+
+  <h3>权限配置长这样</h3>
+  <p class="src">agent_service/.env.dev:14（MCP_DEFAULT_SETTINGS）</p>
+  <pre><code><span class="c"># 按节点配谁能用哪些工具</span>
+{<span class="s">"enabled_tools"</span>: [
+  {<span class="s">"node"</span>: <span class="s">"researcher"</span>,  <span class="s">"tools"</span>: [<span class="s">"fetch_knowledge"</span>,<span class="s">"fetch_data"</span>,<span class="s">"fetch_news"</span>,<span class="s">"model_choice"</span>,<span class="s">"model_predict"</span>,<span class="s">"draw_chart"</span>]},
+  {<span class="s">"node"</span>: <span class="s">"analyst"</span>,    <span class="s">"tools"</span>: [<span class="s">"fetch_knowledge"</span>,<span class="s">"fetch_news"</span>,<span class="s">"fetch_graph"</span>]},
+  {<span class="s">"node"</span>: <span class="s">"background"</span>, <span class="s">"tools"</span>: [<span class="s">"fetch_background"</span>]}
+]}</code></pre>
+
+  <div class="card warn"><div class="t">三个最容易误解的点</div>
+    <ul style="margin:4px 0">
+      <li><b>不是调度室备工具</b>：工具箱在<b>研究员节点内</b>装（<code>merge_mcp_tools</code> 在 researcher 节点调），调度室只派活。</li>
+      <li><b>不是装一次全程用</b>：每个 step、每批并行都<b>重新连 MCP、拉工具、绑 task_id</b>，跨 step 不复用。</li>
+      <li><b>不是所有工具都能调</b>：researcher 能调 6 个，analyst 能调 3 个，权限按节点配。工具表 + prompt 引导 + 权限三者配合，agent 才调对工具。</li>
+    </ul></div>
+  <div class="step-nav"><a class="prev" href="#step-4">← 上一步 调度室</a><a class="next" href="#step-6">下一步 fetch_data →</a></div>
+</section>
+
+<!-- ============ 步骤 6 ============ -->
+<section class="view" id="step-6" hidden>
+  <div class="detail-nav"><a href="#home">← 返回主流程</a><span class="count">步骤 6 / 8</span></div>
+  <h2>⑥ fetch_data 读预测数据</h2>
+  <p>研究员（LLM 大脑决定）调 <code>fetch_data</code> 工具。这个工具在 mcp_server 里，<b>直接 <code>pd.read_csv</code> 读 <code>07/outputs/</code> 里的现成文件</b>，不经过知识库，也不算预测--只是把建模流水线已经算好的结果读出来。</p>
+
+  <h3>fetch_data 的实现</h3>
+  <p class="src">mcp_server/server.py:46</p>
+  <pre><code>@mcp.tool()
+<span class="k">def</span> <span class="f">fetch_data</span>(query: str) -> str:
+    <span class="s">"""查询预测核心数据：标的、评估指标、测试集预测、特征体系。"""</span>
+    parts = []
+    parts.append(<span class="s">"【标的】ID00186052 铁矿石：45个港口（周度）"</span>)
+    parts.append(<span class="s">"【模型评估】\n"</span> + _read_text(OUT_07 / <span class="s">"final_evaluation_weekly.json"</span>))
+    parts.append(<span class="s">"【最优超参】\n"</span> + _read_text(OUT_07 / <span class="s">"best_params_weekly.json"</span>))
+    parts.append(<span class="s">"【测试集预测】\n"</span> + _read_csv_tail(OUT_07 / <span class="s">"test_predictions_weekly.csv"</span>, 10))
+    feats = pd.read_csv(OUT_05 / <span class="s">"final_feature_list_weekly.csv"</span>)
+    parts.append(f<span class="s">"【特征体系】共 {len(feats)} 个特征"</span>)
+    <span class="k">return</span> <span class="s">"\n\n"</span>.join(parts)   <span class="c"># 拼成一段文本返回给 agent</span></code></pre>
+
+  <h3>读的都是哪些文件</h3>
+  <table>
+    <tr><th>文件</th><th>内容</th></tr>
+    <tr><td><code>final_evaluation_weekly.json</code></td><td>MDA 84.91%、MAPE、MAE</td></tr>
+    <tr><td><code>best_params_weekly.json</code></td><td>最优超参组合</td></tr>
+    <tr><td><code>test_predictions_weekly.csv</code></td><td>测试集预测序列（y_true/y_pred）</td></tr>
+    <tr><td><code>final_feature_list_weekly.csv</code></td><td>3184 个特征列表</td></tr>
+  </table>
+
+  <div class="card key"><div class="t">关键：直接读文件，不算预测</div>
+    <p>agent <b>不训练模型、不算预测</b>。它只是读 07 目录里已经算好的结果。所以建模流水线不用每次跑，除非你重训了模型想用新结果。这是「离线产数据 + 在线查数据」的解耦。</p></div>
+  <div class="card tip"><div class="t">返回的是文本，不是结构化数据</div>
+    <p>fetch_data 把多个文件内容拼成一段<b>带标签的文本</b>（【标的】…【模型评估】…）返回。agent 读这段文本理解数据，再写进报告。MCP 工具的返回都是字符串。</p></div>
+  <div class="step-nav"><a class="prev" href="#step-5">← 上一步 装工具箱</a><a class="next" href="#step-7">下一步 查知识库 →</a></div>
+</section>
+
+<!-- ============ 步骤 7 ============ -->
+<section class="view" id="step-7" hidden>
+  <div class="detail-nav"><a href="#home">← 返回主流程</a><span class="count">步骤 7 / 8</span></div>
+  <h2>⑦ fetch_knowledge 查知识库</h2>
+  <p>研究员调 <code>fetch_knowledge</code>。这个工具<b>不读文件，而是用 httpx 转发到知识库服务 <span class="port">:8092</span></b>，让 knowledge_service 跑 RAG 检索，返回最相关的过往文档片段。<b>这是知识库真正被用到的时刻。</b></p>
+
+  <h3>fetch_knowledge 的实现</h3>
+  <p class="src">mcp_server/server.py:122</p>
+  <pre><code>@mcp.tool()
+<span class="k">def</span> <span class="f">fetch_knowledge</span>(query, topK=5, reRank=1) -> str:
+    <span class="s">"""知识库检索：过往分析报告/笔记/项目文档。"""</span>
+    r = httpx.post(
+        <span class="s">"http://127.0.0.1:8092/knowledge-base/report/search"</span>,
+        json={<span class="s">"content"</span>: query, <span class="s">"topK"</span>: topK, <span class="s">"reRank"</span>: reRank, <span class="s">"mode"</span>: <span class="s">"mix"</span>},
+        timeout=120,
+    )
+    data = r.json().get(<span class="s">"data"</span>, [])
+    <span class="c"># 拼成「【知识库检索 N 条】...」文本返回给 agent</span>
+    <span class="k">for</span> i, h <span class="k">in</span> enumerate(data, 1):
+        parts.append(f<span class="s">"{i}. [{h['fileName']}] {h['content'][:...]}..."</span>)
+    <span class="k">return</span> <span class="s">"\n\n"</span>.join(parts)</code></pre>
+
+  <h3>knowledge_service 收到后跑 RAG 检索</h3>
+  <div class="flow">
+    <div class="node pink"><b>query</b>查询</div><div class="arr">→</div>
+    <div class="node green"><b>embed</b>bge-m3<br>查询变向量</div><div class="arr">→</div>
+    <div class="node"><b>双路召回</b>KNN向量<br>BM25关键词</div><div class="arr">→</div>
+    <div class="node purple"><b>RRF融合</b>按排名合并</div><div class="arr">→</div>
+    <div class="node purple"><b>rerank</b>reranker<br>精排</div><div class="arr">→</div>
+    <div class="node green"><b>返回</b>topK片段</div>
+  </div>
+  <p style="color:var(--muted);font-size:14px">入库时 15 篇文档切 237 块、bge-m3 编码、存 Chroma+BM25 索引（离线跑一次）。检索每次实时跑。</p>
+
+  <div class="card key"><div class="t">真实联调证据（2026-07-17 跑通）</div>
+    <p>用默认问题实跑（<code>report_20260717_091245.md</code>，<b>28 次工具调用</b>）：</p>
+    <ul style="margin:4px 0">
+      <li>✅ <code>fetch_knowledge</code> 被多次调用（researcher 从口径定义、驱动因素等不同角度查）</li>
+      <li>✅ 报告明写「<b>与知识库中 3 份过往分析报告保持一致</b>」，含 fetch_data 不返回的港口明细（曹妃甸港、江阴港）</li>
+      <li>✅ knowledge_service 日志三段耗时：<code>embedding=28.96s</code>（首查加载模型）/ <code>search=0.68s</code> / <code>rerank=14.78s</code></li>
+    </ul></div>
+  <div class="card tip"><div class="t">解耦：agent 不直接调知识库</div>
+    <p>agent 调的是 mcp_server 的 <code>fetch_knowledge</code>，由 mcp_server 转发到 :8092。所以从 agent 视角，知识库只是「fetch_knowledge 返回的文档片段」；知识库可以独立优化（换 embedding、调 chunk_size）而不动 agent。</p></div>
+  <div class="card cute"><div class="t">想懂 RAG 每一环？</div>
+    <p>chunk 怎么切、bge-m3 怎么编码、BM25 为啥必须 jieba 分词、RRF 公式、reranker 报错怎么修…全在 <a href="knowledge_be复刻学习指南.html">knowledge_be复刻学习指南.html</a>（8 问 + 动手实验）。本页只讲它在项目里的位置。</p></div>
+  <div class="step-nav"><a class="prev" href="#step-6">← 上一步 fetch_data</a><a class="next" href="#step-8">下一步 reporter 出报告 →</a></div>
+</section>
+
+<!-- ============ 步骤 8 ============ -->
+<section class="view" id="step-8" hidden>
+  <div class="detail-nav"><a href="#home">← 返回主流程</a><span class="count">步骤 8 / 8</span></div>
+  <h2>⑧ reporter 出报告 + 流回</h2>
+  <p>所有 step 做完（白板上 <code>execution_res</code> 都填满），调度室交给<b>撰稿人 reporter</b>。reporter 读计划标题 + 所有 step 的发现（observations），用 LLM 写成一份结构化 Markdown 报告，经 SSE 流回客户端。</p>
+
+  <h3>reporter 综合 findings 写报告</h3>
+  <p class="src">nodes.py:1108</p>
+  <pre><code><span class="k">async def</span> <span class="f">reporter_node</span>(state, config):
+    current_plan = state.get(<span class="s">"current_plan"</span>)
+    input_ = {<span class="s">"messages"</span>: [HumanMessage(
+        f<span class="s">"# Research Requirements\n## Task\n{current_plan.title}\n## Description\n{current_plan.thought}"</span>
+    )], <span class="s">"locale"</span>: state.get(<span class="s">"locale"</span>, <span class="s">"zh-CN"</span>)}
+    invoke_messages = apply_prompt_template(<span class="s">"reporter"</span>, ..., input_, ...)
+
+    <span class="c"># 把所有 step 的发现拼进去</span>
+    <span class="k">for</span> observation <span class="k">in</span> state.get(<span class="s">"observations"</span>, []):
+        invoke_messages.append(HumanMessage(content=f<span class="s">"观察发现:\n{observation}"</span>))
+
+    response = <span class="k">await</span> get_llm_by_type(AGENT_LLM_MAP[<span class="s">"reporter"</span>]).ainvoke(invoke_messages)
+    <span class="c"># ChatAnthropic 可能返回 content 列表（thinking+text），提取 text</span>
+    <span class="k">if</span> isinstance(response.content, list):
+        response.content = <span class="s">""</span>.join(b[<span class="s">"text"</span>] <span class="k">for</span> b <span class="k">in</span> response.content <span class="k">if</span> b.get(<span class="s">"type"</span>)==<span class="s">"text"</span>)
+    <span class="k">return</span> {<span class="s">"final_report"</span>: response.content, <span class="s">"messages"</span>: response}</code></pre>
+
+  <h3>报告经 SSE 流回客户端</h3>
+  <p class="src">agent_service/src/server/utils.py:389</p>
+  <pre><code><span class="k">async def</span> <span class="f">_stream_graph_events</span>(graph, workflow_input, ...):
+    <span class="c"># astream 把图执行过程流式吐出来</span>
+    <span class="k">async for</span> agent, _, event_data <span class="k">in</span> graph.astream(
+        workflow_input, stream_mode=[<span class="s">"messages"</span>, <span class="s">"updates"</span>, <span class="s">"custom"</span>], subgraphs=<span class="k">True</span>
+    ):
+        <span class="k">async for</span> event <span class="k">in</span> _process_message_chunk(...):
+            <span class="k">yield</span> event     <span class="c"># message_chunk / tool_calls / tool_call_result ...</span>
+    <span class="k">yield</span> SSE_DONE        <span class="c"># 最后发 event:finish / data:[DONE]</span></code></pre>
+
+  <div class="card key"><div class="t">报告不是一下子出来的，是流出来的</div>
+    <p>reporter 用 <code>ainvoke</code>（非流式）生成完整报告，但整条链路的 SSE 是流式的--reporter 的输出会作为 <code>message_chunk</code> 事件被切成 token 推给客户端，客户端边收边拼边打印。所以你看到报告是「一段段冒出来」的。</p></div>
+  <div class="card tip"><div class="t">客户端收尾</div>
+    <p>客户端收到 <code>[DONE]</code> 后，把拼好的 <code>report_chunks</code> 存成 <code>outputs/report_&lt;时间戳&gt;.md</code>，打印「✓ 报告已保存」+ 工具调用次数，然后退出。<a href="knowledge_be复刻学习指南.html">知识库指南</a>里有完整报告样例可看。</p></div>
+  <div class="step-nav"><a class="prev" href="#step-7">← 上一步 查知识库</a><a class="next" href="#home">回到主流程 ✓</a></div>
+</section>
+
+<!-- ============ 术语表 ============ -->
+<section class="view" id="glossary" hidden>
+  <div class="detail-nav"><a href="#home">← 返回主流程</a><span class="count">附录</span></div>
+  <h2>📖 术语表</h2>
+  <dl class="glossary">
+    <dt>MCP（Model Context Protocol）</dt>
+    <dd>把「外部能力」标准化暴露给 LLM 的协议。mcp_server 用 MCP 把 8 个工具暴露给 agent，agent 不关心数据在文件还是数据库，只管调工具。</dd>
+    <dt>LangGraph</dt>
+    <dd>把 LLM 工作流组织成「图」的框架，节点是步骤、边是流转。支持条件路由、并行、循环。本项目的 coordinator→planner→research_team→researcher→reporter 就是张图。</dd>
+    <dt>ReAct</dt>
+    <dd>Reason+Act，LLM 边推理边调工具的循环：思考→调工具→看结果→再思考。researcher 就是 ReAct agent，决定调哪个工具、调几次。</dd>
+    <dt>SSE（Server-Sent Events）</dt>
+    <dd>服务端推流。agent 用 SSE 把研究过程和报告流式推给客户端，不用等全部生成完才返回，能边跑边看。事件格式 <code>event: 类型\ndata: {json}</code>，<code>[DONE]</code> 结束。</dd>
+    <dt>RAG（检索增强生成）</dt>
+    <dd>先从知识库检索相关片段，再喂给 LLM 生成。knowledge_service 做「检索」那半，生成那半在 agent。</dd>
+    <dt>bi-encoder / cross-encoder</dt>
+    <dd>bi-encoder：query 和 doc 各自编码成向量算距离，快但浅（bge-m3，用于召回）；cross-encoder：query+doc 拼一起打分，慢但准（bge-reranker，用于重排）。</dd>
+    <dt>RRF（Reciprocal Rank Fusion）</dt>
+    <dd>按排名融合多路检索结果，分数=Σ 1/(k+rank)，只看排名不看分数量纲。把 KNN 和 BM25 两份排名合成一份。</dd>
+    <dt>Chroma</dt>
+    <dd>轻量向量数据库，本地文件、零运维。存 237 个 chunk 的 1024 维向量，cosine 相似度做 KNN。</dd>
+    <dt>BM25</dt>
+    <dd>经典关键词检索，基于 TF+IDF。中文要先 jieba 分词。和向量检索互补。</dd>
+    <dt>MDA（方向准确率）</dt>
+    <dd>预测方向（涨/跌）与实际一致的比例。主标的测试集 MDA=84.91%，是模型核心指标。</dd>
+    <dt>Optuna</dt>
+    <dd>超参自动优化框架，贝叶斯优化（TPE）。本项目跑 200 次试验找最优 LightGBM 超参。</dd>
+    <dt>GLM / 火山方舟</dt>
+    <dd>本项目 LLM 用智谱 GLM（<code>glm-5-2-260617</code>），通过火山方舟的 Anthropic 兼容接口调用。key 在 <code>.env.dev</code>。</dd>
+  </dl>
+  <div class="step-nav"><span class="spacer"></span><a class="next" href="#home">回到主流程 ✓</a></div>
+</section>
+
+</div>
+
+<script>
+/* hash 路由：切换 view 显示 */
+function route() {
+  var hash = location.hash || '#home';
+  var id = hash.replace('#','');
+  var target = document.getElementById(id);
+  if (!target || !target.classList.contains('view')) target = document.getElementById('home');
+  document.querySelectorAll('.view').forEach(function(v){ v.hidden = (v !== target); });
+  window.scrollTo(0, 0);
+}
+window.addEventListener('hashchange', route);
+window.addEventListener('DOMContentLoaded', route);
+</script>
+</body>
+</html>
